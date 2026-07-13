@@ -1,0 +1,112 @@
+<title>台積電 2330 · 投顧戰情報告</title>
+<style>
+:root{--base:#E7EAF5;--ink:#383B58;--ink2:#5A5E80;--muted:#7E82A2;--faint:#A2A6C2;
+--sh-d:#C6CBDE;--sh-l:#FFFFFF;--line:#D5D9EA;--pink:#F3A6D0;--purple:#B197E8;
+--grad:linear-gradient(135deg,#F3A6D0,#B197E8);--up:#2AA588;--up-bg:#D6EEE6;
+--down:#E36088;--down-bg:#F7DEE7;--warn:#D2982F;--warn-bg:#F3E8D2;
+--mono:ui-monospace,"SF Mono",Menlo,monospace;--sans:system-ui,-apple-system,"PingFang TC","Noto Sans TC",sans-serif;}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+background:linear-gradient(165deg,#E4E9F7,#E9E5F3 48%,#F1E6EE);background-attachment:fixed;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:26px 16px 70px}
+.real{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#1e7d63;background:var(--up-bg);
+border-radius:999px;padding:5px 12px;font-weight:600}
+.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--up)}
+header{margin-top:16px}
+.tick{font-family:var(--mono);color:var(--muted);font-size:15px;margin-left:8px}
+.mkt{font-size:11px;border-radius:6px;padding:2px 8px;color:var(--purple);background:rgba(177,151,232,.16);
+margin-left:8px;vertical-align:middle;font-weight:600}
+h1{font-size:29px;margin:12px 0 6px;font-weight:700;letter-spacing:-.01em}
+.meta{color:var(--muted);font-size:13px;font-family:var(--mono)}
+.card{background:var(--base);border-radius:22px;padding:22px;margin-top:18px;
+box-shadow:7px 7px 16px var(--sh-d),-7px -7px 16px var(--sh-l)}
+.chieftag{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dir{font-size:24px;font-weight:800;margin:9px 0 4px;letter-spacing:-.01em}
+.chief{font-size:15px;color:var(--ink);margin:12px 0 0}
+.kpis{display:flex;flex-wrap:wrap;gap:11px;margin-top:16px}
+.kpi{flex:1;min-width:120px;background:var(--base);border-radius:14px;padding:11px 14px;
+box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}
+.kpi .t{font-size:11px;color:var(--muted)} .kpi .b{font-size:15px;margin-top:3px;font-weight:700}
+.adv{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.advbox{border-radius:15px;padding:14px 15px;background:var(--down-bg)}
+.advbox.risk{background:var(--warn-bg)}
+.advbox .h{font-size:11.5px;font-weight:700;letter-spacing:.04em;margin-bottom:6px}
+.advbox.risk .h{color:#a8792a} .advbox .h{color:#bd4a6c}
+.advbox p{margin:0;font-size:13px;color:var(--ink2);line-height:1.55}
+.sechead{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+font-weight:700;margin:30px 4px 4px}
+.dim{background:var(--base);border-radius:20px;padding:18px;margin-top:14px;
+box-shadow:6px 6px 14px var(--sh-d),-6px -6px 14px var(--sh-l)}
+.dimhead{display:flex;align-items:center;gap:11px}
+.dimhead h3{font-size:17px;margin:0;font-weight:650}
+.dimhead .lgt{margin-left:auto;font-size:13px;font-weight:700}
+.lgt.g{color:var(--up)} .lgt.y{color:var(--warn)} .lgt.r{color:var(--down)}
+.tl{width:11px;height:11px;border-radius:50%;flex:none}
+.tl.g{background:var(--up)} .tl.y{background:var(--warn)} .tl.r{background:var(--down)}
+.evrow{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}
+.evrow .d{background:var(--base);border-radius:11px;padding:8px 12px;font-size:12.5px;color:var(--muted);
+box-shadow:inset 3px 3px 6px var(--sh-d),inset -3px -3px 6px var(--sh-l)}
+.evrow .d b{color:var(--ink);font-family:var(--mono);font-weight:600;margin-left:2px}
+.say{border-radius:14px;padding:13px 15px;background:linear-gradient(135deg,rgba(243,166,208,.10),rgba(177,151,232,.10))}
+.say .who{font-size:11px;font-weight:700;color:var(--purple);display:block;margin-bottom:5px}
+.say p{margin:0;font-size:14px;color:var(--ink)}
+.news{display:flex;justify-content:space-between;gap:12px;align-items:baseline;text-decoration:none;
+padding:12px 2px;border-bottom:1px solid var(--line);color:var(--ink)}
+.news:last-child{border-bottom:0}
+.news .nt{font-size:14px;line-height:1.45} .news:hover .nt{color:var(--purple)}
+.news .ns{font-size:11.5px;color:var(--faint);font-family:var(--mono);white-space:nowrap;flex:none}
+.muted{color:var(--muted);font-size:13px}
+footer{margin-top:28px;color:var(--faint);font-size:12.5px}
+.discl{background:var(--base);border-radius:16px;padding:15px 17px;margin-top:12px;font-size:12.5px;
+color:var(--ink2);line-height:1.65;box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}
+@media(max-width:520px){h1{font-size:24px}.adv{grid-template-columns:1fr}.kpi{min-width:calc(50% - 6px)}}
+</style>
+<div class="wrap">
+  <span class="real">真實資料 · FinMind × TWSE × Google News</span>
+  <header>
+    <h1>台積電<span class="tick">2330</span><span class="mkt">台股</span></h1>
+    <div class="meta">投顧戰情報告 · 資料日 2026-07-13（台北） · 產出 2026-07-13 18:57（台北）</div>
+  </header>
+
+  <div class="card">
+    <div class="chieftag">投資長 · 綜合研判</div>
+    <div class="dir">訊號分歧・建議觀望</div>
+    <p class="chief">三面分歧：基本面與技術面偏多、但籌碼面轉弱，估值也在高檔。這種情況硬喊『買進』並不專業。結論是——續抱者可續抱、空手者建議觀望不追高；等兩個訊號之一出現再動手：(1) 法人回補轉買，或 (2) 估值回到相對合理（PER 分位下修）。</p>
+    <div class="kpis">
+      <div class="kpi"><div class="t">操作建議</div><div class="b">續抱 / 空手觀望（不追高）</div></div>
+      <div class="kpi"><div class="t">信心度</div><div class="b">中低</div></div>
+      <div class="kpi"><div class="t">加權分</div><div class="b">0.0</div></div>
+    </div>
+    <div class="kpi" style="margin-top:11px"><div class="t">防守 / 停損參考</div><div class="b" style="font-size:13.5px">以 MA20（2,420）為續抱防守線，跌破且法人續賣則減碼</div></div>
+    <div class="adv">
+      <div class="advbox risk"><div class="h">⚠ 風控長</div><p>最大風險是『估值＋籌碼』組合：股價在歷史估值高檔（96% 分位）容錯空間小；同時法人近 5 日連賣 3 天、淨賣約 1.6 萬張，聰明錢正在調節。一旦法說展望不如預期或 AI 資本支出出現雜音，高基期的回檔空間會被放大。防守線：跌破 MA20（2,420）且法人續賣，應降評、減碼。</p></div>
+      <div class="advbox"><div class="h">◆ 魔鬼代言人</div><p>別被『史上最強營收』沖昏頭——那是後照鏡數字，股價早漲一段反映完了。真正該問：如果基本面這麼好，為什麼法人在賣？當『財報好』撞上『聰明錢調節＋估值 96% 分位』，最常見的劇本是『利多出盡』。這檔現在最不該做的，就是『因為公司好所以追高』。</p></div>
+    </div>
+  </div>
+
+  <div class="sechead">三維度團隊研判</div>
+  
+    <div class="dim">
+      <div class="dimhead"><span class="tl y"></span><h3>基本面</h3><span class="lgt y">🟡 中性</span></div>
+      <div class="evrow"><span class="d">最新營收月 <b>2026/6</b></span><span class="d">營收YoY <b>+67.9%</b></span><span class="d">近3月平均YoY <b>+38.5%</b></span><span class="d">PER <b>32.8</b></span><span class="d">PER歷史分位 <b>96%</b></span><span class="d">殖利率 <b>0.9%</b></span></div>
+      <div class="say"><span class="who">基本面分析師</span><p>台積電基本面體質很強：6 月營收年增 67.9%、上半年營收破 2 兆創史上最強，CoWoS 先進封裝供不應求撐住 AI 需求能見度。但要誠實提醒——PER 32.8 倍已站上近兩年 96% 分位、殖利率僅 0.9%，代表『好消息大多已反映在價格裡』。基本面偏多，但現價性價比不高，屬於『續抱理由充分、追買理由不足』。</p></div>
+    </div>
+    <div class="dim">
+      <div class="dimhead"><span class="tl g"></span><h3>技術面</h3><span class="lgt g">🟢 偏多</span></div>
+      <div class="evrow"><span class="d">收盤 <b>2440.0</b></span><span class="d">MA20 <b>2420.8</b></span><span class="d">MA60 <b>2299.9</b></span><span class="d">MA120 <b>2070.5</b></span><span class="d">RSI14 <b>55.0</b></span><span class="d">量能 <b>0.9×20日均量</b></span><span class="d">排列 <b>多頭排列</b></span><span class="d">備註 <b>—</b></span></div>
+      <div class="say"><span class="who">技術分析師</span><p>型態健康。收盤 2,440 站上 20／60／120 日全部均線、標準多頭排列，長線多頭沒被破壞；RSI 55 中性偏多、沒過熱，量能 0.9 倍均量屬正常換手。技術面本身偏多、趨勢完好可續抱；短線要進場，等回測 MA20（約 2,420）不破再上比較安全。</p></div>
+    </div>
+    <div class="dim">
+      <div class="dimhead"><span class="tl r"></span><h3>消息 · 籌碼</h3><span class="lgt r">🔴 偏空</span></div>
+      <div class="evrow"><span class="d">近5日法人淨額(張) <b>-15,821</b></span><span class="d">連續方向天數 <b>賣 3 天</b></span><span class="d">最新日 <b>2026-07-13</b></span><span class="d">備註 <b>新聞情緒分類待 LLM 團隊層補上</b></span></div>
+      <div class="say"><span class="who">消息／籌碼分析師</span><p>消息面偏正向、但多是『眾所皆知的利多』：上半年營收創高、CoWoS 供不應求、先進封裝擴廠題材延燒——市場已充分認知，邊際驚喜有限。留意 7／16 法說會是下一個變數點，展望若不如高預期，容易觸發獲利了結。</p></div>
+    </div>
+
+  <div class="sechead">近期新聞</div>
+  <div class="card" style="padding:8px 20px"><a class="news" href="https://news.google.com/rss/articles/CBMijANBVV95cUxPOWNKeFdRcUc2WldONm9wSFI4U2VtWldxUkNKUTRSdUY3OGZjZTc2Y3otRmZXVjlrWnN4cF9nc1FDSWFoUWhsUTN2NnhvVTdIaVktakdvZVNBZFlSbWlLVDMwRlNCSXBtbUt4WFYzcGtabFl0SlRDQnhzN3ZhRUZRWUJ1WV9NVEpVRm5xTTBnbWY5VUNMaDJOSXNDY2JRY3J1V1BwMzg0ak5MQ3Bib0o1cjQ3TzdzTTRrMkNGSlFMVHNqaVpvaHF1cEkwYmVxdEZVdkphaGs0Nkp6UWdjYzZERzZJTWZ5WkZQNEFNRmhxcXlhZElra3JWRlJaZGFkUGVENi1JT1pnUTFYeG1NZVQxc1BleThfeU5qYnEwQ3diZ3VSWHpPUWpfQ0cwbjNXaktqQ1hzMlVMQm9IVkVrVktXR1owWGtxdzFaa0hBYlRJWlQwQUxuUkY4T0EyNW9qenpDT2MyYmdGY1JlUUVDZC1WMVpWeHlNZ1FlX3RLUjZUUzM3Tk1iOUxhN2Z0VVc?oc=5" target="_blank" rel="noopener"><span class="nt">符合預期！台積電史上最強上半年 營收破2兆元「年增36％」 - Yahoo股市</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMinAFBVV95cUxQaFRvdFBNVG02M25LZi1nbGd3RHFacEJOYmpTa20ydjBhbGhJS1F4U0p1Y3hZTk9WRTNkbGJON2l2OG5IYWNRSDg3V2cwNlRKTWJLNWluYi1XYllKTWx4RmJjd1Bqa0xvNnBKRnJZdld6ZzloNHZlSnlvdUNvSTNxVktQTjZNU04yMDBwNTVaNDV4NEw4RUdUaHNDT2w?oc=5" target="_blank" rel="noopener"><span class="nt">台積電 CoWoS 供不應求，封測台廠英特爾受惠訂單外溢 - TechNews 科技新報</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMi8AJBVV95cUxOTi1MT0ZkMGVrenhnR1BlTXNxYk0zclY3Yjh6SmUzbW1mY3JydjdaRGwtNkRkNUt2RG56ZC1JMmJoNjBiVFlieTVoejgxdXhxeml0M1NNdmpZM213QlUxdW1ZQTdWX3pDMkV5MWNJZFVnOGZBQ2RSMFBDcDlyWHpVVElCbktJUEFJNjdUa0dqQWNsMHp3aUNEZ0V4bTBjWFVUVzFibUJFQjVBd0xZVVUtNTUxUjROQ1JEQzZIZThlRWJwQmROYlVlX1FQcTNJR3lQaXpNUGhFUkNIbElRMG9nMDk2Z3JrWXRlMnpSd2N3SXN2MkVaS01FS1lVaWtxT2Itb0FmM3ZwR3VXSk0tMUdQUW9JaFMzZUxlNWc3dW5ibllBRi12cG5IcU1pZ0ZUeVRiQXl5cDA4eHVQMWFJVzZLVjhMc0VKdFk0WXZnc3B4dHhhTXprVlE1MWZITDMzS1lKV3cwdjZITEt3SVBWQS1PSw?oc=5" target="_blank" rel="noopener"><span class="nt">攜手台積電搶攻先進封裝！「它」6月營收飆破293億 目標價曝光 - Yahoo新聞</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE82eWRDTHEtb0FhR2cydEc2SVFSTmh4VkRER09XOV80cUVpT1p0SVU3anN6bmVyMGN1c3ItcVloZGUtVkZ2SGREdlBWdGs5V1h6bE41c1M0aw?oc=5" target="_blank" rel="noopener"><span class="nt">嘉科二期台積電再設3座廠 打造全球先進封裝重鎮 - 東森新聞</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiTkFVX3lxTFAzUDJCMTJCNks4MDU1Yzh5X1J6Vk5tUUt4a2liTXk3TzFkRFBtSmFIaFF1ZGhmNHRYRDhqRWdGcm02TlNUT1lHVlltb1ppdw?oc=5" target="_blank" rel="noopener"><span class="nt">捨台積電模式，越南拚2030年百家IC設計公司、5萬晶片大軍，能順利轉型嗎？ - 天下雜誌</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiUkFVX3lxTFBqWUNaX24zeldwNmJqbUhXTVlJcjJUQ1g3LWdfZ2lUMUVPVTY3dS1WNUpmR3RyNlpHR0FaUHpzUjdsdGJ0WUhkaFlaUFg4TDBtQmfSAW5BVV95cUxOMGZOME1lWlpVblF0UDFyZVpyT2stUXFfRllPdmpMOTZHREtTWG53RWNYLTB3SXBzVzBkZzdZeHpfY1BNV1huTi1hMktJTHVRcWJMQVd1bGlOZFJBRWI1Z09rcUtlTUVWUGFLUDhTUQ?oc=5" target="_blank" rel="noopener"><span class="nt">台股虎頭蛇尾！僅收漲25點　台積電收今日最低2440元 - ETtoday財經雲</span><span class="ns">Google News</span></a></div>
+
+  <footer>
+    <div class="discl">紅綠燈由「數據＋固定規則」計算（技術面均線／RSI／量能、基本面營收 YoY／PER 分位、籌碼三大法人淨買），團隊觀點由分析師解讀與反駁，不憑感覺喊買賣。<b style="color:var(--ink)">本報告為投資決策輔助，非投資建議、非保證獲利，最終決策與風險由使用者承擔。</b>數據來源與抓取時間如上；抓不到即註記缺漏、絕不編造。</div>
+  </footer>
+</div>
