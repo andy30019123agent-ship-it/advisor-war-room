@@ -33,8 +33,10 @@ def fetch_market():
     # 美股 / 總經（yfinance）
     for name, t, kind in US:
         try:
-            h = yf.Ticker(t).history(period="7d")
-            last = float(h["Close"].iloc[-1]); wk = (last / float(h["Close"].iloc[0]) - 1) * 100
+            c = yf.Ticker(t).history(period="1mo")["Close"]
+            last = float(c.iloc[-1])
+            base = float(c.iloc[-6]) if len(c) >= 6 else float(c.iloc[0])  # 約 5 個交易日前
+            wk = (last / base - 1) * 100
             unit = "%" if t == "^TNX" else ""
             items.append({"name": name, "value": f"{last:,.2f}{unit}", "wk": round(wk, 2),
                           "dot": _dot(wk, kind), "grp": "us"})

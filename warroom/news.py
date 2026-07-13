@@ -1,5 +1,5 @@
 """新聞抓取：GDELT 為主（退避重試），Google News RSS 備援。中文 query 一律 URL 編碼。"""
-import json, time, re, urllib.request, urllib.parse
+import json, time, re, html, urllib.request, urllib.parse
 
 UA = {"User-Agent": "advisor-war-room/1.0 (personal research)"}
 
@@ -25,7 +25,7 @@ def from_gdelt(query, limit=6):
 
 
 def from_google_rss(query, limit=6):
-    q = urllib.parse.quote(query)
+    q = urllib.parse.quote(query + " when:14d")  # 只取近 14 天，避免混入舊文
     url = f"https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-TW"
     try:
         txt = _get(url).decode("utf-8", "replace")
@@ -35,7 +35,7 @@ def from_google_rss(query, limit=6):
             t = re.search(r"<title>(.*?)</title>", it, re.S)
             l = re.search(r"<link>(.*?)</link>", it, re.S)
             p = re.search(r"<pubDate>(.*?)</pubDate>", it, re.S)
-            out.append({"title": (t.group(1) if t else "").strip(),
+            out.append({"title": html.unescape((t.group(1) if t else "").strip()),
                         "url": l.group(1) if l else "", "date": p.group(1) if p else "", "src": "Google News"})
         return out
     except Exception:

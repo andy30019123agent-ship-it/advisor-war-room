@@ -34,10 +34,11 @@ def sector_rows(sectors):
     for r in sectors:
         zh, cls = tierzh[r["tier"]]
         m5 = f'{r["m5"]:+.1f}%' if r["m5"] is not None else "—"
+        m20 = f'{r["m20"]:+.1f}%' if r.get("m20") is not None else "—"
         rows += f'''<details class="srow"><summary>
             <span class="sname">{esc(r['group'])} <span class="etf">{esc(r['etf'])}</span></span>
             <span class="schg {chg_cls(r['m5'])}">{m5}</span><span class="tag {cls}">{zh}</span></summary>
-          <div class="sdetail"><span>近5日 <b>{m5}</b></span><span>近20日 <b>{r['m20']:+.1f}%</b></span>
+          <div class="sdetail"><span>近5日 <b>{m5}</b></span><span>近20日 <b>{m20}</b></span>
             <span>美股代表 <b>{esc(r['us_names'])}</b></span><span style="flex-basis:100%">→ 台股對應：{esc(r['tw'])}</span></div></details>'''
     return rows
 
@@ -94,7 +95,10 @@ def build():
     code, emo, zh = LIGHT[m["light"]]
     foreign = ""
     if m.get("foreign"):
-        foreign = f'<div class="cell"><div class="lab"><span class="tl r"></span>外資買賣超</div><div class="v">{m["foreign"]["net_yi"]:,.0f} 億</div><div class="chg down">{esc(m["foreign"]["date"])}</div></div>'
+        net = m["foreign"]["net_yi"]
+        fdot = "g" if net > 0 else "r" if net < 0 else "y"
+        fcls = "up" if net > 0 else "down" if net < 0 else "muted"
+        foreign = f'<div class="cell"><div class="lab"><span class="tl {fdot}"></span>外資買賣超</div><div class="v">{net:+,.0f} 億</div><div class="chg {fcls}">{esc(m["foreign"]["date"])}</div></div>'
 
     stock_cards = "".join(stock_card(sid, stocks[sid], n["stocks"][sid]) for sid in stocks if sid in stocks)
     themes = json.load(open("data/themes.json", encoding="utf-8")) if os.path.exists("data/themes.json") else []

@@ -31,7 +31,7 @@ MAPPING = {
 def _mom(ticker):
     h = yf.Ticker(ticker).history(period="1mo")
     c = h["Close"]
-    m5 = (c.iloc[-1] / c.iloc[-6] - 1) * 100 if len(c) > 6 else None
+    m5 = (c.iloc[-1] / c.iloc[-6] - 1) * 100 if len(c) >= 6 else None
     m20 = (c.iloc[-1] / c.iloc[0] - 1) * 100 if len(c) > 1 else None
     return round(m5, 2) if m5 is not None else None, round(m20, 2) if m20 is not None else None
 

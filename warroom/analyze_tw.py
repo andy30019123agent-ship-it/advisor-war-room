@@ -41,7 +41,9 @@ def rsi(series, n=14):
     gain = delta.clip(lower=0).ewm(alpha=1/n, adjust=False).mean()
     loss = (-delta.clip(upper=0)).ewm(alpha=1/n, adjust=False).mean()
     rs = gain / loss.replace(0, 1e-9)
-    return 100 - 100 / (1 + rs)
+    out = 100 - 100 / (1 + rs)
+    out[(gain == 0) & (loss == 0)] = 50  # 完全平盤 → 中性，避免被誤判超賣
+    return out
 
 
 def technical(price):
@@ -96,7 +98,8 @@ def fundamental(rev, val):
     avg_yoy = sum(yoys) / len(yoys) if yoys else None
 
     v = val.sort_values("date").reset_index(drop=True)
-    per_series = v["PER"].replace(0, pd.NA).dropna()
+    per_num = pd.to_numeric(v["PER"], errors="coerce")
+    per_series = per_num[per_num > 0].dropna()  # 排除負/零 PER，避免污染分位
     per_last = per_series.iloc[-1] if len(per_series) else None
     per_pctile = (per_series < per_last).mean() if per_last is not None else None
     div_yield = v["dividend_yield"].iloc[-1] if len(v) else None
@@ -121,23 +124,25 @@ def fundamental(rev, val):
 # ---------- 消息/籌碼面（籌碼部分先做；新聞情緒待 LLM 層）----------
 def chips(chip):
     df = chip.copy()
+    df["buy"] = pd.to_numeric(df["buy"], errors="coerce").fillna(0)
+    df["sell"] = pd.to_numeric(df["sell"], errors="coerce").fillna(0)
     df["net"] = df["buy"] - df["sell"]
     daily = df.groupby("date")["net"].sum().sort_index()
     last5 = daily.tail(5)
     net5 = last5.sum()
-    # 連買/連賣天數
+    # 方向以「最新一天」為準，連續天數從最新日同號往回數
+    buy_dir = daily.iloc[-1] > 0
     streak = 0
     for v in reversed(daily.tolist()):
-        if net5 >= 0 and v > 0:
-            streak += 1
-        elif net5 < 0 and v < 0:
+        if v != 0 and (v > 0) == buy_dir:
             streak += 1
         else:
             break
-    light = "green" if net5 > 0 and streak >= 3 else "red" if net5 < 0 and streak >= 3 else "amber"
+    light = ("green" if buy_dir and streak >= 3 and net5 > 0
+             else "red" if (not buy_dir) and streak >= 3 and net5 < 0 else "amber")
     return light, {
-        "近5日法人淨額(張)": f"{net5/1000:,.0f}" ,
-        "連續方向天數": f"{'買' if net5>=0 else '賣'} {streak} 天",
+        "近5日法人淨額(張)": f"{net5/1000:,.0f}",
+        "連續方向天數": f"{'買' if buy_dir else '賣'} {streak} 天",
         "最新日": daily.index[-1],
         "備註": "新聞情緒分類待 LLM 團隊層補上",
     }
