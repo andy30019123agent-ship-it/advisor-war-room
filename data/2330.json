@@ -13,15 +13,17 @@
     }
   },
   "technical": {
-    "light": "green",
+    "light": "amber",
     "ev": {
-      "收盤": 2440.0,
-      "MA20": 2420.8,
-      "MA60": 2299.9,
-      "MA120": 2070.5,
-      "RSI14": 55.0,
+      "收盤": 2420.0,
+      "MA20": 2426.2,
+      "MA60": 2305.5,
+      "MA120": 2076.7,
+      "RSI14": 53.0,
       "量能": "0.9×20日均量",
-      "排列": "多頭排列",
+      "排列": "均線糾結",
+      "買入參考區": "近20日低 2,325 · MA60 2,306",
+      "壓力參考位": "MA20 2,426 · 近20日高 2,535",
       "備註": "—"
     }
   },
@@ -36,13 +38,19 @@
   },
   "news": [
     {
+      "title": "台積電目標價升至3800元 花旗理由全說了 - 自由財經",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9Dd3VXZEJrU1doZmsyYnNaTTZWcUxJUFN1OTJPc0hReTlaRnFMeW0xLWFIM3liTzhTWUM0TXV3cFhpdWV0QVAwdUZORnc5Rm56R1ZtZlZaZ2pzTE9DbHZn0gFkQVVfeXFMUEFucVI3a0txY0N4d0kxakIzNWVmdEExWXpZRUxZTDNMallOQWVVeEkxbC1FQmRUdFhncnJZSTVCazJrN280U0FncFVubDVBX0kwYlc2Z3p0d2hWdFU0MXpRN0E0OQ?oc=5",
+      "date": "Mon, 06 Jul 2026 06:01:11 GMT",
+      "src": "Google News"
+    },
+    {
       "title": "台積電符合預期！明天股價會漲嗎？2投顧董座看法不一 - Yahoo股市",
       "url": "https://news.google.com/rss/articles/CBMi_AJBVV95cUxPM2NheG1wbF96X0lpLXAtQm9aU1lCVzU2ZEpGd0hLM0h0NDlDc3dEQXo4OVVqWmlFREJVN0VvZUtsVjY4eHAwLXhZNEx4WFZIMlpBVmFOanZnLV9Ebkl6MHZiZ1RLUXBsTWV3elFOVlZqUW1ZQW5laVcwZklrSGNXc0FOMjBLVHp3ME1pN01BeEJXVXVHcUU0N2VLLVNtU2hqcXMwMVlZWjUxdU1WNnQwZHRhbkpPTE94eHVkblJSU0lyaVFSRE1kdDNrX2xDeFp2WHpPWnR3QjdmUGw2WTdHMHdfLWF2d1NrdDZRZlF0SXctQnJQVldBRnlySnZPSXFnaUhhQUFIZkQzRDlSU3E5LXlYMHc5bkZCcjBjVTBhcW5ZcDdwUngzZWJlRmFqdExaeDZMZ1ZQZm0zUHV2RlQyVnVOazZKZ1EtYndMTFBlRUxEZk1lSnBLa0drS2VQSFBWMXFjX1NFU0dPRHJKQXVoSTVhdWFocmVRSUtUTQ?oc=5",
       "date": "Mon, 13 Jul 2026 07:48:27 GMT",
       "src": "Google News"
     },
     {
-      "title": "巴威颱風來襲 台積電6月營收順延周一公布 - 聯合新聞網",
+      "title": "巴威颱風來襲 台積電6月營收順延周一公布 - UDN",
       "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9LT2VGU2luZDNhRjdLU2loTVV0T3JDY2lWd2tyNFNfSVZSbm5aTFJjdk9fMlQ3OTQ1azgxeHRPeGlxUHJQUENibFZUNVFicm1B0gFWQVVfeXFMTWl2Ukh0QjhqTjZXOExBWG5GUUxoOUtkanNhZmJuM1M4cG1HZ0JmeXV6Uk5YVUdkcUZkUkwySzJQcDRLUURRbXZ6dXFGeUt6RnZ2X0s3YVE?oc=5",
       "date": "Fri, 10 Jul 2026 01:12:24 GMT",
       "src": "Google News"
@@ -54,28 +62,22 @@
       "src": "Google News"
     },
     {
-      "title": "台積電營收史上最強只「符合預期」？專家曝原因：爆表也不好 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMiqwNBVV95cUxOdnNiSmdPQTBwdVdpQmhhVVNOSVctU1J6Rjg5WGdOdVd1ZEdodnNObklhdUhrZ2xfSmVmU0I4cjk0aTNSZkhYYlMtdGwxenJ4Z1Z5Q1lIMlJDekt6R1lMSzRLS05aanRsMW9yeW9XWVFic1VyNFk3LTlqY3lJUEF6QzFrNmJHa2tlVG44WlozaVVqQW1UTnlaOHRiQWZiakxnYnBBVnpzcWg5ZmVTTk82M2tHNlJmRlFrZWlVQjlzVkdHbGZzVDlOWU10RFJrbmRSU1ZuX0hHNHA5TXROdUZXSXRXSkdsNjVaWXdUVDd0OTJITW1ZMHNRYm13RENSWTA0alN4VEhXYmxqYXROaFlfTUlUU1hGWmpCTjE5Z0NEQW9WZjQtLTZNeE4wV1piT1lSZDk4TE9sZE9nekJrZjJQNjVlNmtRS1JlRGtsTHc4TjdPWDh0Ym8zS2Z4V01lWkMtdEg3ZnNBaWF5c1FMeWh1Ri1KN2tFb3dQZW11RF9sUUlhMFZ6ZzRhMFZwekV4Y3VyTnc2NmlXMVVodEloTkhRTVFkU1NwWkxicUxj?oc=5",
-      "date": "Mon, 13 Jul 2026 08:28:28 GMT",
+      "title": "台積電營收創新高 為何仍未提振AI股行情？ - news.cnyes.com",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1SRFI5VVpTMklPV1hkNXVKVzNTX0REQ2xGNW5ydlRncWU0R1pneGhfbFpOcHdfMzdxRENvc1BsSnlJMHNsbzJWLTB5NUFTUTQ?oc=5",
+      "date": "Mon, 13 Jul 2026 22:30:36 GMT",
       "src": "Google News"
     },
     {
-      "title": "台積電全年展望拚二度上修 美元營收挑戰增四成 | 產業熱點 | 產業 - 經濟日報",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1nSUVLNk5iOVQ1RXNWaUJiRGZKWkhsNzVMLWlfekR3c1BiLTBzdUVfWC1jSmw5dDAteEVzdkRIQUVvbXZZS3BCRUZFVm05Z3ZVdVZpYkdiRVVvQQ?oc=5",
-      "date": "Sun, 05 Jul 2026 17:50:37 GMT",
-      "src": "Google News"
-    },
-    {
-      "title": "7/16後股價要噴了？ 外媒點名「台積電」：投資首選 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMisAJBVV95cUxPTUZSQnlWXzRIM3FWRWwyTUZ4WTdTcnlmWDFoTmFKd3JYVDNqTlhCeXNSYWhHRVY3MjBuYWtHRWhnTDE1OTNOQnp1aWNLVTZ2R1h0SU5EUWlZTDl0TFV3d3IzTmtQdl8zZ0lLbWtqcV9lUkFKUmVUOHY1dmhSMkNQbk1oUnlTWTBFY2lCa2tvX0l5NUp1cnFnVHFJSzBxVDhkVXFaOTMtNUwyNUcxX1FlMFVfN2R3anBvTFhFbWxKeEp0a1hSbmMxZC1NY2Q5c20xUWhxRXhHRDJLX21kTzZwdGNlUV9LRmVvMkxuS1ZySUJCMTIxZkV0RW1UMUxjSEVFdURkQ2N5cWhUeklTYkJLcHJ5ZFRSLXN0RW1xQko2OFIzRXk1SG1sYVN3UUszZUJ2?oc=5",
-      "date": "Fri, 10 Jul 2026 11:19:00 GMT",
+      "title": "台積電6月營收快開獎！盤中漲60元該追嗎？ 專家：再等等 - Yahoo股市",
+      "url": "https://news.google.com/rss/articles/CBMigANBVV95cUxNRmZWUWp3TWVNWVdRNE1lTy1TYzY2cDR6YU9CT3Vmekx1Qk1xRE9yaXNnWlFsNHA4al9XdnRCaEdmUTBBc0g3NFF6YnVEMVBQTXBtTEQ2QzE0MlVjODZ3YWFRRVRIWU5sUm5ENmhkVUU3eFZ0X1YyNFU3MlFZVFIyYXh6Y2RzQVJpZ1ZqQklBLW5TZjcxNk9YeElpQUY1VXpRUVFtUzExSGl2N3hJUnhGODFZNmZJbGxrUS1vU2FLc1lSMDc1V3Y1YzNiYUJNZVFuUVd1Vm1YUE5iZkNjQmRrRG15MzVPTHk4LXFYNDlwXy0xbXgzZTdiODJFNUo1bThmWTVWdDhyUEk1SHYwNDBBU0VhUUVDM0FHSXQ0V1JIaV9ZS3QtZ3N6ZGZGcHl3MUpvX0Z0LUNQRm5mNUFEZEt1TDVjNXJOQWpVbFN1M0RpeWtPWmNqcGczc0NONnFhcW1XZTVPRDhlcVgwcVQ0dm1XSVFRZ2t0V3lZWjJST0Nkakg?oc=5",
+      "date": "Mon, 13 Jul 2026 01:18:52 GMT",
       "src": "Google News"
     }
   ],
   "summary": {
-    "score": 0.0,
-    "direction": "訊號分歧・建議觀望",
-    "confidence": "低",
-    "conflict": true
+    "score": -0.3,
+    "direction": "中性",
+    "confidence": "中",
+    "conflict": false
   }
 }

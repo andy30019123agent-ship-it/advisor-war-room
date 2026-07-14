@@ -1,82 +1,134 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>台積電 2330 · 投顧戰情報告</title>
 <style>
-:root{--base:#E7EAF5;--ink:#383B58;--ink2:#5A5E80;--muted:#7E82A2;--faint:#A2A6C2;
---sh-d:#C6CBDE;--sh-l:#FFFFFF;--line:#D5D9EA;--pink:#F3A6D0;--purple:#B197E8;
---grad:linear-gradient(135deg,#F3A6D0,#B197E8);--up:#2AA588;--up-bg:#D6EEE6;
---down:#E36088;--down-bg:#F7DEE7;--warn:#D2982F;--warn-bg:#F3E8D2;
---mono:ui-monospace,"SF Mono",Menlo,monospace;--sans:system-ui,-apple-system,"PingFang TC","Noto Sans TC",sans-serif;}
-*{box-sizing:border-box}
-body{margin:0;color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
-background:linear-gradient(165deg,#E4E9F7,#E9E5F3 48%,#F1E6EE);background-attachment:fixed;min-height:100vh}
-.wrap{max-width:760px;margin:0 auto;padding:26px 16px 70px}
-.real{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#1e7d63;background:var(--up-bg);
-border-radius:999px;padding:5px 12px;font-weight:600}
-.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--up)}
-header{margin-top:16px}
-.tick{font-family:var(--mono);color:var(--muted);font-size:15px;margin-left:8px}
-.mkt{font-size:11px;border-radius:6px;padding:2px 8px;color:var(--purple);background:rgba(177,151,232,.16);
-margin-left:8px;vertical-align:middle;font-weight:600}
-h1{font-size:29px;margin:12px 0 6px;font-weight:700;letter-spacing:-.01em}
-.meta{color:var(--muted);font-size:13px;font-family:var(--mono)}
-.card{background:var(--base);border-radius:22px;padding:22px;margin-top:18px;
-box-shadow:7px 7px 16px var(--sh-d),-7px -7px 16px var(--sh-l)}
-.chieftag{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
-background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.dir{font-size:24px;font-weight:800;margin:9px 0 4px;letter-spacing:-.01em}
-.chief{font-size:15px;color:var(--ink);margin:12px 0 0}
-.kpis{display:flex;flex-wrap:wrap;gap:11px;margin-top:16px}
-.kpi{flex:1;min-width:120px;background:var(--base);border-radius:14px;padding:11px 14px;
-box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}
-.kpi .t{font-size:11px;color:var(--muted)} .kpi .b{font-size:15px;margin-top:3px;font-weight:700}
-.adv{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.advbox{border-radius:15px;padding:14px 15px;background:var(--down-bg)}
-.advbox.risk{background:var(--warn-bg)}
-.advbox .h{font-size:11.5px;font-weight:700;letter-spacing:.04em;margin-bottom:6px}
-.advbox.risk .h{color:#a8792a} .advbox .h{color:#bd4a6c}
-.advbox p{margin:0;font-size:13px;color:var(--ink2);line-height:1.55}
-.sechead{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
-font-weight:700;margin:30px 4px 4px}
-.dim{background:var(--base);border-radius:20px;padding:18px;margin-top:14px;
-box-shadow:6px 6px 14px var(--sh-d),-6px -6px 14px var(--sh-l)}
-.dimhead{display:flex;align-items:center;gap:11px}
-.dimhead h3{font-size:17px;margin:0;font-weight:650}
-.dimhead .lgt{margin-left:auto;font-size:13px;font-weight:700}
-.lgt.g{color:var(--up)} .lgt.y{color:var(--warn)} .lgt.r{color:var(--down)}
-.tl{width:11px;height:11px;border-radius:50%;flex:none}
-.tl.g{background:var(--up)} .tl.y{background:var(--warn)} .tl.r{background:var(--down)}
-.evrow{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}
-.evrow .d{background:var(--base);border-radius:11px;padding:8px 12px;font-size:12.5px;color:var(--muted);
-box-shadow:inset 3px 3px 6px var(--sh-d),inset -3px -3px 6px var(--sh-l)}
-.evrow .d b{color:var(--ink);font-family:var(--mono);font-weight:600;margin-left:2px}
-.say{border-radius:14px;padding:13px 15px;background:linear-gradient(135deg,rgba(243,166,208,.10),rgba(177,151,232,.10))}
-.say .who{font-size:11px;font-weight:700;color:var(--purple);display:block;margin-bottom:5px}
-.say p{margin:0;font-size:14px;color:var(--ink)}
-.news{display:flex;justify-content:space-between;gap:12px;align-items:baseline;text-decoration:none;
-padding:12px 2px;border-bottom:1px solid var(--line);color:var(--ink)}
-.news:last-child{border-bottom:0}
-.news .nt{font-size:14px;line-height:1.45} .news:hover .nt{color:var(--purple)}
-.news .ns{font-size:11.5px;color:var(--faint);font-family:var(--mono);white-space:nowrap;flex:none}
-.muted{color:var(--muted);font-size:13px}
-footer{margin-top:28px;color:var(--faint);font-size:12.5px}
-.discl{background:var(--base);border-radius:16px;padding:15px 17px;margin-top:12px;font-size:12.5px;
-color:var(--ink2);line-height:1.65;box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}
-@media(max-width:520px){h1{font-size:24px}.adv{grid-template-columns:1fr}.kpi{min-width:calc(50% - 6px)}}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --paper:#EFF2EA; --paper2:#E4EADF; --surface:#FBFDF7; --surface2:#F5F8F0;
+  --ink:#151713; --ink2:#30362C; --muted:#65705F; --faint:#647059;
+  --rule:#D8E0D1; --rule-dk:#AEB9A5; --ox:#A85C3A; --ox2:#6E3D2B;
+  --accent:#1A1D14; --acid:#C7F04A; --acid2:#E9FF9D;
+  --up:#167A54; --up-bg:#E2F4EB; --down:#B64238; --down-bg:#F8E4E0;
+  --warn:#8A5A14; --warn-bg:#F7EBCF; --neu:#5E6758; --neu-bg:#ECEFE6;
+  --disp:'Space Grotesk','IBM Plex Sans TC','PingFang TC','Noto Sans TC',sans-serif;
+  --text:'IBM Plex Sans TC','PingFang TC','Noto Sans TC',system-ui,sans-serif;
+  --mono:'Space Grotesk','SF Mono',ui-monospace,Menlo,monospace;
+}
+* { box-sizing:border-box; }
+html { background:var(--paper); }
+body {
+  margin:0; min-height:100vh; color:var(--ink2); font-family:var(--text);
+  font-size:16px; line-height:1.68; background:var(--paper);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+body::before {
+  content:""; position:fixed; inset:0 0 auto; height:8px; z-index:0; pointer-events:none;
+  background:linear-gradient(90deg,var(--acid) 0 22%,var(--ox) 22% 34%,var(--accent) 34% 100%);
+}
+.wrap { position:relative; z-index:1; max-width:820px; margin:0 auto; padding:48px 28px 92px; }
+.up { color:var(--up); } .down { color:var(--down); } .muted { color:var(--muted); font-size:13px; }
+.num { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+.real {
+  display:inline-flex; align-items:center; gap:9px; max-width:100%; color:var(--ink2);
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em;
+  padding:7px 10px; border:1px solid var(--rule-dk); border-radius:999px; background:rgba(251,253,247,.64);
+}
+.real::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--acid); box-shadow:0 0 0 3px rgba(199,240,74,.22); }
+header { margin-top:22px; }
+h1 { margin:12px 0 0; color:var(--ink); font-family:var(--disp); font-size:44px; line-height:1.02; font-weight:700; letter-spacing:-.03em; text-wrap:balance; }
+.tick { margin-left:10px; color:var(--faint); font-family:var(--mono); font-size:17px; font-weight:700; }
+.mkt {
+  margin-left:10px; vertical-align:middle; display:inline-flex; align-items:center;
+  padding:3px 9px; border:1px solid var(--rule-dk); border-radius:999px;
+  color:var(--ox2); background:transparent; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.04em;
+}
+.meta { margin-top:14px; color:var(--muted); font-family:var(--mono); font-size:13px; letter-spacing:.02em; }
+
+.card {
+  position:relative; overflow:hidden; margin-top:26px; padding:28px; border-radius:8px;
+  color:#EEF4E8; background:var(--accent); box-shadow:0 14px 34px rgba(21,23,19,.18);
+}
+.card::before { content:""; position:absolute; inset:0 0 auto; height:5px; background:linear-gradient(90deg,var(--acid),var(--ox)); }
+.newscard {
+  color:var(--ink2); background:var(--surface); border:1px solid var(--rule); box-shadow:none;
+}
+.newscard::before { display:none; }
+.chieftag { color:var(--acid2); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.dir { margin:13px 0 0; color:#FBFDF7; font-family:var(--disp); font-size:30px; line-height:1.16; font-weight:700; letter-spacing:-.025em; text-wrap:balance; }
+.chief { max-width:70ch; margin:15px 0 0; color:#DDE6D5; font-size:16px; line-height:1.78; }
+.kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:22px; }
+.kpi { min-width:0; padding:14px; border-radius:8px; background:rgba(251,253,247,.08); }
+.kpi .t { color:#AEBBA5; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+.kpi .b { margin-top:7px; color:#FBFDF7; font-family:var(--disp); font-size:19px; font-weight:700; line-height:1.2; word-break:break-word; }
+.adv { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.advbox { padding:15px 16px; border-radius:8px; background:rgba(251,253,247,.07); border:1px solid rgba(251,253,247,.14); }
+.advbox .h { margin-bottom:7px; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#E9FF9D; }
+.advbox.risk .h { color:#F3D28A; }
+.advbox p { margin:0; font-size:14px; color:#D6DFCF; line-height:1.62; }
+
+.sechead {
+  margin:38px 0 0; padding-bottom:12px; border-bottom:1px solid var(--rule-dk);
+  color:var(--ink); font-family:var(--disp); font-size:15px; font-weight:700; letter-spacing:.02em;
+  display:flex; align-items:center; gap:10px;
+}
+.sechead::before { content:""; width:10px; height:10px; border-radius:2px; background:var(--acid); flex:none; }
+
+.dim { margin-top:14px; padding:20px; border:1px solid var(--rule); border-radius:8px; background:var(--surface); }
+.dimhead { display:flex; align-items:center; gap:11px; }
+.dimhead .tl { width:10px; height:10px; }
+.dimhead h3 { margin:0; color:var(--ink); font-family:var(--disp); font-size:18px; font-weight:700; letter-spacing:-.01em; }
+.dimhead .lgt { margin-left:auto; display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.04em; }
+.lgt.g { color:var(--up); } .lgt.y { color:var(--warn); } .lgt.r { color:var(--down); }
+.tl { width:10px; height:10px; border-radius:50%; flex:none; display:inline-block; }
+.tl.g { background:var(--up); box-shadow:0 0 0 3px rgba(22,122,84,.12); }
+.tl.y { background:var(--warn); box-shadow:0 0 0 3px rgba(154,104,24,.13); }
+.tl.r { background:var(--down); box-shadow:0 0 0 3px rgba(182,66,56,.12); }
+.evrow { display:flex; flex-wrap:wrap; gap:8px; margin:15px 0; }
+.evrow .d { padding:7px 11px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); font-size:12.5px; color:var(--muted); }
+.evrow .d b { margin-left:4px; color:var(--ink); font-family:var(--mono); font-weight:700; }
+.say { margin-top:2px; padding:14px 15px; border-radius:8px; background:var(--surface2); border:1px solid var(--rule); }
+.say .who { display:block; margin-bottom:7px; color:var(--ox2); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+.say p { margin:0; color:var(--ink); font-size:15px; line-height:1.72; text-wrap:pretty; }
+
+.news { display:flex; justify-content:space-between; gap:14px; align-items:baseline; text-decoration:none; padding:14px 2px; border-bottom:1px solid var(--rule); color:var(--ink); }
+.news:last-child { border-bottom:0; }
+.news .nt { font-size:15px; line-height:1.5; }
+.news:hover .nt { color:var(--ox); }
+.news .ns { flex:none; white-space:nowrap; color:var(--faint); font-family:var(--mono); font-size:12px; font-weight:700; }
+
+footer { margin-top:26px; }
+.discl { padding:16px 0 0; border-top:1px solid var(--rule-dk); color:var(--muted); font-size:13px; line-height:1.75; }
+.discl b { color:var(--ink); font-weight:700; }
+
+@media (max-width:700px) {
+  .wrap { padding:36px 18px 70px; }
+  h1 { font-size:34px; }
+  .card { padding:22px; }
+  .dir { font-size:25px; }
+  .kpis { grid-template-columns:1fr; }
+  .adv { grid-template-columns:1fr; }
+  .tick { display:inline-block; margin-left:0; margin-top:6px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
 </style>
 <div class="wrap">
   <span class="real">真實資料 · FinMind × TWSE × Google News</span>
   <header>
     <h1>台積電<span class="tick">2330</span><span class="mkt">台股</span></h1>
-    <div class="meta">投顧戰情報告 · 資料日 2026-07-13（台北） · 產出 2026-07-13 18:57（台北）</div>
+    <div class="meta">投顧戰情報告 · 資料日 2026-07-13（台北） · 產出 2026-07-14 14:22（台北）</div>
   </header>
 
   <div class="card">
     <div class="chieftag">投資長 · 綜合研判</div>
-    <div class="dir">訊號分歧・建議觀望</div>
+    <div class="dir">中性</div>
     <p class="chief">三面分歧：基本面與技術面偏多、但籌碼面轉弱，估值也在高檔。這種情況硬喊『買進』並不專業。結論是——續抱者可續抱、空手者建議觀望不追高；等兩個訊號之一出現再動手：(1) 法人回補轉買，或 (2) 估值回到相對合理（PER 分位下修）。</p>
     <div class="kpis">
       <div class="kpi"><div class="t">操作建議</div><div class="b">續抱 / 空手觀望（不追高）</div></div>
       <div class="kpi"><div class="t">信心度</div><div class="b">中低</div></div>
-      <div class="kpi"><div class="t">加權分</div><div class="b">0.0</div></div>
+      <div class="kpi"><div class="t">加權分</div><div class="b">-0.3</div></div>
     </div>
     <div class="kpi" style="margin-top:11px"><div class="t">防守 / 停損參考</div><div class="b" style="font-size:13.5px">以 MA20（2,420）為續抱防守線，跌破且法人續賣則減碼</div></div>
     <div class="adv">
@@ -88,23 +140,23 @@ color:var(--ink2);line-height:1.65;box-shadow:inset 4px 4px 9px var(--sh-d),inse
   <div class="sechead">三維度團隊研判</div>
   
     <div class="dim">
-      <div class="dimhead"><span class="tl y"></span><h3>基本面</h3><span class="lgt y">🟡 中性</span></div>
+      <div class="dimhead"><span class="tl y"></span><h3>基本面</h3><span class="lgt y"><span class="tl y"></span>中性</span></div>
       <div class="evrow"><span class="d">最新營收月 <b>2026/6</b></span><span class="d">營收YoY <b>+67.9%</b></span><span class="d">近3月平均YoY <b>+38.5%</b></span><span class="d">PER <b>32.8</b></span><span class="d">PER歷史分位 <b>96%</b></span><span class="d">殖利率 <b>0.9%</b></span></div>
       <div class="say"><span class="who">基本面分析師</span><p>台積電基本面體質很強：6 月營收年增 67.9%、上半年營收破 2 兆創史上最強，CoWoS 先進封裝供不應求撐住 AI 需求能見度。但要誠實提醒——PER 32.8 倍已站上近兩年 96% 分位、殖利率僅 0.9%，代表『好消息大多已反映在價格裡』。基本面偏多，但現價性價比不高，屬於『續抱理由充分、追買理由不足』。</p></div>
     </div>
     <div class="dim">
-      <div class="dimhead"><span class="tl g"></span><h3>技術面</h3><span class="lgt g">🟢 偏多</span></div>
-      <div class="evrow"><span class="d">收盤 <b>2440.0</b></span><span class="d">MA20 <b>2420.8</b></span><span class="d">MA60 <b>2299.9</b></span><span class="d">MA120 <b>2070.5</b></span><span class="d">RSI14 <b>55.0</b></span><span class="d">量能 <b>0.9×20日均量</b></span><span class="d">排列 <b>多頭排列</b></span><span class="d">備註 <b>—</b></span></div>
+      <div class="dimhead"><span class="tl y"></span><h3>技術面</h3><span class="lgt y"><span class="tl y"></span>中性</span></div>
+      <div class="evrow"><span class="d">收盤 <b>2420.0</b></span><span class="d">MA20 <b>2426.2</b></span><span class="d">MA60 <b>2305.5</b></span><span class="d">MA120 <b>2076.7</b></span><span class="d">RSI14 <b>53.0</b></span><span class="d">量能 <b>0.9×20日均量</b></span><span class="d">排列 <b>均線糾結</b></span><span class="d">買入參考區 <b>近20日低 2,325 · MA60 2,306</b></span><span class="d">壓力參考位 <b>MA20 2,426 · 近20日高 2,535</b></span><span class="d">備註 <b>—</b></span></div>
       <div class="say"><span class="who">技術分析師</span><p>型態健康。收盤 2,440 站上 20／60／120 日全部均線、標準多頭排列，長線多頭沒被破壞；RSI 55 中性偏多、沒過熱，量能 0.9 倍均量屬正常換手。技術面本身偏多、趨勢完好可續抱；短線要進場，等回測 MA20（約 2,420）不破再上比較安全。</p></div>
     </div>
     <div class="dim">
-      <div class="dimhead"><span class="tl r"></span><h3>消息 · 籌碼</h3><span class="lgt r">🔴 偏空</span></div>
+      <div class="dimhead"><span class="tl r"></span><h3>消息 · 籌碼</h3><span class="lgt r"><span class="tl r"></span>偏空</span></div>
       <div class="evrow"><span class="d">近5日法人淨額(張) <b>-15,821</b></span><span class="d">連續方向天數 <b>賣 3 天</b></span><span class="d">最新日 <b>2026-07-13</b></span><span class="d">備註 <b>新聞情緒分類待 LLM 團隊層補上</b></span></div>
       <div class="say"><span class="who">消息／籌碼分析師</span><p>消息面偏正向、但多是『眾所皆知的利多』：上半年營收創高、CoWoS 供不應求、先進封裝擴廠題材延燒——市場已充分認知，邊際驚喜有限。留意 7／16 法說會是下一個變數點，展望若不如高預期，容易觸發獲利了結。</p></div>
     </div>
 
   <div class="sechead">近期新聞</div>
-  <div class="card" style="padding:8px 20px"><a class="news" href="https://news.google.com/rss/articles/CBMijANBVV95cUxPOWNKeFdRcUc2WldONm9wSFI4U2VtWldxUkNKUTRSdUY3OGZjZTc2Y3otRmZXVjlrWnN4cF9nc1FDSWFoUWhsUTN2NnhvVTdIaVktakdvZVNBZFlSbWlLVDMwRlNCSXBtbUt4WFYzcGtabFl0SlRDQnhzN3ZhRUZRWUJ1WV9NVEpVRm5xTTBnbWY5VUNMaDJOSXNDY2JRY3J1V1BwMzg0ak5MQ3Bib0o1cjQ3TzdzTTRrMkNGSlFMVHNqaVpvaHF1cEkwYmVxdEZVdkphaGs0Nkp6UWdjYzZERzZJTWZ5WkZQNEFNRmhxcXlhZElra3JWRlJaZGFkUGVENi1JT1pnUTFYeG1NZVQxc1BleThfeU5qYnEwQ3diZ3VSWHpPUWpfQ0cwbjNXaktqQ1hzMlVMQm9IVkVrVktXR1owWGtxdzFaa0hBYlRJWlQwQUxuUkY4T0EyNW9qenpDT2MyYmdGY1JlUUVDZC1WMVpWeHlNZ1FlX3RLUjZUUzM3Tk1iOUxhN2Z0VVc?oc=5" target="_blank" rel="noopener"><span class="nt">符合預期！台積電史上最強上半年 營收破2兆元「年增36％」 - Yahoo股市</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMinAFBVV95cUxQaFRvdFBNVG02M25LZi1nbGd3RHFacEJOYmpTa20ydjBhbGhJS1F4U0p1Y3hZTk9WRTNkbGJON2l2OG5IYWNRSDg3V2cwNlRKTWJLNWluYi1XYllKTWx4RmJjd1Bqa0xvNnBKRnJZdld6ZzloNHZlSnlvdUNvSTNxVktQTjZNU04yMDBwNTVaNDV4NEw4RUdUaHNDT2w?oc=5" target="_blank" rel="noopener"><span class="nt">台積電 CoWoS 供不應求，封測台廠英特爾受惠訂單外溢 - TechNews 科技新報</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMi8AJBVV95cUxOTi1MT0ZkMGVrenhnR1BlTXNxYk0zclY3Yjh6SmUzbW1mY3JydjdaRGwtNkRkNUt2RG56ZC1JMmJoNjBiVFlieTVoejgxdXhxeml0M1NNdmpZM213QlUxdW1ZQTdWX3pDMkV5MWNJZFVnOGZBQ2RSMFBDcDlyWHpVVElCbktJUEFJNjdUa0dqQWNsMHp3aUNEZ0V4bTBjWFVUVzFibUJFQjVBd0xZVVUtNTUxUjROQ1JEQzZIZThlRWJwQmROYlVlX1FQcTNJR3lQaXpNUGhFUkNIbElRMG9nMDk2Z3JrWXRlMnpSd2N3SXN2MkVaS01FS1lVaWtxT2Itb0FmM3ZwR3VXSk0tMUdQUW9JaFMzZUxlNWc3dW5ibllBRi12cG5IcU1pZ0ZUeVRiQXl5cDA4eHVQMWFJVzZLVjhMc0VKdFk0WXZnc3B4dHhhTXprVlE1MWZITDMzS1lKV3cwdjZITEt3SVBWQS1PSw?oc=5" target="_blank" rel="noopener"><span class="nt">攜手台積電搶攻先進封裝！「它」6月營收飆破293億 目標價曝光 - Yahoo新聞</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE82eWRDTHEtb0FhR2cydEc2SVFSTmh4VkRER09XOV80cUVpT1p0SVU3anN6bmVyMGN1c3ItcVloZGUtVkZ2SGREdlBWdGs5V1h6bE41c1M0aw?oc=5" target="_blank" rel="noopener"><span class="nt">嘉科二期台積電再設3座廠 打造全球先進封裝重鎮 - 東森新聞</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiTkFVX3lxTFAzUDJCMTJCNks4MDU1Yzh5X1J6Vk5tUUt4a2liTXk3TzFkRFBtSmFIaFF1ZGhmNHRYRDhqRWdGcm02TlNUT1lHVlltb1ppdw?oc=5" target="_blank" rel="noopener"><span class="nt">捨台積電模式，越南拚2030年百家IC設計公司、5萬晶片大軍，能順利轉型嗎？ - 天下雜誌</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiUkFVX3lxTFBqWUNaX24zeldwNmJqbUhXTVlJcjJUQ1g3LWdfZ2lUMUVPVTY3dS1WNUpmR3RyNlpHR0FaUHpzUjdsdGJ0WUhkaFlaUFg4TDBtQmfSAW5BVV95cUxOMGZOME1lWlpVblF0UDFyZVpyT2stUXFfRllPdmpMOTZHREtTWG53RWNYLTB3SXBzVzBkZzdZeHpfY1BNV1huTi1hMktJTHVRcWJMQVd1bGlOZFJBRWI1Z09rcUtlTUVWUGFLUDhTUQ?oc=5" target="_blank" rel="noopener"><span class="nt">台股虎頭蛇尾！僅收漲25點　台積電收今日最低2440元 - ETtoday財經雲</span><span class="ns">Google News</span></a></div>
+  <div class="card newscard" style="padding:8px 20px"><a class="news" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE9Dd3VXZEJrU1doZmsyYnNaTTZWcUxJUFN1OTJPc0hReTlaRnFMeW0xLWFIM3liTzhTWUM0TXV3cFhpdWV0QVAwdUZORnc5Rm56R1ZtZlZaZ2pzTE9DbHZn0gFkQVVfeXFMUEFucVI3a0txY0N4d0kxakIzNWVmdEExWXpZRUxZTDNMallOQWVVeEkxbC1FQmRUdFhncnJZSTVCazJrN280U0FncFVubDVBX0kwYlc2Z3p0d2hWdFU0MXpRN0E0OQ?oc=5" target="_blank" rel="noopener"><span class="nt">台積電目標價升至3800元 花旗理由全說了 - 自由財經</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMi_AJBVV95cUxPM2NheG1wbF96X0lpLXAtQm9aU1lCVzU2ZEpGd0hLM0h0NDlDc3dEQXo4OVVqWmlFREJVN0VvZUtsVjY4eHAwLXhZNEx4WFZIMlpBVmFOanZnLV9Ebkl6MHZiZ1RLUXBsTWV3elFOVlZqUW1ZQW5laVcwZklrSGNXc0FOMjBLVHp3ME1pN01BeEJXVXVHcUU0N2VLLVNtU2hqcXMwMVlZWjUxdU1WNnQwZHRhbkpPTE94eHVkblJSU0lyaVFSRE1kdDNrX2xDeFp2WHpPWnR3QjdmUGw2WTdHMHdfLWF2d1NrdDZRZlF0SXctQnJQVldBRnlySnZPSXFnaUhhQUFIZkQzRDlSU3E5LXlYMHc5bkZCcjBjVTBhcW5ZcDdwUngzZWJlRmFqdExaeDZMZ1ZQZm0zUHV2RlQyVnVOazZKZ1EtYndMTFBlRUxEZk1lSnBLa0drS2VQSFBWMXFjX1NFU0dPRHJKQXVoSTVhdWFocmVRSUtUTQ?oc=5" target="_blank" rel="noopener"><span class="nt">台積電符合預期！明天股價會漲嗎？2投顧董座看法不一 - Yahoo股市</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE9LT2VGU2luZDNhRjdLU2loTVV0T3JDY2lWd2tyNFNfSVZSbm5aTFJjdk9fMlQ3OTQ1azgxeHRPeGlxUHJQUENibFZUNVFicm1B0gFWQVVfeXFMTWl2Ukh0QjhqTjZXOExBWG5GUUxoOUtkanNhZmJuM1M4cG1HZ0JmeXV6Uk5YVUdkcUZkUkwySzJQcDRLUURRbXZ6dXFGeUt6RnZ2X0s3YVE?oc=5" target="_blank" rel="noopener"><span class="nt">巴威颱風來襲 台積電6月營收順延周一公布 - UDN</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMi9wNBVV95cUxOVlpEM1FtQUVvVWhVTmx5eFQ2M19vamh1czVVSGh6bGlncUZ0OXFtcTZTYlVrOTdQZE9KWVdQWkM3UDRGbzFHVS1zcm9mdHJBaG1nb25OYzktbFVDT1g5UndmMmdOa3NIYUpRUDFOV1dRNTYwQVBKQl8tLUF5RWhCWEdMZmUwZkIzUDM2dkRFTWNfOEVxZkZvaTJjSHh6ZTVqakM3VFVrQ3dmYksweFpxSGZsVVNmNUo3T1RYYXA4LWJKbV9PMVhjTE0xT3NOajVTYXRzT2lSQWZka3gwdUpVZFUxMzhrOWNmUDBJTmJNQ05BeXQzYXJ3VUk1SnVzdmQ1emdtOF9paGozMmxDZlhBdGZ1am1sLTZPcE85MzVhVGJzUGcxMjRmSE92MXQyX1RVZjc2MlVBMGZfa3VKeUV5d3NFaVdsQ0VPSDJNUXZiNVdPN3Q1VUk5OUZ0bGVtQXR1czlES3QyNEc2UjFMMTJFY19HNTgtS2NsckdvQmUwVExvVUp3X2dIcFhmbVpQMXdSZG5qTnlkdHNvbW5pWjdpSktSLWppdEFqZkZyZUNSY2VsWW1GREE1YWktOWdyd2swR0RyTDAyVzhDbnVqTHE1LVJUQTV6RG5ranhtUVdjcmxoWnBLcUUycGVxRHdLQU5GRlEzSnY5Zw?oc=5" target="_blank" rel="noopener"><span class="nt">台積電營收／月增6.2%、年增67.9%，上半年營收2.4兆，年增35.6，本周法說關注重點｜股市話題｜豐雲學堂2026 年 07 月 - sinotrade.com.tw</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMiT0FVX3lxTE1SRFI5VVpTMklPV1hkNXVKVzNTX0REQ2xGNW5ydlRncWU0R1pneGhfbFpOcHdfMzdxRENvc1BsSnlJMHNsbzJWLTB5NUFTUTQ?oc=5" target="_blank" rel="noopener"><span class="nt">台積電營收創新高 為何仍未提振AI股行情？ - news.cnyes.com</span><span class="ns">Google News</span></a><a class="news" href="https://news.google.com/rss/articles/CBMigANBVV95cUxNRmZWUWp3TWVNWVdRNE1lTy1TYzY2cDR6YU9CT3Vmekx1Qk1xRE9yaXNnWlFsNHA4al9XdnRCaEdmUTBBc0g3NFF6YnVEMVBQTXBtTEQ2QzE0MlVjODZ3YWFRRVRIWU5sUm5ENmhkVUU3eFZ0X1YyNFU3MlFZVFIyYXh6Y2RzQVJpZ1ZqQklBLW5TZjcxNk9YeElpQUY1VXpRUVFtUzExSGl2N3hJUnhGODFZNmZJbGxrUS1vU2FLc1lSMDc1V3Y1YzNiYUJNZVFuUVd1Vm1YUE5iZkNjQmRrRG15MzVPTHk4LXFYNDlwXy0xbXgzZTdiODJFNUo1bThmWTVWdDhyUEk1SHYwNDBBU0VhUUVDM0FHSXQ0V1JIaV9ZS3QtZ3N6ZGZGcHl3MUpvX0Z0LUNQRm5mNUFEZEt1TDVjNXJOQWpVbFN1M0RpeWtPWmNqcGczc0NONnFhcW1XZTVPRDhlcVgwcVQ0dm1XSVFRZ2t0V3lZWjJST0Nkakg?oc=5" target="_blank" rel="noopener"><span class="nt">台積電6月營收快開獎！盤中漲60元該追嗎？ 專家：再等等 - Yahoo股市</span><span class="ns">Google News</span></a></div>
 
   <footer>
     <div class="discl">紅綠燈由「數據＋固定規則」計算（技術面均線／RSI／量能、基本面營收 YoY／PER 分位、籌碼三大法人淨買），團隊觀點由分析師解讀與反駁，不憑感覺喊買賣。<b style="color:var(--ink)">本報告為投資決策輔助，非投資建議、非保證獲利，最終決策與風險由使用者承擔。</b>數據來源與抓取時間如上；抓不到即註記缺漏、絕不編造。</div>

@@ -19,7 +19,7 @@ def dim_card(no, title, block, narration):
     code, emo, zh = LIGHT.get(block["light"], ("y", "🟡", "中性"))
     return f"""
     <div class="dim">
-      <div class="dimhead"><span class="tl {code}"></span><h3>{title}</h3><span class="lgt {code}">{emo} {zh}</span></div>
+      <div class="dimhead"><span class="tl {code}"></span><h3>{title}</h3><span class="lgt {code}"><span class="tl {code}"></span>{zh}</span></div>
       <div class="evrow">{ev_chips(block['ev'])}</div>
       <div class="say"><span class="who">{no}</span><p>{esc(narration)}</p></div>
     </div>"""
@@ -54,69 +54,121 @@ def build(stock_id):
     )
 
 
-TEMPLATE = """<title>{name} {sid} · 投顧戰情報告</title>
+TEMPLATE = """<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{name} {sid} · 投顧戰情報告</title>
 <style>
-:root{{--base:#E7EAF5;--ink:#383B58;--ink2:#5A5E80;--muted:#7E82A2;--faint:#A2A6C2;
---sh-d:#C6CBDE;--sh-l:#FFFFFF;--line:#D5D9EA;--pink:#F3A6D0;--purple:#B197E8;
---grad:linear-gradient(135deg,#F3A6D0,#B197E8);--up:#2AA588;--up-bg:#D6EEE6;
---down:#E36088;--down-bg:#F7DEE7;--warn:#D2982F;--warn-bg:#F3E8D2;
---mono:ui-monospace,"SF Mono",Menlo,monospace;--sans:system-ui,-apple-system,"PingFang TC","Noto Sans TC",sans-serif;}}
-*{{box-sizing:border-box}}
-body{{margin:0;color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
-background:linear-gradient(165deg,#E4E9F7,#E9E5F3 48%,#F1E6EE);background-attachment:fixed;min-height:100vh}}
-.wrap{{max-width:760px;margin:0 auto;padding:26px 16px 70px}}
-.real{{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#1e7d63;background:var(--up-bg);
-border-radius:999px;padding:5px 12px;font-weight:600}}
-.real::before{{content:"";width:7px;height:7px;border-radius:50%;background:var(--up)}}
-header{{margin-top:16px}}
-.tick{{font-family:var(--mono);color:var(--muted);font-size:15px;margin-left:8px}}
-.mkt{{font-size:11px;border-radius:6px;padding:2px 8px;color:var(--purple);background:rgba(177,151,232,.16);
-margin-left:8px;vertical-align:middle;font-weight:600}}
-h1{{font-size:29px;margin:12px 0 6px;font-weight:700;letter-spacing:-.01em}}
-.meta{{color:var(--muted);font-size:13px;font-family:var(--mono)}}
-.card{{background:var(--base);border-radius:22px;padding:22px;margin-top:18px;
-box-shadow:7px 7px 16px var(--sh-d),-7px -7px 16px var(--sh-l)}}
-.chieftag{{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
-background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}}
-.dir{{font-size:24px;font-weight:800;margin:9px 0 4px;letter-spacing:-.01em}}
-.chief{{font-size:15px;color:var(--ink);margin:12px 0 0}}
-.kpis{{display:flex;flex-wrap:wrap;gap:11px;margin-top:16px}}
-.kpi{{flex:1;min-width:120px;background:var(--base);border-radius:14px;padding:11px 14px;
-box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}}
-.kpi .t{{font-size:11px;color:var(--muted)}} .kpi .b{{font-size:15px;margin-top:3px;font-weight:700}}
-.adv{{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}}
-.advbox{{border-radius:15px;padding:14px 15px;background:var(--down-bg)}}
-.advbox.risk{{background:var(--warn-bg)}}
-.advbox .h{{font-size:11.5px;font-weight:700;letter-spacing:.04em;margin-bottom:6px}}
-.advbox.risk .h{{color:#a8792a}} .advbox .h{{color:#bd4a6c}}
-.advbox p{{margin:0;font-size:13px;color:var(--ink2);line-height:1.55}}
-.sechead{{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
-font-weight:700;margin:30px 4px 4px}}
-.dim{{background:var(--base);border-radius:20px;padding:18px;margin-top:14px;
-box-shadow:6px 6px 14px var(--sh-d),-6px -6px 14px var(--sh-l)}}
-.dimhead{{display:flex;align-items:center;gap:11px}}
-.dimhead h3{{font-size:17px;margin:0;font-weight:650}}
-.dimhead .lgt{{margin-left:auto;font-size:13px;font-weight:700}}
-.lgt.g{{color:var(--up)}} .lgt.y{{color:var(--warn)}} .lgt.r{{color:var(--down)}}
-.tl{{width:11px;height:11px;border-radius:50%;flex:none}}
-.tl.g{{background:var(--up)}} .tl.y{{background:var(--warn)}} .tl.r{{background:var(--down)}}
-.evrow{{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}}
-.evrow .d{{background:var(--base);border-radius:11px;padding:8px 12px;font-size:12.5px;color:var(--muted);
-box-shadow:inset 3px 3px 6px var(--sh-d),inset -3px -3px 6px var(--sh-l)}}
-.evrow .d b{{color:var(--ink);font-family:var(--mono);font-weight:600;margin-left:2px}}
-.say{{border-radius:14px;padding:13px 15px;background:linear-gradient(135deg,rgba(243,166,208,.10),rgba(177,151,232,.10))}}
-.say .who{{font-size:11px;font-weight:700;color:var(--purple);display:block;margin-bottom:5px}}
-.say p{{margin:0;font-size:14px;color:var(--ink)}}
-.news{{display:flex;justify-content:space-between;gap:12px;align-items:baseline;text-decoration:none;
-padding:12px 2px;border-bottom:1px solid var(--line);color:var(--ink)}}
-.news:last-child{{border-bottom:0}}
-.news .nt{{font-size:14px;line-height:1.45}} .news:hover .nt{{color:var(--purple)}}
-.news .ns{{font-size:11.5px;color:var(--faint);font-family:var(--mono);white-space:nowrap;flex:none}}
-.muted{{color:var(--muted);font-size:13px}}
-footer{{margin-top:28px;color:var(--faint);font-size:12.5px}}
-.discl{{background:var(--base);border-radius:16px;padding:15px 17px;margin-top:12px;font-size:12.5px;
-color:var(--ink2);line-height:1.65;box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}}
-@media(max-width:520px){{h1{{font-size:24px}}.adv{{grid-template-columns:1fr}}.kpi{{min-width:calc(50% - 6px)}}}}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {{
+  --paper:#EFF2EA; --paper2:#E4EADF; --surface:#FBFDF7; --surface2:#F5F8F0;
+  --ink:#151713; --ink2:#30362C; --muted:#65705F; --faint:#647059;
+  --rule:#D8E0D1; --rule-dk:#AEB9A5; --ox:#A85C3A; --ox2:#6E3D2B;
+  --accent:#1A1D14; --acid:#C7F04A; --acid2:#E9FF9D;
+  --up:#167A54; --up-bg:#E2F4EB; --down:#B64238; --down-bg:#F8E4E0;
+  --warn:#8A5A14; --warn-bg:#F7EBCF; --neu:#5E6758; --neu-bg:#ECEFE6;
+  --disp:'Space Grotesk','IBM Plex Sans TC','PingFang TC','Noto Sans TC',sans-serif;
+  --text:'IBM Plex Sans TC','PingFang TC','Noto Sans TC',system-ui,sans-serif;
+  --mono:'Space Grotesk','SF Mono',ui-monospace,Menlo,monospace;
+}}
+* {{ box-sizing:border-box; }}
+html {{ background:var(--paper); }}
+body {{
+  margin:0; min-height:100vh; color:var(--ink2); font-family:var(--text);
+  font-size:16px; line-height:1.68; background:var(--paper);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}}
+body::before {{
+  content:""; position:fixed; inset:0 0 auto; height:8px; z-index:0; pointer-events:none;
+  background:linear-gradient(90deg,var(--acid) 0 22%,var(--ox) 22% 34%,var(--accent) 34% 100%);
+}}
+.wrap {{ position:relative; z-index:1; max-width:820px; margin:0 auto; padding:48px 28px 92px; }}
+.up {{ color:var(--up); }} .down {{ color:var(--down); }} .muted {{ color:var(--muted); font-size:13px; }}
+.num {{ font-family:var(--mono); font-variant-numeric:tabular-nums; }}
+
+.real {{
+  display:inline-flex; align-items:center; gap:9px; max-width:100%; color:var(--ink2);
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em;
+  padding:7px 10px; border:1px solid var(--rule-dk); border-radius:999px; background:rgba(251,253,247,.64);
+}}
+.real::before {{ content:""; width:7px; height:7px; border-radius:50%; background:var(--acid); box-shadow:0 0 0 3px rgba(199,240,74,.22); }}
+header {{ margin-top:22px; }}
+h1 {{ margin:12px 0 0; color:var(--ink); font-family:var(--disp); font-size:44px; line-height:1.02; font-weight:700; letter-spacing:-.03em; text-wrap:balance; }}
+.tick {{ margin-left:10px; color:var(--faint); font-family:var(--mono); font-size:17px; font-weight:700; }}
+.mkt {{
+  margin-left:10px; vertical-align:middle; display:inline-flex; align-items:center;
+  padding:3px 9px; border:1px solid var(--rule-dk); border-radius:999px;
+  color:var(--ox2); background:transparent; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.04em;
+}}
+.meta {{ margin-top:14px; color:var(--muted); font-family:var(--mono); font-size:13px; letter-spacing:.02em; }}
+
+.card {{
+  position:relative; overflow:hidden; margin-top:26px; padding:28px; border-radius:8px;
+  color:#EEF4E8; background:var(--accent); box-shadow:0 14px 34px rgba(21,23,19,.18);
+}}
+.card::before {{ content:""; position:absolute; inset:0 0 auto; height:5px; background:linear-gradient(90deg,var(--acid),var(--ox)); }}
+.newscard {{
+  color:var(--ink2); background:var(--surface); border:1px solid var(--rule); box-shadow:none;
+}}
+.newscard::before {{ display:none; }}
+.chieftag {{ color:var(--acid2); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }}
+.dir {{ margin:13px 0 0; color:#FBFDF7; font-family:var(--disp); font-size:30px; line-height:1.16; font-weight:700; letter-spacing:-.025em; text-wrap:balance; }}
+.chief {{ max-width:70ch; margin:15px 0 0; color:#DDE6D5; font-size:16px; line-height:1.78; }}
+.kpis {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:22px; }}
+.kpi {{ min-width:0; padding:14px; border-radius:8px; background:rgba(251,253,247,.08); }}
+.kpi .t {{ color:#AEBBA5; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }}
+.kpi .b {{ margin-top:7px; color:#FBFDF7; font-family:var(--disp); font-size:19px; font-weight:700; line-height:1.2; word-break:break-word; }}
+.adv {{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }}
+.advbox {{ padding:15px 16px; border-radius:8px; background:rgba(251,253,247,.07); border:1px solid rgba(251,253,247,.14); }}
+.advbox .h {{ margin-bottom:7px; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#E9FF9D; }}
+.advbox.risk .h {{ color:#F3D28A; }}
+.advbox p {{ margin:0; font-size:14px; color:#D6DFCF; line-height:1.62; }}
+
+.sechead {{
+  margin:38px 0 0; padding-bottom:12px; border-bottom:1px solid var(--rule-dk);
+  color:var(--ink); font-family:var(--disp); font-size:15px; font-weight:700; letter-spacing:.02em;
+  display:flex; align-items:center; gap:10px;
+}}
+.sechead::before {{ content:""; width:10px; height:10px; border-radius:2px; background:var(--acid); flex:none; }}
+
+.dim {{ margin-top:14px; padding:20px; border:1px solid var(--rule); border-radius:8px; background:var(--surface); }}
+.dimhead {{ display:flex; align-items:center; gap:11px; }}
+.dimhead .tl {{ width:10px; height:10px; }}
+.dimhead h3 {{ margin:0; color:var(--ink); font-family:var(--disp); font-size:18px; font-weight:700; letter-spacing:-.01em; }}
+.dimhead .lgt {{ margin-left:auto; display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.04em; }}
+.lgt.g {{ color:var(--up); }} .lgt.y {{ color:var(--warn); }} .lgt.r {{ color:var(--down); }}
+.tl {{ width:10px; height:10px; border-radius:50%; flex:none; display:inline-block; }}
+.tl.g {{ background:var(--up); box-shadow:0 0 0 3px rgba(22,122,84,.12); }}
+.tl.y {{ background:var(--warn); box-shadow:0 0 0 3px rgba(154,104,24,.13); }}
+.tl.r {{ background:var(--down); box-shadow:0 0 0 3px rgba(182,66,56,.12); }}
+.evrow {{ display:flex; flex-wrap:wrap; gap:8px; margin:15px 0; }}
+.evrow .d {{ padding:7px 11px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); font-size:12.5px; color:var(--muted); }}
+.evrow .d b {{ margin-left:4px; color:var(--ink); font-family:var(--mono); font-weight:700; }}
+.say {{ margin-top:2px; padding:14px 15px; border-radius:8px; background:var(--surface2); border:1px solid var(--rule); }}
+.say .who {{ display:block; margin-bottom:7px; color:var(--ox2); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }}
+.say p {{ margin:0; color:var(--ink); font-size:15px; line-height:1.72; text-wrap:pretty; }}
+
+.news {{ display:flex; justify-content:space-between; gap:14px; align-items:baseline; text-decoration:none; padding:14px 2px; border-bottom:1px solid var(--rule); color:var(--ink); }}
+.news:last-child {{ border-bottom:0; }}
+.news .nt {{ font-size:15px; line-height:1.5; }}
+.news:hover .nt {{ color:var(--ox); }}
+.news .ns {{ flex:none; white-space:nowrap; color:var(--faint); font-family:var(--mono); font-size:12px; font-weight:700; }}
+
+footer {{ margin-top:26px; }}
+.discl {{ padding:16px 0 0; border-top:1px solid var(--rule-dk); color:var(--muted); font-size:13px; line-height:1.75; }}
+.discl b {{ color:var(--ink); font-weight:700; }}
+
+@media (max-width:700px) {{
+  .wrap {{ padding:36px 18px 70px; }}
+  h1 {{ font-size:34px; }}
+  .card {{ padding:22px; }}
+  .dir {{ font-size:25px; }}
+  .kpis {{ grid-template-columns:1fr; }}
+  .adv {{ grid-template-columns:1fr; }}
+  .tick {{ display:inline-block; margin-left:0; margin-top:6px; }}
+}}
+@media (prefers-reduced-motion:reduce) {{
+  *,*::before,*::after {{ animation-duration:.01ms !important; transition-duration:.01ms !important; }}
+}}
 </style>
 <div class="wrap">
   <span class="real">真實資料 · FinMind × TWSE × Google News</span>
@@ -145,7 +197,7 @@ color:var(--ink2);line-height:1.65;box-shadow:inset 4px 4px 9px var(--sh-d),inse
   {dims}
 
   <div class="sechead">近期新聞</div>
-  <div class="card" style="padding:8px 20px">{news}</div>
+  <div class="card newscard" style="padding:8px 20px">{news}</div>
 
   <footer>
     <div class="discl">紅綠燈由「數據＋固定規則」計算（技術面均線／RSI／量能、基本面營收 YoY／PER 分位、籌碼三大法人淨買），團隊觀點由分析師解讀與反駁，不憑感覺喊買賣。<b style="color:var(--ink)">本報告為投資決策輔助，非投資建議、非保證獲利，最終決策與風險由使用者承擔。</b>數據來源與抓取時間如上；抓不到即註記缺漏、絕不編造。</div>

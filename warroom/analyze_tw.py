@@ -69,11 +69,28 @@ def technical(price):
     if vol_ratio > 1.5:
         note.append(f"爆量 {vol_ratio:.1f}×均量")
 
+    # 技術位（純規則參考，非買賣建議）：從均線＋近期高低點挑最靠近的支撐/壓力
+    hi_c = "max" if "max" in df.columns else "high" if "high" in df.columns else "close"
+    lo_c = "min" if "min" in df.columns else "low" if "low" in df.columns else "close"
+    cand = {"MA20": ma[20], "MA60": ma[60], "MA120": ma[120],
+            "近20日高": df[hi_c].tail(20).max(), "近60日高": df[hi_c].tail(60).max(),
+            "近20日低": df[lo_c].tail(20).min()}
+
+    def _px(v):
+        return f"{v:,.0f}" if v >= 100 else f"{v:.1f}"
+
+    sup = sorted([(v, k) for k, v in cand.items() if v < last], reverse=True)   # 收盤下方＝支撐（近→遠）
+    res = sorted([(v, k) for k, v in cand.items() if v > last])                 # 收盤上方＝壓力（近→遠）
+    buy_ref = " · ".join(f"{k} {_px(v)}" for v, k in sup[:2]) or "無明顯支撐（探底中）"
+    res_ref = " · ".join(f"{k} {_px(v)}" for v, k in res[:2]) or "無明顯壓力（波段創高）"
+
     return light, {
         "收盤": round(last, 1), "MA20": round(ma[20], 1), "MA60": round(ma[60], 1),
         "MA120": round(ma[120], 1), "RSI14": round(r, 0),
         "量能": f"{vol_ratio:.1f}×20日均量",
         "排列": "多頭排列" if bull else "空頭排列" if bear else "均線糾結",
+        "買入參考區": buy_ref,
+        "壓力參考位": res_ref,
         "備註": "；".join(note) or "—",
     }
 

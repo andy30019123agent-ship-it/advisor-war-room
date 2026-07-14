@@ -1,87 +1,212 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>戰情週報 2026 W29-B · 專屬投顧戰情室</title>
 <style>
-:root{--base:#E7EAF5;--ink:#383B58;--ink2:#5A5E80;--muted:#7E82A2;--faint:#A2A6C2;
---sh-d:#C6CBDE;--sh-l:#FFFFFF;--line:#D5D9EA;--pink:#F3A6D0;--purple:#B197E8;
---grad:linear-gradient(135deg,#F3A6D0,#B197E8);--up:#2AA588;--up-bg:#D6EEE6;
---down:#E36088;--down-bg:#F7DEE7;--warn:#D2982F;--warn-bg:#F3E8D2;--neu:#5E6288;--neu-bg:#E0E3F1;
---mono:ui-monospace,"SF Mono",Menlo,monospace;--sans:system-ui,-apple-system,"PingFang TC","Noto Sans TC",sans-serif;}
-*{box-sizing:border-box}
-body{margin:0;color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
-background:linear-gradient(165deg,#E4E9F7,#E9E5F3 48%,#F1E6EE);background-attachment:fixed;min-height:100vh}
-.wrap{max-width:780px;margin:0 auto;padding:24px 16px 70px}
-.num,.v,.chg,.schg{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.up{color:var(--up)}.down{color:var(--down)}.muted{color:var(--muted)}
-.real{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#1e7d63;background:var(--up-bg);border-radius:999px;padding:5px 12px;font-weight:600}
-.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--up)}
-.eyebrow{font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-top:14px}
-h1{font-size:29px;margin:8px 0 4px;font-weight:700;letter-spacing:-.01em}
-.meta{color:var(--muted);font-size:13px;font-family:var(--mono)}
-.card{background:var(--base);border-radius:22px;padding:22px;margin-top:16px;box-shadow:7px 7px 16px var(--sh-d),-7px -7px 16px var(--sh-l)}
-.chieftag{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.dir{font-size:23px;font-weight:800;margin:9px 0 0}
-.chief{font-size:14.5px;margin:12px 0 0}
-.kpis{display:flex;flex-wrap:wrap;gap:11px;margin-top:15px}
-.kpi{flex:1;min-width:110px;background:var(--base);border-radius:14px;padding:11px 14px;box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}
-.kpi .t{font-size:11px;color:var(--muted)}.kpi .b{font-size:15px;margin-top:3px;font-weight:700}
-.meterwrap{margin-top:15px;background:var(--base);border-radius:14px;padding:12px 15px;box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}
-.meter{height:9px;border-radius:99px;position:relative;background:linear-gradient(90deg,var(--up),var(--warn),var(--down))}
-.meter i{position:absolute;top:-4px;width:5px;height:17px;background:#fff;border-radius:3px;box-shadow:0 1px 5px rgba(80,60,110,.5)}
-details{background:var(--base);border-radius:22px;margin-top:16px;overflow:hidden;box-shadow:7px 7px 16px var(--sh-d),-7px -7px 16px var(--sh-l)}
-summary{list-style:none;cursor:pointer;padding:17px 20px;display:flex;align-items:center;gap:12px;user-select:none}
-summary::-webkit-details-marker{display:none}
-.layerno{font-family:var(--mono);font-size:13px;font-weight:700;width:34px;height:34px;flex:none;border-radius:11px;display:grid;place-items:center;color:var(--purple);box-shadow:inset 3px 3px 6px var(--sh-d),inset -3px -3px 6px var(--sh-l)}
-summary h2{font-size:18px;margin:0;font-weight:650}
-summary .lgt{margin-left:auto;font-size:13px;font-weight:700}
-.chev{width:20px;height:20px;flex:none;color:var(--muted);transition:transform .25s}
-details[open] .chev{transform:rotate(180deg)}
-.inner{padding:2px 20px 20px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-top:4px}
-.cell{background:var(--base);border-radius:14px;padding:12px 14px;box-shadow:5px 5px 11px var(--sh-d),-5px -5px 11px var(--sh-l)}
-.cell .lab{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}
-.cell .v{font-size:17px;margin-top:4px;font-weight:600}
-.cell .chg{font-size:12px;margin-top:1px}
-.tl{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
-.tl.g{background:var(--up)}.tl.y{background:var(--warn)}.tl.r{background:var(--down)}
-.say{border-radius:15px;padding:14px 16px;margin-top:14px;background:linear-gradient(135deg,rgba(243,166,208,.10),rgba(177,151,232,.10))}
-.say .who{font-size:11px;font-weight:700;color:var(--purple);display:block;margin-bottom:5px;letter-spacing:.05em}
-.say p{margin:0;font-size:14px}
-.srow{background:var(--base);border-radius:14px;margin-top:10px;overflow:hidden;box-shadow:5px 5px 11px var(--sh-d),-5px -5px 11px var(--sh-l)}
-.srow>summary{padding:12px 15px;gap:10px}
-.srow .sname{font-weight:600;font-size:14px}.srow .etf{font-family:var(--mono);color:var(--faint);font-size:11.5px}
-.srow .schg{margin-left:auto;font-size:13.5px}
-.srow .sdetail{padding:0 15px 13px;font-size:12.5px;color:var(--ink2);display:flex;flex-wrap:wrap;gap:6px 16px}
-.srow .sdetail b{color:var(--ink);font-family:var(--mono)}
-.tag{font-size:11.5px;border-radius:8px;padding:3px 10px;font-weight:700}
-.tag.att{color:#1e7d63;background:var(--up-bg)}.tag.hold{color:#a8792a;background:var(--warn-bg)}.tag.avoid{color:#bd4a6c;background:var(--down-bg)}
-.stk{border-radius:16px;margin-top:12px}
-.stk>summary{padding:15px 16px;gap:11px;align-items:flex-start}
-.stk .name{font-size:16px;font-weight:700}.stk .tick{font-family:var(--mono);color:var(--muted);font-size:13px;margin-left:6px}
-.stk .sublight{display:flex;gap:6px;margin-top:8px}
-.verdict{margin-left:auto;flex:none;font-size:12.5px;font-weight:700;border-radius:10px;padding:6px 12px}
-.stkbody{padding:0 16px 16px}
-.lights{display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 11px}
-.mini{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2)}
-.reason{font-size:14px;margin:0 0 8px}.meta2{font-size:12px;color:var(--faint);font-family:var(--mono)}
-.theme{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}.theme:last-child{border-bottom:0}
-.theme .heat{flex:none;width:60px;text-align:center;border-radius:13px;padding:9px 0;box-shadow:inset 3px 3px 6px var(--sh-d),inset -3px -3px 6px var(--sh-l)}
-.theme .heat .z{font-family:var(--mono);font-size:15px;font-weight:700}.theme .heat .zl{font-size:9.5px;color:var(--faint);margin-top:2px}
-.theme .tn{font-size:15px;font-weight:650;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.theme .tmeta{font-size:11.5px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
-.theme .tnote{font-size:13px;color:var(--ink2);margin-top:5px}
-.status{font-size:11px;font-weight:700;border-radius:8px;padding:2px 9px}
-.status.on{color:#1e7d63;background:var(--up-bg)}.status.watch{color:#a8792a;background:var(--warn-bg)}
-.ev{display:flex;gap:13px;padding:12px 0;border-bottom:1px solid var(--line)}.ev:last-child{border-bottom:0}
-.ev .d{flex:none;font-family:var(--mono);width:52px;font-size:12.5px;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.ev .et{font-size:14px}.ev .et b{color:var(--ink)}.ev .mm{color:var(--muted);font-size:12.5px;margin-top:3px;line-height:1.5}
-footer{margin-top:26px;color:var(--faint);font-size:12.5px}
-.discl{background:var(--base);border-radius:16px;padding:15px 17px;margin-top:12px;font-size:12.5px;color:var(--ink2);line-height:1.65;box-shadow:inset 4px 4px 9px var(--sh-d),inset -4px -4px 9px var(--sh-l)}
-@media(max-width:520px){h1{font-size:24px}.kpi{min-width:calc(50% - 6px)}}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --paper:#EFF2EA; --paper2:#E4EADF; --surface:#FBFDF7; --surface2:#F5F8F0;
+  --ink:#151713; --ink2:#30362C; --muted:#65705F; --faint:#647059;
+  --rule:#D8E0D1; --rule-dk:#AEB9A5; --ox:#A85C3A; --ox2:#6E3D2B;
+  --accent:#1A1D14; --acid:#C7F04A; --acid2:#E9FF9D;
+  --up:#167A54; --up-bg:#E2F4EB; --down:#B64238; --down-bg:#F8E4E0;
+  --warn:#8A5A14; --warn-bg:#F7EBCF; --neu:#5E6758; --neu-bg:#ECEFE6;
+  --disp:'Space Grotesk','IBM Plex Sans TC','PingFang TC','Noto Sans TC',sans-serif;
+  --text:'IBM Plex Sans TC','PingFang TC','Noto Sans TC',system-ui,sans-serif;
+  --mono:'Space Grotesk','SF Mono',ui-monospace,Menlo,monospace;
+}
+* { box-sizing:border-box; }
+html { background:var(--paper); }
+body {
+  margin:0; min-height:100vh; color:var(--ink2); font-family:var(--text);
+  font-size:16px; line-height:1.68; letter-spacing:0; background:var(--paper);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+body::before {
+  content:""; position:fixed; inset:0 0 auto; height:8px; z-index:0; pointer-events:none;
+  background:linear-gradient(90deg,var(--acid) 0 22%,var(--ox) 22% 34%,var(--accent) 34% 100%);
+}
+.wrap { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:48px 28px 92px; }
+.up { color:var(--up); } .down { color:var(--down); } .muted { color:var(--muted); } .warn { color:var(--warn); }
+
+.smcap,.chieftag,.cell .lab,.kpi .t,.meterlab,.say .who,.meta2 {
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+}
+.real {
+  display:inline-flex; align-items:center; gap:9px; max-width:100%; color:var(--ink2);
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em;
+  padding:7px 10px; border:1px solid var(--rule-dk); border-radius:999px; background:rgba(251,253,247,.64);
+}
+.real::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--acid); box-shadow:0 0 0 3px rgba(199,240,74,.22); }
+.eyebrow { margin-top:26px; color:var(--ox2); font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.05em; }
+h1 {
+  margin:10px 0 0; color:var(--ink); font-family:var(--disp); font-size:56px; line-height:.98;
+  font-weight:700; letter-spacing:-.03em; text-wrap:balance;
+}
+.meta { margin-top:16px; color:var(--muted); font-size:13px; font-family:var(--mono); letter-spacing:.02em; }
+
+.card {
+  position:relative; overflow:hidden; margin-top:30px; padding:28px; border-radius:8px;
+  color:#EEF4E8; background:var(--accent); box-shadow:0 14px 34px rgba(21,23,19,.18);
+}
+.card::before { content:""; position:absolute; inset:0 0 auto; height:5px; background:linear-gradient(90deg,var(--acid),var(--ox)); }
+.chieftag { color:var(--acid2); }
+.dir { margin:13px 0 0; color:#FBFDF7; font-family:var(--disp); font-size:34px; line-height:1.16; font-weight:700; letter-spacing:-.025em; text-wrap:balance; }
+.chief { max-width:70ch; margin:16px 0 0; color:#DDE6D5; font-size:16px; line-height:1.78; }
+.kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:24px; }
+.kpi { min-width:0; padding:14px; border-radius:8px; background:rgba(251,253,247,.08); }
+.kpi .t { color:#AEBBA5; }
+.kpi .b { display:flex; align-items:center; gap:8px; margin-top:7px; color:#FBFDF7; font-family:var(--disp); font-size:20px; font-weight:700; line-height:1.15; }
+.meterwrap { margin-top:20px; padding-top:4px; }
+.meterlab { display:flex; justify-content:space-between; margin-bottom:9px; color:#AEBBA5; }
+.num,.v,.chg,.schg { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.meterwrap .num,.meterlab .num { color:#FBFDF7; }
+.meter { position:relative; height:8px; border-radius:999px; background:linear-gradient(90deg,var(--up),var(--warn),var(--down)); }
+.meter i { position:absolute; top:-6px; width:4px; height:20px; border-radius:999px; background:#FBFDF7; box-shadow:0 0 0 2px rgba(21,23,19,.5); }
+
+details { border:0; }
+.wrap > details {
+  margin-top:18px; border:1px solid var(--rule); border-radius:8px; overflow:hidden; background:var(--surface);
+}
+summary { list-style:none; cursor:pointer; user-select:none; transition:background .2s ease,color .2s ease; }
+summary::-webkit-details-marker { display:none; }
+summary:focus-visible { outline:3px solid color-mix(in srgb,var(--acid) 70%,transparent); outline-offset:3px; border-radius:8px; }
+.wrap > details > summary { display:flex; align-items:center; gap:14px; padding:18px 18px; }
+.wrap > details > summary:hover { background:var(--surface2); }
+.layerno {
+  display:grid; place-items:center; flex:none; width:42px; height:34px; border-radius:8px;
+  color:var(--accent); background:var(--acid); font-family:var(--mono); font-size:16px; font-weight:700; line-height:1;
+}
+summary h2 { min-width:0; margin:0; color:var(--ink); font-family:var(--disp); font-size:23px; line-height:1.18; font-weight:700; letter-spacing:-.02em; text-wrap:balance; }
+summary .lgt { margin-left:auto; display:inline-flex; align-items:center; gap:8px; color:var(--muted); font-family:var(--mono); font-size:12px; font-weight:700; white-space:nowrap; }
+.lgt .tl,.kpi .b .tl { width:9px; height:9px; }
+.chev { flex:none; width:20px; height:20px; color:var(--muted); transition:transform .22s cubic-bezier(.2,.8,.2,1), color .2s ease; }
+details[open] > summary .chev { transform:rotate(180deg); color:var(--ink); }
+.inner { padding:0 18px 22px; }
+
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.cell { min-width:0; padding:15px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); }
+.cell .lab { display:flex; align-items:center; gap:8px; color:var(--muted); line-height:1.35; }
+.cell .v { margin-top:8px; color:var(--ink); font-size:24px; font-weight:700; line-height:1.08; }
+.cell .chg { margin-top:6px; font-size:13px; font-weight:700; }
+.tl { display:inline-block; flex:none; width:8px; height:8px; border-radius:50%; }
+.tl.g { background:var(--up); box-shadow:0 0 0 3px rgba(22,122,84,.12); }
+.tl.y { background:var(--warn); box-shadow:0 0 0 3px rgba(154,104,24,.13); }
+.tl.r { background:var(--down); box-shadow:0 0 0 3px rgba(182,66,56,.12); }
+
+.say { margin-top:18px; padding:16px 17px; border:1px solid var(--rule-dk); border-radius:8px; background:#F7FAF1; }
+.say .who { display:block; margin-bottom:8px; color:var(--ox2); }
+.say p { margin:0; color:var(--ink); font-size:16px; line-height:1.78; text-wrap:pretty; }
+
+.srow,.stk { border-top:1px solid var(--rule); }
+.srow:first-of-type,.stk:first-of-type { margin-top:10px; }
+.srow > summary,.stk > summary { display:flex; align-items:center; gap:13px; padding:15px 2px; }
+.srow > summary:hover,.stk > summary:hover { background:linear-gradient(90deg,rgba(199,240,74,.10),transparent); }
+.srow .sname { min-width:0; color:var(--ink); font-size:16px; font-weight:700; }
+.srow .etf,.stk .tick { color:var(--faint); font-family:var(--mono); font-size:12px; font-weight:700; }
+.srow .schg { margin-left:auto; font-size:15px; font-weight:700; }
+.srow .sdetail { display:flex; flex-wrap:wrap; gap:7px 18px; padding:0 2px 16px; color:var(--muted); font-size:13px; line-height:1.6; }
+.srow .sdetail b { color:var(--ink); font-family:var(--mono); font-weight:700; }
+.tag,.status {
+  display:inline-flex; align-items:center; min-height:24px; padding:3px 9px; border-radius:999px;
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+}
+.tag.att,.status.on { color:var(--up); background:var(--up-bg); }
+.tag.hold,.status.watch { color:var(--warn); background:var(--warn-bg); }
+.tag.avoid { color:var(--down); background:var(--down-bg); }
+.tag.watch { color:var(--neu); background:var(--neu-bg); }
+
+.stk .name { color:var(--ink); font-size:17px; font-weight:700; }
+.stk .tick { margin-left:8px; }
+.stk .sublight { display:flex; gap:7px; margin-top:9px; }
+.verdict {
+  margin-left:auto; flex:none; align-self:center; padding:5px 10px; border-radius:999px;
+  border:1px solid color-mix(in srgb,currentColor 28%,transparent);
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; white-space:nowrap;
+}
+.stkbody { padding:0 2px 17px; }
+.lights { display:flex; flex-wrap:wrap; gap:10px 16px; margin:1px 0 13px; }
+.mini { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; }
+.reason { margin:0 0 10px; color:var(--ink2); font-size:15px; line-height:1.75; text-wrap:pretty; }
+.meta2 { color:var(--faint); }
+.lvls { display:flex; flex-wrap:wrap; gap:9px; margin:2px 0 12px; }
+.lvl { display:inline-flex; flex-direction:column; gap:3px; padding:9px 13px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); font-family:var(--mono); font-size:13px; color:var(--ink); font-weight:600; }
+.lvl i { font-style:normal; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+
+.theme { display:flex; gap:16px; padding:18px 0; border-bottom:1px solid var(--rule); }
+.theme:last-child { border-bottom:0; }
+.theme .heat { flex:none; width:72px; padding:10px 8px; border-radius:8px; color:var(--accent); background:var(--acid); text-align:center; }
+.theme .heat .z { font-family:var(--mono); font-size:18px; font-weight:700; line-height:1; }
+.theme .heat .zl { margin-top:5px; font-family:var(--mono); color:#465023; font-size:10px; font-weight:700; letter-spacing:.03em; }
+.theme .tn { display:flex; align-items:center; flex-wrap:wrap; gap:9px; color:var(--ink); font-size:17px; font-weight:700; }
+.theme .tmeta { margin-top:6px; color:var(--muted); font-family:var(--mono); font-size:12px; line-height:1.55; }
+.theme .tnote { margin-top:8px; color:var(--ink2); font-size:14px; line-height:1.7; }
+details.theme { display:block; }
+.theme summary.thsum { display:flex; gap:16px; list-style:none; cursor:pointer; }
+.theme summary.thsum::-webkit-details-marker { display:none; }
+.theme summary.thsum:focus-visible { outline:2px solid var(--ox); outline-offset:3px; }
+.thexp { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.05em; color:var(--ox2); padding:2px 8px; border:1px solid var(--rule-dk); border-radius:999px; }
+details.theme[open] .thexp { color:var(--accent); background:var(--acid); border-color:var(--acid); }
+.thstocks { display:flex; flex-direction:column; gap:8px; padding:6px 0 16px 88px; }
+.thstk { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px; padding:10px 13px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); }
+.thstk.pure { border-color:var(--acid); background:#F4FBE4; }
+.thid { font-family:var(--mono); font-size:12px; font-weight:700; color:var(--muted); }
+.thname { font-size:15px; font-weight:700; color:var(--ink); }
+.pur { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.05em; padding:2px 8px; border-radius:999px; }
+.pur.hi { color:var(--up); background:var(--up-bg); }
+.pur.mid { color:var(--warn); background:var(--warn-bg); }
+.pur.lo { color:var(--neu); background:var(--neu-bg); }
+.puresttag { font-family:var(--mono); font-size:10px; font-weight:700; color:var(--accent); background:var(--acid); padding:2px 8px; border-radius:999px; }
+.thnote { flex-basis:100%; color:var(--ink2); font-size:13px; line-height:1.55; }
+@media (max-width:700px) { .thstocks { padding-left:0; } }
+
+.ev { display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--rule); }
+.ev:last-child { border-bottom:0; }
+.ev .d { flex:none; width:70px; color:var(--ox2); font-family:var(--mono); font-size:13px; font-weight:700; line-height:1.45; }
+.ev .et { color:var(--ink2); font-size:15px; line-height:1.65; }
+.ev .et b { color:var(--ink); font-weight:700; }
+.ev .mm { margin-top:4px; color:var(--muted); font-size:13px; line-height:1.6; }
+
+.mktstrip { margin:2px 0 16px; padding:14px 15px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); }
+.mstitle { font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ox2); margin-bottom:11px; }
+.mchips { display:flex; flex-wrap:wrap; gap:9px 16px; }
+.mchip { display:inline-flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; }
+.mchip b { color:var(--ink2); font-weight:600; }
+.mchip .up,.mchip .down,.mchip .muted { font-family:var(--mono); font-weight:700; }
+
+footer { margin-top:24px; color:var(--muted); font-size:13px; }
+.discl { padding:16px 0 0; border-top:1px solid var(--rule-dk); color:var(--muted); font-size:13px; line-height:1.75; }
+.discl b { color:var(--ink); font-weight:700; }
+
+@media (max-width:700px) {
+  .wrap { padding:36px 18px 70px; }
+  h1 { font-size:42px; }
+  .card { padding:22px; }
+  .dir { font-size:28px; }
+  .kpis { grid-template-columns:1fr; }
+  .grid { grid-template-columns:1fr; }
+  .wrap > details > summary { flex-wrap:wrap; align-items:center; gap:11px; padding:16px 14px; }
+  .layerno { width:38px; height:32px; font-size:15px; }
+  summary h2 { flex:1; font-size:20px; }
+  summary .lgt { order:3; flex-basis:100%; margin-left:49px; white-space:normal; }
+  .inner { padding:0 14px 20px; }
+  .srow > summary,.stk > summary { flex-wrap:wrap; }
+  .srow .schg { margin-left:auto; }
+  .verdict { margin-left:0; }
+  .theme { gap:12px; }
+  .theme .heat { width:64px; }
+  .ev { gap:12px; }
+  .ev .d { width:58px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+}
 </style>
 <div class="wrap">
   <span class="real">真實資料 · FinMind × TWSE × yfinance × Google News</span>
   <div class="eyebrow">專屬投顧戰情室 · Advisor War Room</div>
   <h1>戰情週報 2026 W29-B</h1>
-  <div class="meta">一週兩次 · 資料日 2026-07-13（台北） · 產出 2026-07-14 01:38（台北）</div>
+  <div class="meta">一週兩次 · 資料日 2026-07-13（台北） · 產出 2026-07-14 14:22（台北）</div>
 
   <div class="card">
     <div class="chieftag">投資長 · 本期總結</div>
@@ -89,28 +214,28 @@ footer{margin-top:26px;color:var(--faint);font-size:12.5px}
     <p class="chief">本週定調＝『AI 硬體修正／資金輪動』週，大盤逆風。美股大盤仍在高檔，但半導體族群明顯轉弱、資金輪動到能源與金融；台股跟著回檔、外資單日賣超約 196 億，VIX／美債殖利率／美元同步走升，三重逆風。核心操作＝『守』：降低 AI 供應鏈曝險、不追高、保留現金，等美股半導體（SOX／SMH）止穩＋外資回補再重新進攻。</p>
     <div class="kpis">
       <div class="kpi"><div class="t">建議股票曝險</div><div class="b">40–50%（偏保守）</div></div>
-      <div class="kpi"><div class="t">大盤環境</div><div class="b">🔴 偏空</div></div>
+      <div class="kpi"><div class="t">大盤環境</div><div class="b"><span class="tl r"></span>偏空</div></div>
       <div class="kpi"><div class="t">信心度</div><div class="b">中</div></div>
     </div>
     <div class="meterwrap">
-      <div style="font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px"><span>風險溫度</span><span class="num">7 / 10</span></div>
+      <div style="font-size:11px;color:#AEBBA5;display:flex;justify-content:space-between;margin-bottom:8px"><span>風險溫度</span><span class="num">7 / 10</span></div>
       <div class="meter"><i style="left:70%"></i></div>
     </div>
   </div>
 
   <details open>
-    <summary><span class="layerno">01</span><h2>大盤 · 環境溫度</h2><span class="lgt">🔴</span>
+    <summary><span class="layerno">01</span><h2>大盤 · 環境溫度</h2><span class="lgt"><span class="tl r"></span></span>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
     <div class="inner"><div class="grid"><div class="cell"><div class="lab"><span class="tl r"></span>加權指數</div>
-          <div class="v">45,381</div><div class="chg down">-3.0% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>櫃買 TPEx</div>
-          <div class="v">420</div><div class="chg down">-5.7% · 週</div></div><div class="cell"><div class="lab"><span class="tl y"></span>S&amp;P 500</div>
-          <div class="v">7,522.46</div><div class="chg down">-0.2% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>Nasdaq</div>
-          <div class="v">25,906.87</div><div class="chg down">-0.8% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>費半 SOX</div>
-          <div class="v">12,348.09</div><div class="chg down">-4.3% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>VIX 波動率</div>
-          <div class="v">16.57</div><div class="chg up">+6.4% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>美 10Y 殖利率</div>
+          <div class="v">44,738</div><div class="chg down">-3.9% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>櫃買 TPEx</div>
+          <div class="v">407</div><div class="chg down">-7.4% · 週</div></div><div class="cell"><div class="lab"><span class="tl y"></span>S&amp;P 500</div>
+          <div class="v">7,515.34</div><div class="chg down">-0.3% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>Nasdaq</div>
+          <div class="v">25,873.18</div><div class="chg down">-0.9% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>費半 SOX</div>
+          <div class="v">12,347.78</div><div class="chg down">-4.3% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>VIX 波動率</div>
+          <div class="v">17.16</div><div class="chg up">+10.2% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>美 10Y 殖利率</div>
           <div class="v">4.61%</div><div class="chg up">+2.9% · 週</div></div><div class="cell"><div class="lab"><span class="tl y"></span>美元 DXY</div>
-          <div class="v">101.23</div><div class="chg up">+0.4% · 週</div></div><div class="cell"><div class="lab"><span class="tl r"></span>美元/台幣</div>
-          <div class="v">32.20</div><div class="chg up">+0.9% · 週</div></div></div><div class="cell"><div class="lab"><span class="tl r"></span>外資買賣超</div><div class="v">-196 億</div><div class="chg down">2026-07-13</div></div>
+          <div class="v">101.21</div><div class="chg up">+0.1% · 週</div></div><div class="cell"><div class="lab"><span class="tl y"></span>美元/台幣</div>
+          <div class="v">32.16</div><div class="chg up">+0.3% · 週</div></div></div><div class="cell"><div class="lab"><span class="tl r"></span>外資買賣超</div><div class="v">-196 億</div><div class="chg down">2026-07-13</div></div>
       <div class="say"><span class="who">團隊觀點 · 大盤</span><p>美股 S&amp;P／Nasdaq 仍偏多，但費半 SOX 週跌、半導體 ETF（SMH 近月 −8%、SOXX −11%）領跌，明顯轉弱；台股加權 −3%、櫃買 −5.7% 同步回檔，外資賣超約 196 億。VIX、10Y 殖利率、美元對台股都是逆風。大盤給 🔴：本週宜守不宜攻，建議股票曝險降到 40–50%、以防禦與現金為主。</p></div>
     </div>
   </details>
@@ -119,31 +244,32 @@ footer{margin-top:26px;color:var(--faint);font-size:12.5px}
     <summary><span class="layerno">02</span><h2>類股 · 資金往哪流</h2><span class="lgt" style="font-size:12px;color:var(--faint);font-family:var(--mono)">美股領先→台股</span>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
     <div class="inner">
+      <div class="mktstrip"><div class="mstitle">台美大盤現況 · 週變化</div><div class="mchips"><span class="mchip"><span class="tl r"></span><b>加權指數</b><span class="down">-3.9%</span></span><span class="mchip"><span class="tl r"></span><b>櫃買 TPEx</b><span class="down">-7.4%</span></span><span class="mchip"><span class="tl y"></span><b>S&amp;P 500</b><span class="down">-0.3%</span></span><span class="mchip"><span class="tl r"></span><b>Nasdaq</b><span class="down">-0.9%</span></span><span class="mchip"><span class="tl r"></span><b>費半 SOX</b><span class="down">-4.3%</span></span><span class="mchip"><span class="tl r"></span><b>VIX 波動率</b><span class="up">+10.2%</span></span><span class="mchip"><span class="tl r"></span><b>美 10Y 殖利率</b><span class="up">+2.9%</span></span><span class="mchip"><span class="tl y"></span><b>美元 DXY</b><span class="up">+0.1%</span></span><span class="mchip"><span class="tl y"></span><b>美元/台幣</b><span class="up">+0.3%</span></span></div></div>
       <div style="font-size:11.5px;color:var(--faint);margin:4px 0 2px">美股族群動能排名（點列展開對應台股供應鏈）</div>
       <details class="srow"><summary>
             <span class="sname">能源 <span class="etf">XLE</span></span>
             <span class="schg up">+6.8%</span><span class="tag att">領先</span></summary>
-          <div class="sdetail"><span>近5日 <b>+6.8%</b></span><span>近20日 <b>+2.8%</b></span>
+          <div class="sdetail"><span>近5日 <b>+6.8%</b></span><span>近20日 <b>+2.9%</b></span>
             <span>美股代表 <b>XOM · CVX</b></span><span style="flex-basis:100%">→ 台股對應：台股對應少</span></div></details><details class="srow"><summary>
             <span class="sname">金融 <span class="etf">XLF</span></span>
-            <span class="schg down">-0.3%</span><span class="tag hold">中性</span></summary>
-          <div class="sdetail"><span>近5日 <b>-0.3%</b></span><span>近20日 <b>+4.8%</b></span>
+            <span class="schg down">-0.1%</span><span class="tag hold">中性</span></summary>
+          <div class="sdetail"><span>近5日 <b>-0.1%</b></span><span>近20日 <b>+5.0%</b></span>
             <span>美股代表 <b>JPM · BAC</b></span><span style="flex-basis:100%">→ 台股對應：台股金控</span></div></details><details class="srow"><summary>
             <span class="sname">科技大盤 <span class="etf">XLK</span></span>
             <span class="schg down">-1.2%</span><span class="tag avoid">落後</span></summary>
-          <div class="sdetail"><span>近5日 <b>-1.2%</b></span><span>近20日 <b>-5.3%</b></span>
+          <div class="sdetail"><span>近5日 <b>-1.2%</b></span><span>近20日 <b>-5.4%</b></span>
             <span>美股代表 <b>AAPL · MSFT</b></span><span style="flex-basis:100%">→ 台股對應：電子權值整體</span></div></details><details class="srow"><summary>
             <span class="sname">軟體 / 雲 <span class="etf">IGV</span></span>
-            <span class="schg down">-1.9%</span><span class="tag avoid">落後</span></summary>
-          <div class="sdetail"><span>近5日 <b>-1.9%</b></span><span>近20日 <b>+0.3%</b></span>
+            <span class="schg down">-2.2%</span><span class="tag avoid">落後</span></summary>
+          <div class="sdetail"><span>近5日 <b>-2.2%</b></span><span>近20日 <b>+0.0%</b></span>
             <span>美股代表 <b>MSFT · CRM · ORCL</b></span><span style="flex-basis:100%">→ 台股對應：台股直接對應少，觀察雲端伺服器代工</span></div></details><details class="srow"><summary>
             <span class="sname">AI 晶片 / 半導體 <span class="etf">SMH</span></span>
-            <span class="schg down">-3.0%</span><span class="tag avoid">落後</span></summary>
-          <div class="sdetail"><span>近5日 <b>-3.0%</b></span><span>近20日 <b>-9.4%</b></span>
+            <span class="schg down">-3.1%</span><span class="tag avoid">落後</span></summary>
+          <div class="sdetail"><span>近5日 <b>-3.1%</b></span><span>近20日 <b>-9.5%</b></span>
             <span>美股代表 <b>NVDA · AVGO · AMD</b></span><span style="flex-basis:100%">→ 台股對應：台積電 · 先進封裝(世芯/日月光) · 散熱(奇鋐) · PCB/ABF(欣興)</span></div></details><details class="srow"><summary>
             <span class="sname">半導體設備 <span class="etf">SOXX</span></span>
-            <span class="schg down">-4.9%</span><span class="tag avoid">落後</span></summary>
-          <div class="sdetail"><span>近5日 <b>-4.9%</b></span><span>近20日 <b>-12.0%</b></span>
+            <span class="schg down">-4.8%</span><span class="tag avoid">落後</span></summary>
+          <div class="sdetail"><span>近5日 <b>-4.8%</b></span><span>近20日 <b>-11.9%</b></span>
             <span>美股代表 <b>AMAT · LRCX · KLAC</b></span><span style="flex-basis:100%">→ 台股對應：設備廠(家登/辛耘) · 台積電資本支出受惠鏈</span></div></details><details class="srow"><summary>
             <span class="sname">國防航太 <span class="etf">ITA</span></span>
             <span class="schg down">-6.3%</span><span class="tag avoid">落後</span></summary>
@@ -159,13 +285,14 @@ footer{margin-top:26px;color:var(--faint);font-size:12.5px}
     <div class="inner"><details class="stk">
       <summary>
         <div><span class="name">台積電</span><span class="tick">2330</span>
-          <div class="sublight"><span class="tl y"></span><span class="tl g"></span><span class="tl r"></span></div></div>
-        <span class="verdict" style="color:var(--warn);background:var(--neu-bg)">訊號分歧・建議觀望</span>
+          <div class="sublight"><span class="tl y"></span><span class="tl y"></span><span class="tl r"></span></div></div>
+        <span class="verdict" style="color:var(--warn);background:var(--neu-bg)">中性</span>
       </summary>
       <div class="stkbody">
-        <div class="lights"><div class="mini"><span class="tl y"></span>基本面 🟡</div><div class="mini"><span class="tl g"></span>技術面 🟢</div><div class="mini"><span class="tl r"></span>消息/籌碼 🔴</div></div>
+        <div class="lights"><div class="mini"><span class="tl y"></span>基本面 中性</div><div class="mini"><span class="tl y"></span>技術面 中性</div><div class="mini"><span class="tl r"></span>消息/籌碼 偏空</div></div>
+        <div class="lvls"><span class="lvl"><i>買入參考區</i>近20日低 2,325 · MA60 2,306</span><span class="lvl"><i>壓力參考位</i>MA20 2,426 · 近20日高 2,535</span></div>
         <p class="reason">續抱可、空手觀望——公司體質強（營收 YoY +67.9%）但估值在 96% 分位偏貴、法人連賣 3 天；防守線 MA20（2,420），跌破且法人續賣則減碼。</p>
-        <div class="meta2">加權分 0.0 · 信心 低</div>
+        <div class="meta2">加權分 -0.3 · 信心 中 · 技術位為規則參考非買賣建議</div>
       </div></details><details class="stk">
       <summary>
         <div><span class="name">聯發科</span><span class="tick">2454</span>
@@ -173,9 +300,10 @@ footer{margin-top:26px;color:var(--faint);font-size:12.5px}
         <span class="verdict" style="color:var(--warn);background:var(--neu-bg)">中性</span>
       </summary>
       <div class="stkbody">
-        <div class="lights"><div class="mini"><span class="tl y"></span>基本面 🟡</div><div class="mini"><span class="tl y"></span>技術面 🟡</div><div class="mini"><span class="tl r"></span>消息/籌碼 🔴</div></div>
+        <div class="lights"><div class="mini"><span class="tl y"></span>基本面 中性</div><div class="mini"><span class="tl y"></span>技術面 中性</div><div class="mini"><span class="tl r"></span>消息/籌碼 偏空</div></div>
+        <div class="lvls"><span class="lvl"><i>買入參考區</i>近20日低 3,515 · MA120 2,700</span><span class="lvl"><i>壓力參考位</i>MA60 3,728 · MA20 4,197</span></div>
         <p class="reason">中性偏弱——6 月營收 580 億元年月雙升、基本面佳，但股價已跌破月線、法人連賣 4 天；等站回 MA20（4,223）再看，7/16 台積電法說是全鏈變數。</p>
-        <div class="meta2">加權分 -0.3 · 信心 中</div>
+        <div class="meta2">加權分 -0.3 · 信心 中 · 技術位為規則參考非買賣建議</div>
       </div></details>
       <div style="font-size:11.5px;color:var(--faint);margin-top:12px">＊來源：選股器機會清單 opportunities.json，經團隊三維研判。說「研究 XXXX」可產完整單檔報告。</div>
     </div>
@@ -186,43 +314,43 @@ footer{margin-top:26px;color:var(--faint);font-size:12.5px}
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
     <div class="inner">
       <div style="font-size:11.5px;color:var(--faint);margin:2px 0 4px">新技術／話題發掘 · 熱度上升＋個股確認才「成案」，只有噪音的僅進觀察</div>
-      <div class="theme">
-          <div class="heat"><div class="z">+3%</div><div class="zl">熱度趨勢</div></div>
+      <details class="theme"><summary class="thsum"><div class="heat"><div class="z">+3%</div><div class="zl">熱度趨勢</div></div>
           <div style="flex:1;min-width:0">
-            <div class="tn">資料中心液冷<span class="status watch">觀察</span></div>
-            <div class="tmeta">領頭 VRT -2.3% · 台股：奇鋐 · 雙鴻 · 高力 · 首見 2026-07-14</div>
+            <div class="tn">資料中心液冷<span class="status watch">觀察</span><span class="thexp">個股 ▾</span></div>
+            <div class="tmeta">領頭 VRT -2.3% · 首見 2026-07-14</div>
             <div class="tnote">熱度未起、個股未確認</div>
-          </div></div><div class="theme">
-          <div class="heat"><div class="z">-4%</div><div class="zl">熱度趨勢</div></div>
+          </div></summary>
+              <div class="thstocks"><div class="thstk pure"><span class="thid">3017</span><span class="thname">奇鋐</span><span class="pur hi">純</span><span class="puresttag">最純</span><span class="thnote">伺服器散熱主業含液冷</span></div><div class="thstk"><span class="thid">3324</span><span class="thname">雙鴻</span><span class="pur hi">純</span><span class="thnote">散熱模組主業含液冷</span></div><div class="thstk"><span class="thid">8996</span><span class="thname">高力</span><span class="pur mid">中</span><span class="thnote">熱交換器切入液冷</span></div></div></details><details class="theme"><summary class="thsum"><div class="heat"><div class="z">-4%</div><div class="zl">熱度趨勢</div></div>
           <div style="flex:1;min-width:0">
-            <div class="tn">人形機器人<span class="status watch">觀察</span></div>
-            <div class="tmeta">領頭 TSLA -4.2% · 台股：上銀 · 所羅門 · 廣達 · 首見 2026-07-14</div>
+            <div class="tn">人形機器人<span class="status watch">觀察</span><span class="thexp">個股 ▾</span></div>
+            <div class="tmeta">領頭 TSLA -4.2% · 首見 2026-07-14</div>
             <div class="tnote">熱度未起、個股未確認</div>
-          </div></div><div class="theme">
-          <div class="heat"><div class="z">-10%</div><div class="zl">熱度趨勢</div></div>
+          </div></summary>
+              <div class="thstocks"><div class="thstk pure"><span class="thid">2049</span><span class="thname">上銀</span><span class="pur mid">中</span><span class="puresttag">最純</span><span class="thnote">傳動元件主業，非整機</span></div><div class="thstk"><span class="thid">2359</span><span class="thname">所羅門</span><span class="pur mid">中</span><span class="thnote">AI視覺導入機器人</span></div><div class="thstk"><span class="thid">2382</span><span class="thname">廣達</span><span class="pur lo">分散</span><span class="thnote">達明轉投資，集團受惠</span></div></div></details><details class="theme"><summary class="thsum"><div class="heat"><div class="z">-10%</div><div class="zl">熱度趨勢</div></div>
           <div style="flex:1;min-width:0">
-            <div class="tn">先進封裝 / CoWoS<span class="status watch">觀察</span></div>
-            <div class="tmeta">領頭 NVDA -3.7% · 台股：台積電 · 日月光 · 辛耘 · 首見 2026-07-14</div>
+            <div class="tn">先進封裝 / CoWoS<span class="status watch">觀察</span><span class="thexp">個股 ▾</span></div>
+            <div class="tmeta">領頭 NVDA -3.7% · 首見 2026-07-14</div>
             <div class="tnote">熱度未起、個股未確認</div>
-          </div></div><div class="theme">
-          <div class="heat"><div class="z">-49%</div><div class="zl">熱度趨勢</div></div>
+          </div></summary>
+              <div class="thstocks"><div class="thstk"><span class="thid">2330</span><span class="thname">台積電</span><span class="pur lo">分散</span><span class="thnote">CoWoS龍頭但營收分散</span></div><div class="thstk"><span class="thid">3711</span><span class="thname">日月光投控</span><span class="pur mid">中</span><span class="thnote">封測龍頭，CoWoS非全部</span></div><div class="thstk pure"><span class="thid">3583</span><span class="thname">辛耘</span><span class="pur mid">中</span><span class="puresttag">最純</span><span class="thnote">濕製程設備受惠CoWoS</span></div></div></details><details class="theme"><summary class="thsum"><div class="heat"><div class="z">-49%</div><div class="zl">熱度趨勢</div></div>
           <div style="flex:1;min-width:0">
-            <div class="tn">矽光子 / CPO<span class="status watch">觀察</span></div>
-            <div class="tmeta">領頭 COHR -24.8% · 台股：聯亞 · 光聖 · 華星光 · 首見 2026-07-14</div>
+            <div class="tn">矽光子 / CPO<span class="status watch">觀察</span><span class="thexp">個股 ▾</span></div>
+            <div class="tmeta">領頭 COHR -24.8% · 首見 2026-07-14</div>
             <div class="tnote">熱度未起、個股未確認</div>
-          </div></div><div class="theme">
-          <div class="heat"><div class="z">—</div><div class="zl">熱度趨勢</div></div>
+          </div></summary>
+              <div class="thstocks"><div class="thstk pure"><span class="thid">3081</span><span class="thname">聯亞</span><span class="pur hi">純</span><span class="puresttag">最純</span><span class="thnote">InP雷射晶片上游</span></div><div class="thstk"><span class="thid">6442</span><span class="thname">光聖</span><span class="pur hi">純</span><span class="thnote">光通訊連接器與模組</span></div><div class="thstk"><span class="thid">4979</span><span class="thname">華星光</span><span class="pur hi">純</span><span class="thnote">光收發模組出貨主業</span></div></div></details><details class="theme"><summary class="thsum"><div class="heat"><div class="z">—</div><div class="zl">熱度趨勢</div></div>
           <div style="flex:1;min-width:0">
-            <div class="tn">AI ASIC 客製晶片<span class="status watch">觀察</span></div>
-            <div class="tmeta">領頭 AVGO -1.6% · 台股：世芯 · 創意 · M31 · 首見 2026-07-14</div>
+            <div class="tn">AI ASIC 客製晶片<span class="status watch">觀察</span><span class="thexp">個股 ▾</span></div>
+            <div class="tmeta">領頭 AVGO -1.6% · 首見 2026-07-14</div>
             <div class="tnote">熱度未起、個股未確認</div>
-          </div></div><div class="theme">
-          <div class="heat"><div class="z">—</div><div class="zl">熱度趨勢</div></div>
+          </div></summary>
+              <div class="thstocks"><div class="thstk pure"><span class="thid">3661</span><span class="thname">世芯-KY</span><span class="pur hi">純</span><span class="puresttag">最純</span><span class="thnote">ASIC設計服務核心收入</span></div><div class="thstk"><span class="thid">3443</span><span class="thname">創意</span><span class="pur hi">純</span><span class="thnote">台積系ASIC設計服務</span></div><div class="thstk"><span class="thid">6643</span><span class="thname">M31</span><span class="pur mid">中</span><span class="thnote">矽智財供ASIC設計</span></div></div></details><details class="theme"><summary class="thsum"><div class="heat"><div class="z">—</div><div class="zl">熱度趨勢</div></div>
           <div style="flex:1;min-width:0">
-            <div class="tn">HBM 高頻寬記憶體<span class="status watch">觀察</span></div>
-            <div class="tmeta">領頭 MU -15.1% · 台股：群聯 · 南亞科 · 華邦電 · 首見 2026-07-14</div>
+            <div class="tn">HBM 高頻寬記憶體<span class="status watch">觀察</span><span class="thexp">個股 ▾</span></div>
+            <div class="tmeta">領頭 MU -15.1% · 首見 2026-07-14</div>
             <div class="tnote">熱度未起、個股未確認</div>
-          </div></div>
+          </div></summary>
+              <div class="thstocks"><div class="thstk"><span class="thid">8299</span><span class="thname">群聯</span><span class="pur lo">分散</span><span class="thnote">NAND控制器，HBM待確認</span></div><div class="thstk pure"><span class="thid">2408</span><span class="thname">南亞科</span><span class="pur lo">分散</span><span class="puresttag">最純</span><span class="thnote">DRAM主業，HBM待確認</span></div><div class="thstk"><span class="thid">2344</span><span class="thname">華邦電</span><span class="pur lo">分散</span><span class="thnote">利基記憶體，非HBM主線</span></div></div></details>
       <div class="say"><span class="who">團隊觀點 · 主題</span><p>本期主題雷達『無成案』——6 個候選主題的熱度不是降溫就是個股未確認，呼應這週的半導體修正。矽光子／CPO 新聞聲量大降（近月 −49%）、領頭股 COHR 重挫近 25%，題材明顯退燒；資料中心液冷熱度微升（+3%）但領頭股與台股個股尚未跟上。這正是紀律所在：沒有『熱度上升＋個股確認』的雙重訊號，就全部列觀察、不硬推、不追高。等哪個主題出現『聲量回升＋領頭股轉強＋台股營收／法人確認』，才會升為成案、進入進場名單。</p></div>
     </div>
   </details>
