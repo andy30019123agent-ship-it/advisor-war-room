@@ -1,31 +1,57 @@
 """一週兩次 top-down 戰情週報產生器：大盤→類股→個股→事件。
 即時抓 market/sectors，讀個股引擎 JSON ＋ 我手寫的 weekly_narration.json → 產 reports/weekly.html。
-白底柔和 neumorphism、可點擊開合。真實資料。
+Neumorphism 柔白＋淡粉版（MASTER.md 為唯一設計權威）。真實資料，非示意。
+
+渲染是純函式：render_weekly_html(ctx) 只吃 dict、回字串，
+無網路、無 assert，可離線測試。build() 負責抓網路資料＋一致性 assert＋落檔的既有流程。
 """
-import json, os, html
+import json
+import os
 from datetime import datetime, timezone, timedelta
+
+from warroom import render_common as rc
 from warroom.market import fetch_market
 from warroom.sectors import fetch_sectors, fetch_tw_sectors
 
 TPE = timezone(timedelta(hours=8))
-LIGHT = {"green": ("g", "🟢", "偏多"), "amber": ("y", "🟡", "中性"), "red": ("r", "🔴", "偏空")}
-DIRW = {"g": "var(--up)", "y": "var(--warn)", "r": "var(--down)"}
+LIGHT = {"green": ("g", "偏多"), "amber": ("y", "中性"), "red": ("r", "偏空")}
+RATING_CLS = {"買進": "up", "試單": "up", "續抱": "up", "觀望": "muted", "減碼": "down"}
+TIER_ZH = {"lead": ("領先", "up"), "mid": ("中性", "muted"), "lag": ("落後", "down")}
+PUR_CLS = {"純": "hi", "中": "mid", "分散": "lo"}
 
 
-def esc(s): return html.escape(str(s))
+def chg_cls(wk):
+    """漲用 up、跌用 down、平用 muted（綠漲紅跌固定，不得翻轉）。"""
+    return "up" if (wk or 0) > 0 else "down" if (wk or 0) < 0 else "muted"
 
 
-def chg_cls(wk): return "up" if (wk or 0) > 0 else "down" if (wk or 0) < 0 else "muted"
+def _pct(x, digits=1):
+    return f'{x:+.{digits}f}%' if x is not None else "—"
+
+
+def _n1(x):
+    if x is None:
+        return "—"
+    return "{:.1f}".format(x)
+
+
+def _pill(container_cls, cls, label):
+    """粉白 neu 底 + 內層語意色文字（container 本身不承載色彩，避免 CSS 特異度覆蓋問題）。"""
+    return f'<span class="{container_cls}"><span class="{cls}">{rc.esc(label)}</span></span>'
 
 
 def index_grid(items):
+    """大盤層格線（加權/櫃買）：沿用 render_common 的 .kpi 卡片元件。"""
     cells = ""
     for i in items:
-        wk = i["wk"]
-        chg = f'{wk:+.1f}%' if wk is not None else "—"
-        cells += f'''<div class="cell"><div class="lab"><span class="tl {i['dot']}"></span>{esc(i['name'])}</div>
-          <div class="v">{esc(i['value'])}</div><div class="chg {chg_cls(wk)}">{chg} · 週</div></div>'''
-    return f'<div class="grid">{cells}</div>'
+        wk = i.get("wk")
+        cells += (
+            '<div class="kpi"><small><span class="dot ' + rc.esc(i.get("dot", "y"))
+            + '"></span> ' + rc.esc(i["name"]) + '</small>'
+            '<strong class="num">' + rc.esc(i["value"]) + '</strong>'
+            '<small class="' + chg_cls(wk) + '">' + _pct(wk) + ' · 週</small></div>'
+        )
+    return '<div class="kpis">' + cells + '</div>'
 
 
 def market_strip(items):
@@ -33,95 +59,288 @@ def market_strip(items):
     chips = ""
     for i in items:
         wk = i.get("wk")
-        pct = f'{wk:+.1f}%' if wk is not None else "—"
-        chips += (f'<span class="mchip"><span class="tl {i["dot"]}"></span>'
-                  f'<b>{esc(i["name"])}</b><span class="{chg_cls(wk)}">{pct}</span></span>')
-    return (f'<div class="mktstrip"><div class="mstitle">台美大盤現況 · 週變化</div>'
-            f'<div class="mchips">{chips}</div></div>')
+        chips += (
+            '<span class="tag"><span class="dot ' + rc.esc(i.get("dot", "y")) + '"></span> '
+            + rc.esc(i["name"]) + ' <span class="' + chg_cls(wk) + ' num">' + _pct(wk) + '</span></span>'
+        )
+    return '<div class="tags">' + chips + '</div>'
 
 
 def sector_rows(sectors):
-    tierzh = {"lead": ("領先", "att"), "mid": ("中性", "hold"), "lag": ("落後", "avoid")}
+    """美股族群動能排名（可展開對應台股供應鏈）。"""
     rows = ""
     for r in sectors:
-        zh, cls = tierzh[r["tier"]]
-        m5 = f'{r["m5"]:+.1f}%' if r["m5"] is not None else "—"
-        m20 = f'{r["m20"]:+.1f}%' if r.get("m20") is not None else "—"
-        rows += f'''<details class="srow"><summary>
-            <span class="sname">{esc(r['group'])} <span class="etf">{esc(r['etf'])}</span></span>
-            <span class="schg {chg_cls(r['m5'])}">{m5}</span><span class="tag {cls}">{zh}</span></summary>
-          <div class="sdetail"><span>近5日 <b>{m5}</b></span><span>近20日 <b>{m20}</b></span>
-            <span>美股代表 <b>{esc(r['us_names'])}</b></span><span style="flex-basis:100%">→ 台股對應：{esc(r['tw'])}</span></div></details>'''
+        zh, cls = TIER_ZH.get(r.get("tier"), ("中性", "muted"))
+        m5, m20 = _pct(r.get("m5")), _pct(r.get("m20"))
+        rows += (
+            '<details><summary><span>' + rc.esc(r["group"])
+            + ' <span class="muted num">' + rc.esc(r["etf"]) + '</span></span>'
+            + _pill("tag", cls, zh) + rc.icon("i-chevron") + '</summary>'
+            '<div class="details-body">'
+            f'<span>近5日 <b class="num {chg_cls(r.get("m5"))}">{m5}</b></span>'
+            f'<span>近20日 <b class="num {chg_cls(r.get("m20"))}">{m20}</b></span>'
+            f'<span>美股代表 <b>{rc.esc(r["us_names"])}</b></span>'
+            f'<span>→ 台股對應：{rc.esc(r["tw"])}</span>'
+            '</div></details>'
+        )
     return rows
 
 
-PUR_CLS = {"純": "hi", "中": "mid", "分散": "lo"}
+def tw_sector_rows(tw_sec):
+    """台股類股輪動真實強度區（data/tw_sectors.json）：依 score／rank 排序展示。"""
+    if not tw_sec:
+        return '<p class="muted">（台股類股輪動本次無資料）</p>'
+    rows = ""
+    for r in sorted(tw_sec, key=lambda x: x.get("rank") if x.get("rank") is not None else 999):
+        zh, cls = TIER_ZH.get(r.get("tier"), ("中性", "muted"))
+        m5, m20 = _pct(r.get("m5")), _pct(r.get("m20"))
+        vol = r.get("vol_expansion")
+        vol_txt = f'{vol:.2f}x' if vol is not None else "—"
+        rs = r.get("rs_vs_twii")
+        rs_txt = f'{rs:+.1f}' if rs is not None else "—"
+        rows += (
+            '<details><summary><span>' + rc.esc(r["group"]) + '</span>'
+            + _pill("tag", cls, zh) + rc.icon("i-chevron") + '</summary>'
+            '<div class="details-body">'
+            f'<span>近5日 <b class="num {chg_cls(r.get("m5"))}">{m5}</b></span>'
+            f'<span>近20日 <b class="num {chg_cls(r.get("m20"))}">{m20}</b></span>'
+            f'<span>量能 <b class="num">{vol_txt}</b></span>'
+            f'<span>RS 強度 <b class="num">{rs_txt}</b></span>'
+            '</div></details>'
+        )
+    return rows
 
 
 def _theme_stock_list(stocks):
     rows = ""
     for s in stocks:
         pur = PUR_CLS.get(s.get("purity", ""), "mid")
-        pure = '<span class="puresttag">最純</span>' if s.get("purest") else ""
-        rows += (f'<div class="thstk{" pure" if s.get("purest") else ""}">'
-                 f'<span class="thid">{esc(s.get("id","—"))}</span>'
-                 f'<span class="thname">{esc(s.get("name",""))}</span>'
-                 f'<span class="pur {pur}">{esc(s.get("purity","—"))}</span>{pure}'
-                 f'<span class="thnote">{esc(s.get("note",""))}</span></div>')
+        pure = '<span class="tag"><span class="up">最純</span></span>' if s.get("purest") else ""
+        rows += (
+            '<div class="flat"><span class="num muted">' + rc.esc(s.get("id", "—")) + '</span> '
+            + rc.esc(s.get("name", "")) + f' <span class="tag"><span class="{pur}">'
+            + rc.esc(s.get("purity", "—")) + '</span></span>' + pure
+            + f'<p class="source">{rc.esc(s.get("note", ""))}</p></div>'
+        )
     return rows
 
 
 def theme_rows(themes, theme_stocks=None):
+    """主題雷達：熱度×領頭股動能×台股個股確認才『成案』。"""
     theme_stocks = theme_stocks or {}
-    st = {"成案": ("on", "成案"), "觀察": ("watch", "觀察")}
+    st = {"成案": "up", "觀察": "muted"}
     rows = ""
     for t in themes:
-        cls, zh = st.get(t["status"], ("watch", "觀察"))
+        cls = st.get(t["status"], "muted")
         heat = f'{t["heat"]:+.0%}' if t.get("heat") is not None else "—"
         mom = f'{t["mom"]:+.1f}%' if t.get("mom") is not None else "—"
         stocks = theme_stocks.get(t["name"])
-        head = f'''<div class="heat"><div class="z">{heat}</div><div class="zl">熱度趨勢</div></div>
-          <div style="flex:1;min-width:0">
-            <div class="tn">{esc(t['name'])}<span class="status {cls}">{zh}</span>{'<span class="thexp">個股 ▾</span>' if stocks else ''}</div>
-            <div class="tmeta">領頭 {esc(t['lead'])} {mom} · 首見 {esc(t.get('first_seen',''))}</div>
-            <div class="tnote">{esc(t['reason'])}</div>
-          </div>'''
+        head = f'<h3>{rc.esc(t["name"])}</h3>' + _pill("tag", cls, t["status"])
+        meta = (
+            f'<p class="source">熱度 <span class="num">{heat}</span> · 領頭 {rc.esc(t["lead"])} {mom} · '
+            f'首見 {rc.esc(t.get("first_seen", ""))}</p>'
+            f'<p class="reason">{rc.esc(t["reason"])}</p>'
+        )
         if stocks:
-            rows += f'''<details class="theme"><summary class="thsum">{head}</summary>
-              <div class="thstocks">{_theme_stock_list(stocks)}</div></details>'''
+            rows += (
+                '<details><summary><span class="light-head">' + head + '</span>'
+                + rc.icon("i-chevron") + '</summary>'
+                '<div class="details-body">' + meta + _theme_stock_list(stocks) + '</div></details>'
+            )
         else:
-            rows += f'<div class="theme">{head}</div>'
+            rows += '<div class="card"><div class="light-head">' + head + '</div>' + meta + '</div>'
     return rows
 
 
 def stock_card(sid, data, one_liner):
+    """個股 · 本期名單（03 層，展開細節）：沿用 summary/紅綠燈點/理由。"""
     s = data["summary"]
     lights = [data["fundamental"]["light"], data["technical"]["light"], data["chips"]["light"]]
-    dircode = "g" if s["score"] > 0.3 else "r" if s["score"] < -0.3 else "y"
-    dots = "".join(f'<span class="tl {LIGHT[l][0]}"></span>' for l in lights)
+    dircode = "green" if s["score"] > 0.3 else "red" if s["score"] < -0.3 else "amber"
+    verdict_cls = "up" if dircode == "green" else "down" if dircode == "red" else "muted"
+    dots = "".join(f'<span class="dot {rc.traffic(l)[0]}"></span>' for l in lights)
     evs = ""
     for key, zh in [("fundamental", "基本面"), ("technical", "技術面"), ("chips", "消息/籌碼")]:
         b = data[key]
-        evs += f'<div class="mini"><span class="tl {LIGHT[b["light"]][0]}"></span>{zh} {LIGHT[b["light"]][2]}</div>'
+        cls, lzh = rc.traffic(b["light"])
+        evs += f'<span><span class="dot {cls}"></span> {zh} {lzh}</span>'
     tev = data.get("technical", {}).get("ev", {})
     buy, res = tev.get("買入參考區"), tev.get("壓力參考位")
     lvls = ""
     if buy or res:
-        lvls = (f'<div class="lvls">'
-                f'<span class="lvl"><i>買入參考區</i>{esc(buy or "—")}</span>'
-                f'<span class="lvl"><i>壓力參考位</i>{esc(res or "—")}</span></div>')
-    return f'''<details class="stk">
-      <summary>
-        <div><span class="name">{esc(data['name'])}</span><span class="tick">{esc(sid)}</span>
-          <div class="sublight">{dots}</div></div>
-        <span class="verdict" style="color:{DIRW[dircode]};background:var(--{'up' if dircode=='g' else 'down' if dircode=='r' else 'neu'}-bg)">{esc(s['direction'])}</span>
-      </summary>
-      <div class="stkbody">
-        <div class="lights">{evs}</div>
-        {lvls}
-        <p class="reason">{esc(one_liner)}</p>
-        <div class="meta2">加權分 {s['score']} · 信心 {esc(s['confidence'])} · 技術位為規則參考非買賣建議</div>
-      </div></details>'''
+        lvls = (
+            '<div class="tags">'
+            f'<span class="tag">買入參考區 {rc.esc(buy or "—")}</span>'
+            f'<span class="tag">壓力參考位 {rc.esc(res or "—")}</span></div>'
+        )
+    return (
+        '<details><summary>'
+        f'<span>{rc.esc(data["name"])} <span class="muted num">{rc.esc(sid)}</span> {dots}</span>'
+        + _pill("chip", verdict_cls, s["direction"]) + rc.icon("i-chevron") + '</summary>'
+        '<div class="details-body">'
+        f'<div class="evidence">{evs}</div>{lvls}'
+        f'<p class="reason">{rc.esc(one_liner)}</p>'
+        f'<p class="source">加權分 {s["score"]} · 信心 {rc.esc(s["confidence"])} · 技術位為規則參考非買賣建議</p>'
+        '</div></details>'
+    )
+
+
+def stock_mini_card(sid, data, one_liner):
+    """首屏個股決策卡縮影：代號名稱、rating、信心、防守、觸發、一句話。只讀引擎，不需個股 narration。"""
+    dec = data.get("decision", {}) or {}
+    rating = dec.get("rating", "—")
+    ccls = RATING_CLS.get(rating, "muted")
+    conf = (dec.get("confidence") or {}).get("total", 0)
+    stop_price = (dec.get("stop") or {}).get("price")
+    breakout = (dec.get("entry") or {}).get("breakout", "") or ""
+    return (
+        '<article class="card">'
+        '<div class="light-head">'
+        f'<h3>{rc.esc(data.get("name", ""))} <span class="muted num">{rc.esc(sid)}</span></h3>'
+        + _pill("chip", ccls, rating) +
+        '</div>'
+        '<div class="kpis">'
+        f'<div class="kpi"><small>信心</small><strong class="num">{conf}</strong></div>'
+        f'<div class="kpi"><small>防守</small><strong class="num">{_n1(stop_price)}</strong></div>'
+        f'<div class="kpi"><small>觸發</small><strong>{rc.esc(breakout)}</strong></div>'
+        '</div>'
+        f'<p class="reason">{rc.esc(one_liner)}</p>'
+        '</article>'
+    )
+
+
+def _events_body(n, events_json):
+    """05 事件層：優先手寫 n["events"]，附 events.json 未來 7 天法說。"""
+    rows = "".join(
+        '<div class="event">'
+        f'<span class="date">{rc.esc(e["d"])}</span>'
+        f'<b>{rc.esc(e["t"])}</b><span class="muted">{rc.esc(e["m"])}</span>'
+        '</div>'
+        for e in n.get("events", [])
+    )
+    upcoming = ""
+    if events_json:
+        conf_events = [
+            e for e in events_json.get("events", [])
+            if (e.get("days_ahead") is not None and e.get("days_ahead") <= 7) and e.get("type") == "法說會"
+        ]
+        if conf_events:
+            items = "".join(
+                '<div class="event">'
+                f'<span class="date">{rc.esc(e.get("date", ""))}（+{e.get("days_ahead", 0)} 天）</span>'
+                f'<b>{rc.esc(e.get("name", ""))}</b><span class="muted">{rc.esc(e.get("detail", ""))}</span>'
+                '</div>'
+                for e in conf_events[:8]
+            )
+            upcoming = f'<p class="source">未來 7 天法說</p><div class="grid two">{items}</div>'
+    return rows + upcoming
+
+
+def render_weekly_html(ctx):
+    """純函式：組週報 HTML。ctx = {"n","market","us_sectors","tw_sectors","stocks","events_json"}
+    （另可選填 "themes"/"theme_stocks" 供 04 主題層，build() 會補上；ctx 未給時該層顯示空）。"""
+    n = ctx["n"]
+    m = ctx["market"]
+    us_sec = ctx.get("us_sectors") or []
+    tw_sec = ctx.get("tw_sectors") or []
+    stocks = ctx.get("stocks") or {}
+    events_json = ctx.get("events_json")
+    themes = ctx.get("themes") or []
+    theme_stocks = ctx.get("theme_stocks") or {}
+
+    code, zh = LIGHT.get(m.get("light"), ("y", "中性"))
+    risk = n.get("risk_temp", 0)
+    risk_pct = risk * 10
+
+    foreign_html = ""
+    if m.get("foreign"):
+        net = m["foreign"]["net_yi"]
+        foreign_html = (
+            '<div class="kpi"><small>外資買賣超</small>'
+            f'<strong class="num {chg_cls(net)}">{net:+,.0f} 億</strong>'
+            f'<small>{rc.esc(m["foreign"].get("date", ""))}</small></div>'
+        )
+
+    stock_sids = [sid for sid in n.get("stocks", {}) if sid in stocks]
+    mini_cards = "".join(stock_mini_card(sid, stocks[sid], n["stocks"][sid]) for sid in stock_sids)
+    stock_cards = "".join(stock_card(sid, stocks[sid], n["stocks"][sid]) for sid in stock_sids)
+
+    gen = datetime.now(TPE).strftime("%Y-%m-%d %H:%M")
+
+    return (
+        rc.head(f'戰情週報 {n.get("period", "")} · 專屬投顧戰情室')
+        + '<div class="page">'
+        + '<div class="topbar"><span class="brand">' + rc.icon("i-chart") + 'Advisor War Room</span>'
+        + '<span>真實資料 · FinMind × TWSE × yfinance × Google News · 資料日 '
+        + rc.esc(n.get("asof", "")) + '</span></div>'
+        + '<header class="hero"><div>'
+        + f'<h1>戰情週報 {rc.esc(n.get("period", ""))}</h1>'
+        + f'<p class="lead">一週兩次 · 產出 {rc.esc(gen)}（台北）</p>'
+        + '</div></header>'
+
+        # 首屏主卡：決策 + 大盤溫度儀表
+        + '<section class="card decision weekly" aria-labelledby="weekly-title">'
+        + '<div class="decision-grid"><div>'
+        + '<span class="eyebrow">本週研判 · 首屏優先</span>'
+        + f'<h2 id="weekly-title" class="rating">{rc.esc(n.get("direction", ""))}</h2>'
+        + f'<p class="reason">{rc.esc(n.get("chief", ""))}</p>'
+        + '</div>'
+        + f'<div class="confidence" style="--p:{risk_pct}%"><div><b>{rc.esc(risk)}</b>'
+        + '<span>風險溫度 / 10</span></div></div>'
+        + '</div>'
+        + '<div class="kpis">'
+        + f'<div class="kpi"><small>建議股票曝險</small><strong>{rc.esc(n.get("exposure", ""))}</strong></div>'
+        + f'<div class="kpi"><small>大盤環境</small><strong><span class="dot {code}"></span> {zh}</strong></div>'
+        + f'<div class="kpi"><small>本週信心</small><strong>{rc.esc(n.get("confidence", ""))}</strong></div>'
+        + '</div></section>'
+
+        # 個股決策卡縮影
+        + '<section id="mini-stocks">' + rc.section_head("i-check", "個股決策卡縮影")
+        + '<div class="grid two">' + mini_cards + '</div></section>'
+
+        # 01 大盤
+        + '<details open><summary>01 · 大盤 · 環境溫度' + rc.icon("i-chevron") + '</summary>'
+        + '<div class="details-body">' + index_grid(m.get("items", [])) + foreign_html
+        + f'<p class="source">{rc.esc(n.get("market", ""))}</p>'
+        + '</div></details>'
+
+        # 02 類股（美股族群 + 台股類股輪動真實強度）
+        + '<details open><summary>02 · 類股 · 資金往哪流' + rc.icon("i-chevron") + '</summary>'
+        + '<div class="details-body">'
+        + market_strip(m.get("items", []))
+        + '<h3>美股族群動能排名（點列展開對應台股供應鏈）</h3>'
+        + sector_rows(us_sec)
+        + '<h3>台股類股輪動 · 真實強度</h3>'
+        + tw_sector_rows(tw_sec)
+        + f'<p class="source">{rc.esc(n.get("sector", ""))}</p>'
+        + '</div></details>'
+
+        # 03 個股名單
+        + '<details open><summary>03 · 個股 · 本期名單' + rc.icon("i-chevron") + '</summary>'
+        + '<div class="details-body">' + stock_cards
+        + '<p class="source">＊來源：選股器機會清單，經團隊三維研判。說「研究 XXXX」可產完整單檔報告。</p>'
+        + '</div></details>'
+
+        # 04 主題雷達
+        + '<details><summary>04 · 主題雷達 · 看未來' + rc.icon("i-chevron") + '</summary>'
+        + '<div class="details-body">'
+        + '<p class="source">新技術／話題發掘 · 熱度上升＋個股確認才「成案」，只有噪音的僅進觀察</p>'
+        + theme_rows(themes, theme_stocks)
+        + f'<p class="source">{rc.esc(n.get("theme", ""))}</p>'
+        + '</div></details>'
+
+        # 05 事件
+        + '<details><summary>05 · 本期關鍵事件' + rc.icon("i-chevron") + '</summary>'
+        + '<div class="details-body grid two">' + _events_body(n, events_json) + '</div></details>'
+
+        + rc.disclaimer(
+            "紅綠燈由「數據＋固定規則」計算，團隊觀點由分析師解讀與反駁，不憑感覺喊買賣。"
+            "跨市場輪動只用「昨晚美股已收盤」資料。",
+            "<b>本報告為投資決策輔助，非投資建議、非保證獲利，最終決策與風險由使用者承擔。</b>"
+            "資料來源與時間如上；抓不到即註記缺漏、絕不編造。",
+        )
+        + "</div>"
+    )
 
 
 def build():
@@ -140,311 +359,25 @@ def build():
     from warroom.consistency import check_weekly_consistency, assert_consistent
     assert_consistent(check_weekly_consistency(stocks, n), "週報")
 
-    code, emo, zh = LIGHT[m["light"]]
-    foreign = ""
-    if m.get("foreign"):
-        net = m["foreign"]["net_yi"]
-        fdot = "g" if net > 0 else "r" if net < 0 else "y"
-        fcls = "up" if net > 0 else "down" if net < 0 else "muted"
-        foreign = f'<div class="cell"><div class="lab"><span class="tl {fdot}"></span>外資買賣超</div><div class="v">{net:+,.0f} 億</div><div class="chg {fcls}">{esc(m["foreign"]["date"])}</div></div>'
-
-    stock_cards = "".join(stock_card(sid, stocks[sid], n["stocks"][sid]) for sid in stocks if sid in stocks)
-    themes = json.load(open("data/themes.json", encoding="utf-8")) if os.path.exists("data/themes.json") else []
-    theme_stocks = json.load(open("data/theme_stocks.json", encoding="utf-8")) if os.path.exists("data/theme_stocks.json") else {}
-    events = "".join(f'<div class="ev"><div class="d">{esc(e["d"])}</div><div class="et"><b>{esc(e["t"])}</b><div class="mm">{esc(e["m"])}</div></div></div>' for e in n["events"])
-    gen = datetime.now(TPE).strftime("%Y-%m-%d %H:%M")
-
     try:
         with open("data/tw_sectors.json", "w", encoding="utf-8") as f:
             json.dump(tw_sec, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
 
-    return TEMPLATE.format(
-        period=esc(n["period"]), asof=esc(n["asof"]), gen=esc(gen),
-        chief=esc(n["chief"]), direction=esc(n["direction"]), exposure=esc(n["exposure"]),
-        conf=esc(n["confidence"]), risk=n["risk_temp"], risk_pct=n["risk_temp"] * 10,
-        mkt_emo=emo, mkt_zh=zh, mkt_code=code,
-        grid=index_grid(m["items"]) , foreign=foreign, market_say=esc(n["market"]),
-        mktstrip=market_strip(m["items"]),
-        sectors=sector_rows(sec), sector_say=esc(n["sector"]),
-        stocks=stock_cards, themes=theme_rows(themes, theme_stocks), theme_say=esc(n.get("theme", "")), events=events,
-    )
+    themes = json.load(open("data/themes.json", encoding="utf-8")) if os.path.exists("data/themes.json") else []
+    theme_stocks = (json.load(open("data/theme_stocks.json", encoding="utf-8"))
+                     if os.path.exists("data/theme_stocks.json") else {})
+    events_json = None
+    if os.path.exists("data/events.json"):
+        events_json = json.load(open("data/events.json", encoding="utf-8"))
 
-
-TEMPLATE = r"""<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>戰情週報 {period} · 專屬投顧戰情室</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-
-:root {{
-  --paper:#EFF2EA; --paper2:#E4EADF; --surface:#FBFDF7; --surface2:#F5F8F0;
-  --ink:#151713; --ink2:#30362C; --muted:#65705F; --faint:#647059;
-  --rule:#D8E0D1; --rule-dk:#AEB9A5; --ox:#A85C3A; --ox2:#6E3D2B;
-  --accent:#1A1D14; --acid:#C7F04A; --acid2:#E9FF9D;
-  --up:#167A54; --up-bg:#E2F4EB; --down:#B64238; --down-bg:#F8E4E0;
-  --warn:#8A5A14; --warn-bg:#F7EBCF; --neu:#5E6758; --neu-bg:#ECEFE6;
-  --disp:'Space Grotesk','IBM Plex Sans TC','PingFang TC','Noto Sans TC',sans-serif;
-  --text:'IBM Plex Sans TC','PingFang TC','Noto Sans TC',system-ui,sans-serif;
-  --mono:'Space Grotesk','SF Mono',ui-monospace,Menlo,monospace;
-}}
-* {{ box-sizing:border-box; }}
-html {{ background:var(--paper); }}
-body {{
-  margin:0; min-height:100vh; color:var(--ink2); font-family:var(--text);
-  font-size:16px; line-height:1.68; letter-spacing:0; background:var(--paper);
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}}
-body::before {{
-  content:""; position:fixed; inset:0 0 auto; height:8px; z-index:0; pointer-events:none;
-  background:linear-gradient(90deg,var(--acid) 0 22%,var(--ox) 22% 34%,var(--accent) 34% 100%);
-}}
-.wrap {{ position:relative; z-index:1; max-width:860px; margin:0 auto; padding:48px 28px 92px; }}
-.up {{ color:var(--up); }} .down {{ color:var(--down); }} .muted {{ color:var(--muted); }} .warn {{ color:var(--warn); }}
-
-.smcap,.chieftag,.cell .lab,.kpi .t,.meterlab,.say .who,.meta2 {{
-  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-}}
-.real {{
-  display:inline-flex; align-items:center; gap:9px; max-width:100%; color:var(--ink2);
-  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em;
-  padding:7px 10px; border:1px solid var(--rule-dk); border-radius:999px; background:rgba(251,253,247,.64);
-}}
-.real::before {{ content:""; width:7px; height:7px; border-radius:50%; background:var(--acid); box-shadow:0 0 0 3px rgba(199,240,74,.22); }}
-.eyebrow {{ margin-top:26px; color:var(--ox2); font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.05em; }}
-h1 {{
-  margin:10px 0 0; color:var(--ink); font-family:var(--disp); font-size:56px; line-height:.98;
-  font-weight:700; letter-spacing:-.03em; text-wrap:balance;
-}}
-.meta {{ margin-top:16px; color:var(--muted); font-size:13px; font-family:var(--mono); letter-spacing:.02em; }}
-
-.card {{
-  position:relative; overflow:hidden; margin-top:30px; padding:28px; border-radius:8px;
-  color:#EEF4E8; background:var(--accent); box-shadow:0 14px 34px rgba(21,23,19,.18);
-}}
-.card::before {{ content:""; position:absolute; inset:0 0 auto; height:5px; background:linear-gradient(90deg,var(--acid),var(--ox)); }}
-.chieftag {{ color:var(--acid2); }}
-.dir {{ margin:13px 0 0; color:#FBFDF7; font-family:var(--disp); font-size:34px; line-height:1.16; font-weight:700; letter-spacing:-.025em; text-wrap:balance; }}
-.chief {{ max-width:70ch; margin:16px 0 0; color:#DDE6D5; font-size:16px; line-height:1.78; }}
-.kpis {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:24px; }}
-.kpi {{ min-width:0; padding:14px; border-radius:8px; background:rgba(251,253,247,.08); }}
-.kpi .t {{ color:#AEBBA5; }}
-.kpi .b {{ display:flex; align-items:center; gap:8px; margin-top:7px; color:#FBFDF7; font-family:var(--disp); font-size:20px; font-weight:700; line-height:1.15; }}
-.meterwrap {{ margin-top:20px; padding-top:4px; }}
-.meterlab {{ display:flex; justify-content:space-between; margin-bottom:9px; color:#AEBBA5; }}
-.num,.v,.chg,.schg {{ font-family:var(--mono); font-variant-numeric:tabular-nums; }}
-.meterwrap .num,.meterlab .num {{ color:#FBFDF7; }}
-.meter {{ position:relative; height:8px; border-radius:999px; background:linear-gradient(90deg,var(--up),var(--warn),var(--down)); }}
-.meter i {{ position:absolute; top:-6px; width:4px; height:20px; border-radius:999px; background:#FBFDF7; box-shadow:0 0 0 2px rgba(21,23,19,.5); }}
-
-details {{ border:0; }}
-.wrap > details {{
-  margin-top:18px; border:1px solid var(--rule); border-radius:8px; overflow:hidden; background:var(--surface);
-}}
-summary {{ list-style:none; cursor:pointer; user-select:none; transition:background .2s ease,color .2s ease; }}
-summary::-webkit-details-marker {{ display:none; }}
-summary:focus-visible {{ outline:3px solid color-mix(in srgb,var(--acid) 70%,transparent); outline-offset:3px; border-radius:8px; }}
-.wrap > details > summary {{ display:flex; align-items:center; gap:14px; padding:18px 18px; }}
-.wrap > details > summary:hover {{ background:var(--surface2); }}
-.layerno {{
-  display:grid; place-items:center; flex:none; width:42px; height:34px; border-radius:8px;
-  color:var(--accent); background:var(--acid); font-family:var(--mono); font-size:16px; font-weight:700; line-height:1;
-}}
-summary h2 {{ min-width:0; margin:0; color:var(--ink); font-family:var(--disp); font-size:23px; line-height:1.18; font-weight:700; letter-spacing:-.02em; text-wrap:balance; }}
-summary .lgt {{ margin-left:auto; display:inline-flex; align-items:center; gap:8px; color:var(--muted); font-family:var(--mono); font-size:12px; font-weight:700; white-space:nowrap; }}
-.lgt .tl,.kpi .b .tl {{ width:9px; height:9px; }}
-.chev {{ flex:none; width:20px; height:20px; color:var(--muted); transition:transform .22s cubic-bezier(.2,.8,.2,1), color .2s ease; }}
-details[open] > summary .chev {{ transform:rotate(180deg); color:var(--ink); }}
-.inner {{ padding:0 18px 22px; }}
-
-.grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }}
-.cell {{ min-width:0; padding:15px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); }}
-.cell .lab {{ display:flex; align-items:center; gap:8px; color:var(--muted); line-height:1.35; }}
-.cell .v {{ margin-top:8px; color:var(--ink); font-size:24px; font-weight:700; line-height:1.08; }}
-.cell .chg {{ margin-top:6px; font-size:13px; font-weight:700; }}
-.tl {{ display:inline-block; flex:none; width:8px; height:8px; border-radius:50%; }}
-.tl.g {{ background:var(--up); box-shadow:0 0 0 3px rgba(22,122,84,.12); }}
-.tl.y {{ background:var(--warn); box-shadow:0 0 0 3px rgba(154,104,24,.13); }}
-.tl.r {{ background:var(--down); box-shadow:0 0 0 3px rgba(182,66,56,.12); }}
-
-.say {{ margin-top:18px; padding:16px 17px; border:1px solid var(--rule-dk); border-radius:8px; background:#F7FAF1; }}
-.say .who {{ display:block; margin-bottom:8px; color:var(--ox2); }}
-.say p {{ margin:0; color:var(--ink); font-size:16px; line-height:1.78; text-wrap:pretty; }}
-
-.srow,.stk {{ border-top:1px solid var(--rule); }}
-.srow:first-of-type,.stk:first-of-type {{ margin-top:10px; }}
-.srow > summary,.stk > summary {{ display:flex; align-items:center; gap:13px; padding:15px 2px; }}
-.srow > summary:hover,.stk > summary:hover {{ background:linear-gradient(90deg,rgba(199,240,74,.10),transparent); }}
-.srow .sname {{ min-width:0; color:var(--ink); font-size:16px; font-weight:700; }}
-.srow .etf,.stk .tick {{ color:var(--faint); font-family:var(--mono); font-size:12px; font-weight:700; }}
-.srow .schg {{ margin-left:auto; font-size:15px; font-weight:700; }}
-.srow .sdetail {{ display:flex; flex-wrap:wrap; gap:7px 18px; padding:0 2px 16px; color:var(--muted); font-size:13px; line-height:1.6; }}
-.srow .sdetail b {{ color:var(--ink); font-family:var(--mono); font-weight:700; }}
-.tag,.status {{
-  display:inline-flex; align-items:center; min-height:24px; padding:3px 9px; border-radius:999px;
-  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-}}
-.tag.att,.status.on {{ color:var(--up); background:var(--up-bg); }}
-.tag.hold,.status.watch {{ color:var(--warn); background:var(--warn-bg); }}
-.tag.avoid {{ color:var(--down); background:var(--down-bg); }}
-.tag.watch {{ color:var(--neu); background:var(--neu-bg); }}
-
-.stk .name {{ color:var(--ink); font-size:17px; font-weight:700; }}
-.stk .tick {{ margin-left:8px; }}
-.stk .sublight {{ display:flex; gap:7px; margin-top:9px; }}
-.verdict {{
-  margin-left:auto; flex:none; align-self:center; padding:5px 10px; border-radius:999px;
-  border:1px solid color-mix(in srgb,currentColor 28%,transparent);
-  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; white-space:nowrap;
-}}
-.stkbody {{ padding:0 2px 17px; }}
-.lights {{ display:flex; flex-wrap:wrap; gap:10px 16px; margin:1px 0 13px; }}
-.mini {{ display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; }}
-.reason {{ margin:0 0 10px; color:var(--ink2); font-size:15px; line-height:1.75; text-wrap:pretty; }}
-.meta2 {{ color:var(--faint); }}
-.lvls {{ display:flex; flex-wrap:wrap; gap:9px; margin:2px 0 12px; }}
-.lvl {{ display:inline-flex; flex-direction:column; gap:3px; padding:9px 13px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); font-family:var(--mono); font-size:13px; color:var(--ink); font-weight:600; }}
-.lvl i {{ font-style:normal; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700; }}
-
-.theme {{ display:flex; gap:16px; padding:18px 0; border-bottom:1px solid var(--rule); }}
-.theme:last-child {{ border-bottom:0; }}
-.theme .heat {{ flex:none; width:72px; padding:10px 8px; border-radius:8px; color:var(--accent); background:var(--acid); text-align:center; }}
-.theme .heat .z {{ font-family:var(--mono); font-size:18px; font-weight:700; line-height:1; }}
-.theme .heat .zl {{ margin-top:5px; font-family:var(--mono); color:#465023; font-size:10px; font-weight:700; letter-spacing:.03em; }}
-.theme .tn {{ display:flex; align-items:center; flex-wrap:wrap; gap:9px; color:var(--ink); font-size:17px; font-weight:700; }}
-.theme .tmeta {{ margin-top:6px; color:var(--muted); font-family:var(--mono); font-size:12px; line-height:1.55; }}
-.theme .tnote {{ margin-top:8px; color:var(--ink2); font-size:14px; line-height:1.7; }}
-details.theme {{ display:block; }}
-.theme summary.thsum {{ display:flex; gap:16px; list-style:none; cursor:pointer; }}
-.theme summary.thsum::-webkit-details-marker {{ display:none; }}
-.theme summary.thsum:focus-visible {{ outline:2px solid var(--ox); outline-offset:3px; }}
-.thexp {{ font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.05em; color:var(--ox2); padding:2px 8px; border:1px solid var(--rule-dk); border-radius:999px; }}
-details.theme[open] .thexp {{ color:var(--accent); background:var(--acid); border-color:var(--acid); }}
-.thstocks {{ display:flex; flex-direction:column; gap:8px; padding:6px 0 16px 88px; }}
-.thstk {{ display:flex; align-items:baseline; flex-wrap:wrap; gap:8px; padding:10px 13px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); }}
-.thstk.pure {{ border-color:var(--acid); background:#F4FBE4; }}
-.thid {{ font-family:var(--mono); font-size:12px; font-weight:700; color:var(--muted); }}
-.thname {{ font-size:15px; font-weight:700; color:var(--ink); }}
-.pur {{ font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.05em; padding:2px 8px; border-radius:999px; }}
-.pur.hi {{ color:var(--up); background:var(--up-bg); }}
-.pur.mid {{ color:var(--warn); background:var(--warn-bg); }}
-.pur.lo {{ color:var(--neu); background:var(--neu-bg); }}
-.puresttag {{ font-family:var(--mono); font-size:10px; font-weight:700; color:var(--accent); background:var(--acid); padding:2px 8px; border-radius:999px; }}
-.thnote {{ flex-basis:100%; color:var(--ink2); font-size:13px; line-height:1.55; }}
-@media (max-width:700px) {{ .thstocks {{ padding-left:0; }} }}
-
-.ev {{ display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--rule); }}
-.ev:last-child {{ border-bottom:0; }}
-.ev .d {{ flex:none; width:70px; color:var(--ox2); font-family:var(--mono); font-size:13px; font-weight:700; line-height:1.45; }}
-.ev .et {{ color:var(--ink2); font-size:15px; line-height:1.65; }}
-.ev .et b {{ color:var(--ink); font-weight:700; }}
-.ev .mm {{ margin-top:4px; color:var(--muted); font-size:13px; line-height:1.6; }}
-
-.mktstrip {{ margin:2px 0 16px; padding:14px 15px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); }}
-.mstitle {{ font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ox2); margin-bottom:11px; }}
-.mchips {{ display:flex; flex-wrap:wrap; gap:9px 16px; }}
-.mchip {{ display:inline-flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; }}
-.mchip b {{ color:var(--ink2); font-weight:600; }}
-.mchip .up,.mchip .down,.mchip .muted {{ font-family:var(--mono); font-weight:700; }}
-
-footer {{ margin-top:24px; color:var(--muted); font-size:13px; }}
-.discl {{ padding:16px 0 0; border-top:1px solid var(--rule-dk); color:var(--muted); font-size:13px; line-height:1.75; }}
-.discl b {{ color:var(--ink); font-weight:700; }}
-
-@media (max-width:700px) {{
-  .wrap {{ padding:36px 18px 70px; }}
-  h1 {{ font-size:42px; }}
-  .card {{ padding:22px; }}
-  .dir {{ font-size:28px; }}
-  .kpis {{ grid-template-columns:1fr; }}
-  .grid {{ grid-template-columns:1fr; }}
-  .wrap > details > summary {{ flex-wrap:wrap; align-items:center; gap:11px; padding:16px 14px; }}
-  .layerno {{ width:38px; height:32px; font-size:15px; }}
-  summary h2 {{ flex:1; font-size:20px; }}
-  summary .lgt {{ order:3; flex-basis:100%; margin-left:49px; white-space:normal; }}
-  .inner {{ padding:0 14px 20px; }}
-  .srow > summary,.stk > summary {{ flex-wrap:wrap; }}
-  .srow .schg {{ margin-left:auto; }}
-  .verdict {{ margin-left:0; }}
-  .theme {{ gap:12px; }}
-  .theme .heat {{ width:64px; }}
-  .ev {{ gap:12px; }}
-  .ev .d {{ width:58px; }}
-}}
-
-@media (prefers-reduced-motion:reduce) {{
-  *,*::before,*::after {{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }}
-}}
-</style>
-<div class="wrap">
-  <span class="real">真實資料 · FinMind × TWSE × yfinance × Google News</span>
-  <div class="eyebrow">專屬投顧戰情室 · Advisor War Room</div>
-  <h1>戰情週報 {period}</h1>
-  <div class="meta">一週兩次 · 資料日 {asof} · 產出 {gen}（台北）</div>
-
-  <div class="card">
-    <div class="chieftag">投資長 · 本期總結</div>
-    <div class="dir">{direction}</div>
-    <p class="chief">{chief}</p>
-    <div class="kpis">
-      <div class="kpi"><div class="t">建議股票曝險</div><div class="b">{exposure}</div></div>
-      <div class="kpi"><div class="t">大盤環境</div><div class="b"><span class="tl {mkt_code}"></span>{mkt_zh}</div></div>
-      <div class="kpi"><div class="t">信心度</div><div class="b">{conf}</div></div>
-    </div>
-    <div class="meterwrap">
-      <div style="font-size:11px;color:#AEBBA5;display:flex;justify-content:space-between;margin-bottom:8px"><span>風險溫度</span><span class="num">{risk} / 10</span></div>
-      <div class="meter"><i style="left:{risk_pct}%"></i></div>
-    </div>
-  </div>
-
-  <details open>
-    <summary><span class="layerno">01</span><h2>大盤 · 環境溫度</h2><span class="lgt"><span class="tl {mkt_code}"></span></span>
-      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
-    <div class="inner">{grid}{foreign}
-      <div class="say"><span class="who">團隊觀點 · 大盤</span><p>{market_say}</p></div>
-    </div>
-  </details>
-
-  <details open>
-    <summary><span class="layerno">02</span><h2>類股 · 資金往哪流</h2><span class="lgt" style="font-size:12px;color:var(--faint);font-family:var(--mono)">美股領先→台股</span>
-      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
-    <div class="inner">
-      {mktstrip}
-      <div style="font-size:11.5px;color:var(--faint);margin:4px 0 2px">美股族群動能排名（點列展開對應台股供應鏈）</div>
-      {sectors}
-      <div class="say"><span class="who">團隊觀點 · 類股輪動</span><p>{sector_say}</p></div>
-    </div>
-  </details>
-
-  <details open>
-    <summary><span class="layerno">03</span><h2>個股 · 本期名單</h2><span class="lgt" style="font-size:12px;color:var(--faint);font-family:var(--mono)">點卡展開</span>
-      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
-    <div class="inner">{stocks}
-      <div style="font-size:11.5px;color:var(--faint);margin-top:12px">＊來源：選股器機會清單 opportunities.json，經團隊三維研判。說「研究 XXXX」可產完整單檔報告。</div>
-    </div>
-  </details>
-
-  <details>
-    <summary><span class="layerno">04</span><h2>主題雷達 · 看未來</h2><span class="lgt" style="font-size:12px;color:var(--faint);font-family:var(--mono)">熱度×確認</span>
-      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
-    <div class="inner">
-      <div style="font-size:11.5px;color:var(--faint);margin:2px 0 4px">新技術／話題發掘 · 熱度上升＋個股確認才「成案」，只有噪音的僅進觀察</div>
-      {themes}
-      <div class="say"><span class="who">團隊觀點 · 主題</span><p>{theme_say}</p></div>
-    </div>
-  </details>
-
-  <details>
-    <summary><span class="layerno">05</span><h2>本期關鍵事件</h2>
-      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
-    <div class="inner">{events}</div>
-  </details>
-
-  <footer>
-    <div class="discl">紅綠燈由「數據＋固定規則」計算，團隊觀點由分析師解讀與反駁，不憑感覺喊買賣。跨市場輪動只用「昨晚美股已收盤」資料。<b style="color:var(--ink)">本報告為投資決策輔助，非投資建議、非保證獲利，最終決策與風險由使用者承擔。</b>資料來源與時間如上；抓不到即註記缺漏、絕不編造。</div>
-  </footer>
-</div>
-"""
+    ctx = {
+        "n": n, "market": m, "us_sectors": sec, "tw_sectors": tw_sec,
+        "stocks": stocks, "events_json": events_json,
+        "themes": themes, "theme_stocks": theme_stocks,
+    }
+    return render_weekly_html(ctx)
 
 
 if __name__ == "__main__":
