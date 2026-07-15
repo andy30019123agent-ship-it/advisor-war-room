@@ -221,6 +221,51 @@ class TestDecisionEngine(unittest.TestCase):
         self.assertEqual(dec["as_of_price"], 2420.0)
         self.assertIn("disclaimer", dec)
 
+    def test_valuation_whitelist_passes_roe_and_bvps(self):
+        """PBR 路徑的 roe/bvps 需被 build_decision 保留（additive 白名單）。"""
+        valuation = {
+            "path": "pbr", "eps_ttm": None, "eps_source": None, "eps_forward": None,
+            "growth_used": None, "multiples": {"bear": 1.42, "base": 1.48, "bull": 1.53},
+            "current_multiple": 1.62, "current_percentile": 0.95,
+            "disclosure": "金融/循環股 PBR 路徑…", "bvps": 20.71, "roe": 0.094,
+            "fair_value": {"bear": 29.4, "base": 30.6, "bull": 31.7},
+        }
+        out = build_decision(
+            price=33.5, lights=["green", "green", "amber"], per_percentile=0.95,
+            market_light="amber", valuation=valuation, atr=1.0, key_ma=32.0,
+            low20=31.0, high20=35.0, ma20=32.0, avg_vol20=1000.0,
+            atr_pct=0.03, atr_median_pct=0.03, data_flags={"fundamental": True},
+            rev_signals={"yoy_negative": False, "below_6m_2months": False},
+            chip_signals={"sell_streak_ge3": False, "ratio_gt_15pct": False},
+            profile=PROFILE, stock_id="2892",
+        )
+        self.assertIn("bvps", out["valuation"])
+        self.assertIn("roe", out["valuation"])
+        self.assertEqual(out["valuation"]["bvps"], 20.71)
+        self.assertAlmostEqual(out["valuation"]["roe"], 0.094)
+        # PER 路徑（roe/bvps 為 None）仍保留鍵、值為 None，不 KeyError
+        valuation_per = {
+            "path": "per", "eps_ttm": 60.0, "eps_source": "financial_statement",
+            "eps_forward": 75.0, "growth_used": 0.25,
+            "multiples": {"bear": 25.0, "base": 30.0, "bull": 35.0},
+            "current_multiple": 32.8, "current_percentile": 0.5,
+            "disclosure": "PER 路徑…", "bvps": None, "roe": None,
+            "fair_value": {"bear": 1500.0, "base": 1800.0, "bull": 2100.0},
+        }
+        out_per = build_decision(
+            price=1850.0, lights=["green", "green", "amber"], per_percentile=0.5,
+            market_light="amber", valuation=valuation_per, atr=50.0, key_ma=1800.0,
+            low20=1700.0, high20=1900.0, ma20=1800.0, avg_vol20=1000.0,
+            atr_pct=0.027, atr_median_pct=0.027, data_flags={"fundamental": True},
+            rev_signals={"yoy_negative": False, "below_6m_2months": False},
+            chip_signals={"sell_streak_ge3": False, "ratio_gt_15pct": False},
+            profile=PROFILE, stock_id="2454",
+        )
+        self.assertIn("bvps", out_per["valuation"])
+        self.assertIn("roe", out_per["valuation"])
+        self.assertIsNone(out_per["valuation"]["bvps"])
+        self.assertIsNone(out_per["valuation"]["roe"])
+
 
 if __name__ == "__main__":
     unittest.main()
