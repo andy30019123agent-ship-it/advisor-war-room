@@ -68,3 +68,55 @@
 - 綠漲紅跌：沿用本專案定案的國際慣例，不做台股紅綠反轉。
 - 圖示一致：全部使用 inline SVG，統一 stroke 寬與線端樣式，不用 emoji 作為結構 icon。
 - 資料揭露：估值區間顯示 Bear / Base / Bull、現價落點、EPS 與倍數假設；所有數據均標示為示意。
+
+## Neumorphism 定案方向
+
+### neu-a｜白底經典 Neumorphism
+
+色票：
+- Background `#F0F0F3`
+- Surface `#FBFBFE`
+- Soft `#F6F6F9`
+- Pressed `#E7E7EC`
+- Ink `#141823`
+- Text `#262B38`
+- Muted `#566071`
+- Accent Purple `#6554D9`
+- Accent Violet `#7D4FC7`
+- Up Green `#087A46`
+- Down Red `#B82033`
+- Warning `#A06900`
+
+字體配對：`Nunito Sans` 作為圓潤標題，`IBM Plex Sans TC` 作為繁中介面與內文，`IBM Plex Mono` 作為數字與代碼標籤。
+
+陰影 token：
+- Extrude `10px 10px 22px #C9C9D0, -10px -10px 22px #FFFFFF`
+- Soft control `6px 6px 14px #D0D0D7, -6px -6px 14px #FFFFFF`
+- Inset `inset 6px 6px 12px #C9C9D0, inset -6px -6px 12px #FFFFFF`
+
+差異定位：最貼近 Andy 指定的柔白經典 neumorphism，乾淨、明亮、偏產品預設。
+
+### neu-b｜霧藍灰柔色 Neumorphism
+
+色票：
+- Background `#E7EDF1`
+- Surface `#F5F9FB`
+- Soft `#EDF3F6`
+- Pressed `#DBE5EB`
+- Ink `#12202A`
+- Text `#253340`
+- Muted `#516575`
+- Accent Blue `#315F8F`
+- Accent Violet `#6C4BB3`
+- Up Green `#087A46`
+- Down Red `#B51E32`
+- Warning `#986400`
+
+字體配對：`Nunito Sans` 作為圓潤標題，`IBM Plex Sans TC` 作為繁中介面與內文，`IBM Plex Mono` 作為數字與代碼標籤。
+
+陰影 token：
+- Extrude `10px 10px 22px #C3CDD4, -10px -10px 22px #FFFFFF`
+- Soft control `6px 6px 14px #C8D2D9, -6px -6px 14px #FFFFFF`
+- Inset `inset 6px 6px 12px #C1CBD2, inset -6px -6px 12px #FFFFFF`
+
+差異定位：用霧藍灰建立更有識別度的柔色底，閱讀較安定但仍保留清楚訊號。
