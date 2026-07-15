@@ -66,8 +66,8 @@ Task C 產出、併入既有 `data/<id>.json`（與 `fundamental`/`technical`/`c
   "position": {"tier": "試單", "amount": 100000, "odd_lot": true,
                "shares": 41, "reason": "R/R 1.5-2 且信心 50-65",
                "core_note": "此為核心持股…不影響定期定額核心部位"}, // 非核心股 core_note=""
-  "confidence": {"total": 58, "completeness": 30, "consistency": 15,
-                 "rr": 8, "regime": 5},
+  "confidence": {"total": 63, "completeness": 30, "consistency": 15,
+                 "rr": 8, "regime": 10},  // regime 只會是 0/10/20（red/amber/green）
   "time_frames": {
     "short": {"label": "短線 1-4 週", "stance": "中性", "basis": "…", "ref_price": "…"},
     "swing": {"label": "波段 1-3 月（主）", "stance": "中性偏多", "basis": "…", "ref_price": "…"},
