@@ -84,7 +84,7 @@ def stock_momentum(price_df) -> Dict:
     out = {"r5": None, "r20": None, "r60": None, "vol5": None, "vol60": None}
     if price_df is None or len(price_df) == 0 or "close" not in price_df.columns:
         return out
-    df = price_df.reset_index(drop=True)
+    df = price_df.sort_values("date").reset_index(drop=True)
     c = pd.to_numeric(df["close"], errors="coerce").dropna()
     out["r5"], out["r20"], out["r60"] = _ret(c, 5), _ret(c, 20), _ret(c, 60)
     if "Trading_Volume" in df.columns:

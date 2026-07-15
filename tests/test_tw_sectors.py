@@ -9,8 +9,9 @@ from warroom.sectors import stock_momentum, tw_group_metrics
 def make_price(closes, vols=None):
     n = len(closes)
     vols = vols or [1000.0] * n
-    return pd.DataFrame({"date": [f"2026-05-{(i % 28) + 1:02d}" for i in range(n)],
-                         "close": closes, "Trading_Volume": vols})
+    # 用真實遞增日期（不循環進位），避免 sort_values("date") 打亂與生成順序不一致的舊 bug。
+    dates = pd.date_range("2026-01-01", periods=n, freq="D").strftime("%Y-%m-%d")
+    return pd.DataFrame({"date": dates, "close": closes, "Trading_Volume": vols})
 
 
 class TestTwSectors(unittest.TestCase):
@@ -24,6 +25,17 @@ class TestTwSectors(unittest.TestCase):
         self.assertAlmostEqual(m["r60"], (169 / 109 - 1) * 100, places=3)
         self.assertIsNotNone(m["vol5"])
         self.assertIsNotNone(m["vol60"])
+
+    def test_stock_momentum_order_independent(self):
+        # 防回歸：把正確 fixture 的列順序打亂餵入，結果須與排序版完全相同
+        # （證明 stock_momentum 內部靠 sort_values("date") 自行還原順序，不依賴輸入順序）。
+        closes = [100.0 + i for i in range(70)]
+        price = make_price(closes)
+        shuffled = price.sample(frac=1, random_state=42).reset_index(drop=True)
+        self.assertFalse(shuffled["date"].tolist() == price["date"].tolist())  # 確認真的打亂了
+        m_sorted = stock_momentum(price)
+        m_shuffled = stock_momentum(shuffled)
+        self.assertEqual(m_sorted, m_shuffled)
 
     def test_stock_momentum_insufficient(self):
         m = stock_momentum(make_price([100.0, 101.0, 102.0]))
