@@ -16,12 +16,12 @@ MACRO_EVENTS_2026H2 = [
     {"date": "2026-07-29", "type": "FOMC", "name": "FOMC 利率決議", "detail": "2026-07 會議（第二日）"},
     {"date": "2026-09-16", "type": "FOMC", "name": "FOMC 利率決議", "detail": "2026-09 會議（第二日）"},
     {"date": "2026-10-28", "type": "FOMC", "name": "FOMC 利率決議", "detail": "2026-10 會議（第二日）"},
-    {"date": "2026-12-16", "type": "FOMC", "name": "FOMC 利率決議", "detail": "2026-12 會議（第二日）"},
+    {"date": "2026-12-09", "type": "FOMC", "name": "FOMC 利率決議", "detail": "2026-12 會議（第二日）"},
     {"date": "2026-07-14", "type": "CPI", "name": "美國 6 月 CPI", "detail": "BLS 公布"},
     {"date": "2026-08-12", "type": "CPI", "name": "美國 7 月 CPI", "detail": "BLS 公布"},
     {"date": "2026-09-11", "type": "CPI", "name": "美國 8 月 CPI", "detail": "BLS 公布"},
-    {"date": "2026-10-13", "type": "CPI", "name": "美國 9 月 CPI", "detail": "BLS 公布"},
-    {"date": "2026-11-13", "type": "CPI", "name": "美國 10 月 CPI", "detail": "BLS 公布"},
+    {"date": "2026-10-14", "type": "CPI", "name": "美國 9 月 CPI", "detail": "BLS 公布"},
+    {"date": "2026-11-10", "type": "CPI", "name": "美國 10 月 CPI", "detail": "BLS 公布"},
     {"date": "2026-12-10", "type": "CPI", "name": "美國 11 月 CPI", "detail": "BLS 公布"},
 ]
 

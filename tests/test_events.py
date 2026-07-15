@@ -87,6 +87,15 @@ class TestEvents(unittest.TestCase):
         self.assertTrue(has_upcoming_event("2892", div, None, {}, "2026-07-15", 14))
         self.assertFalse(has_upcoming_event("2892", None, None, {}, "2026-07-15", 14))
 
+    def test_has_upcoming_event_revenue_branch(self):
+        # 今天 7/7（<10 號），下一次月營收公布＝7/10（本月 10 日前公布規則），落在窗口內
+        # 手算：t.day=7<10 → pub=2026-07-10；_in_window("2026-07-10","2026-07-07",14) 為真
+        self.assertTrue(
+            has_upcoming_event("2330", None, None, {"2330": "台積電"}, "2026-07-07", 14))
+        # stock_map 沒有該股 → 月營收分支不觸發（回歸死碼修復前的錯誤：空 stock_map 永遠 False）
+        self.assertFalse(
+            has_upcoming_event("2330", None, None, {}, "2026-07-07", 14))
+
     def test_event_risk_downgrade(self):
         # 事件前 + 高估值 + 籌碼弱 → 降一級
         r, note = event_risk_downgrade("買進", True, 0.9, "red")

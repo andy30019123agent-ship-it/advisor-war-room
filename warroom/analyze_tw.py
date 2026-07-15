@@ -428,7 +428,8 @@ def _decide(stock_id, d, res, flags):
         if _os.path.exists(ep):
             earnings_json = _json.load(open(ep, encoding="utf-8"))
         today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
-        has_ev = has_upcoming_event(stock_id, d.get("div"), earnings_json, {}, today, 14)
+        has_ev = has_upcoming_event(stock_id, d.get("div"), earnings_json,
+                                     {stock_id: res["name"]}, today, 14)
         new_rating, ev_note = event_risk_downgrade(
             dec["rating"], has_ev, per_pctile, res["chips"]["light"])
         if ev_note:
