@@ -28,6 +28,12 @@ class TestEvents(unittest.TestCase):
         self.assertEqual(build_ex_div_map(None), {})
         self.assertEqual(build_ex_div_map(pd.DataFrame()), {})
 
+    def test_build_ex_div_map_nan_ex_date_skipped(self):
+        # P1 fix #5：除息日欄位為 NaN → 不進 map（同 parse_dividends 的過濾邏輯）
+        df = pd.DataFrame([{"CashExDividendTradingDate": float("nan"),
+                            "CashEarningsDistribution": 1.0}])
+        self.assertEqual(build_ex_div_map(df), {})
+
     def test_parse_earnings_window(self):
         j = {"events": [
             {"id": "2317", "name": "鴻海", "date": "2026-07-16", "type": "法說會"},
@@ -57,6 +63,15 @@ class TestEvents(unittest.TestCase):
         self.assertEqual(evs[0]["type"], "除息")
         self.assertIn("1.2", evs[0]["detail"])
         self.assertEqual(evs[0]["confidence"], "scheduled")
+
+    def test_parse_dividends_nan_announcement_not_announced(self):
+        # P1 fix #5：AnnouncementDate 為 NaN（非空字串）不得被誤判為「已公告」
+        df = pd.DataFrame([{"date": "", "stock_id": "2892",
+                            "AnnouncementDate": float("nan"),
+                            "CashExDividendTradingDate": "2026-07-24",
+                            "CashEarningsDistribution": 1.0}])
+        evs = parse_dividends(df, name="第一金", today="2026-07-15", horizon_days=14)
+        self.assertEqual(evs, [])
 
     def test_revenue_publish_rule(self):
         # 7/15 之後最近的「10 號」是 8/10（本月 10 號已過）
@@ -88,13 +103,19 @@ class TestEvents(unittest.TestCase):
         self.assertFalse(has_upcoming_event("2892", None, None, {}, "2026-07-15", 14))
 
     def test_has_upcoming_event_revenue_branch(self):
-        # 今天 7/7（<10 號），下一次月營收公布＝7/10（本月 10 日前公布規則），落在窗口內
-        # 手算：t.day=7<10 → pub=2026-07-10；_in_window("2026-07-10","2026-07-07",14) 為真
-        self.assertTrue(
+        # P1 fix #6：月營收「每月10日前」是估計性規則事件（confidence=estimated），
+        # 不算「確認事件」，不該讓 has_upcoming_event（供事件降級用）觸發——
+        # 否則每逢月初全市場都會被誤降評。兩種 stock_map 情境皆應為 False。
+        self.assertFalse(
             has_upcoming_event("2330", None, None, {"2330": "台積電"}, "2026-07-07", 14))
-        # stock_map 沒有該股 → 月營收分支不觸發（回歸死碼修復前的錯誤：空 stock_map 永遠 False）
         self.assertFalse(
             has_upcoming_event("2330", None, None, {}, "2026-07-07", 14))
+
+    def test_revenue_event_marked_estimated_confidence(self):
+        # 月營收事件仍保留在日曆顯示，但標 confidence:"estimated"（不觸發降級，只做展示）
+        evs = revenue_publish_events({"2330": "台積電"}, today="2026-07-15", horizon_days=30)
+        self.assertTrue(evs)
+        self.assertTrue(all(e["confidence"] == "estimated" for e in evs))
 
     def test_event_risk_downgrade(self):
         # 事件前 + 高估值 + 籌碼弱 → 降一級

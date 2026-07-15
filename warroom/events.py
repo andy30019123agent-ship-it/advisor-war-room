@@ -49,14 +49,19 @@ def _days_ahead(date_iso: str, today: str) -> int:
 
 
 def build_ex_div_map(div_df) -> Dict[str, float]:
-    """{現金除息交易日: 每股現金股利}。缺欄或空表 → {}。"""
+    """{現金除息交易日: 每股現金股利}。缺欄或空表 → {}。
+    P1 fix #5：除息日欄位若為 NaN（缺值）先以 pd.notna() 濾掉，
+    再交給 _iso() 解析（解析失敗一樣不進 map），避免 NaN 被字串化後誤判。"""
     if div_df is None or len(div_df) == 0:
         return {}
     if "CashExDividendTradingDate" not in div_df.columns:
         return {}
     out = {}
     for _, r in div_df.iterrows():
-        ex = _iso(r.get("CashExDividendTradingDate"))
+        ex_raw = r.get("CashExDividendTradingDate")
+        if pd.isna(ex_raw):
+            continue
+        ex = _iso(ex_raw)
         amt = pd.to_numeric(pd.Series([r.get("CashEarningsDistribution")]),
                             errors="coerce").iloc[0]
         if ex and pd.notna(amt) and amt > 0:
@@ -86,13 +91,20 @@ def parse_earnings(latest_json: Optional[Dict], today: str, horizon_days: int) -
 
 
 def parse_dividends(div_df, name: str, today: str, horizon_days: int) -> List[Dict]:
-    """僅『已公告（AnnouncementDate 非空）且除息日在未來窗口內』的除息事件。"""
+    """僅『已公告（AnnouncementDate 非空）且除息日在未來窗口內』的除息事件。
+    P1 fix #5：AnnouncementDate 為 NaN 時，舊寫法 `str(NaN or "")` 會變成非空字串 "nan"，
+    被誤判為「已公告」。改用 pd.notna() 直接驗證，NaN 一律視為未公告不進事件；
+    除息日一樣先過 pd.notna() 再交給 _iso()，解析失敗（含 NaN）不進事件。"""
     if div_df is None or len(div_df) == 0 or "CashExDividendTradingDate" not in div_df.columns:
         return []
     out = []
     for _, r in div_df.iterrows():
-        announced = str(r.get("AnnouncementDate") or "").strip()
-        ex = _iso(r.get("CashExDividendTradingDate"))
+        ann_raw = r.get("AnnouncementDate")
+        ex_raw = r.get("CashExDividendTradingDate")
+        if pd.isna(ann_raw) or pd.isna(ex_raw):
+            continue
+        announced = str(ann_raw).strip()
+        ex = _iso(ex_raw)
         amt = pd.to_numeric(pd.Series([r.get("CashEarningsDistribution")]),
                             errors="coerce").iloc[0]
         if not announced or not ex or not _in_window(ex, today, horizon_days):
@@ -155,14 +167,16 @@ def build_event_calendar(earnings_json, div_by_stock: Dict, stock_map: Dict,
 
 def has_upcoming_event(stock_id: str, div_df, earnings_json, stock_map,
                        today: str, horizon_days: int = 14) -> bool:
-    """該股未來窗口內是否有事件（除息／法說／月營收），供 decision 事件降級判斷。"""
+    """該股未來窗口內是否有『確認』事件（法說／已公告除息），供 decision 事件降級判斷。
+    P1 fix #6：月營收公布是「每月10日前」的估計性規則事件（confidence=estimated），
+    不是確認事件，不該讓事件降級每逢月初對全市場觸發——故此處不看月營收（維持在
+    build_event_calendar 顯示，但不進降級判斷）。stock_map 參數保留供呼叫端相容，
+    此函式不再使用它。"""
     if parse_dividends(div_df, "", today, horizon_days):
         return True
     for e in parse_earnings(earnings_json, today, horizon_days):
         if e["stock_id"] == stock_id:
             return True
-    if stock_id in (stock_map or {}) and revenue_publish_events({stock_id: ""}, today, horizon_days):
-        return True
     return False
 
 
