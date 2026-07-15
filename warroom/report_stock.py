@@ -1,211 +1,400 @@
 """單檔投顧報告產生器：讀 data/<id>.json（引擎數據）＋ data/<id>.narration.json（Claude 團隊觀點）
-→ 產 reports/<id>.html（白底柔和 neumorphism 風）。這是真實資料報告，非示意。
+→ 產 reports/<id>.html（Neumorphism 柔白＋淡粉版）。這是真實資料報告，非示意。
+
+渲染是純函式：render_stock_html(d, n, stats, events) 只吃 dict/list、回字串，
+無網路、無 assert，可離線測試。build() 負責讀檔＋一致性 assert＋落檔的既有流程。
 """
-import json, sys, os, html
-from datetime import datetime, timezone, timedelta
+import json
+import os
+import sys
 
-TPE = timezone(timedelta(hours=8))
-LIGHT = {"green": ("g", "🟢", "偏多"), "amber": ("y", "🟡", "中性"), "red": ("r", "🔴", "偏空")}
+from warroom import render_common as rc
+from warroom import track_record
+
+_FACTOR_ORDER = (
+    ("revenue", "營收"), ("eps", "EPS"), ("gross_margin", "毛利率"),
+    ("operating_margin", "營益率"), ("roe", "ROE"), ("fcf", "現金流"), ("debt", "負債"),
+)
+_GROUP_ORDER = ("外資", "投信", "自營")
+_DEFAULT_HORIZON_DAYS = 14  # events.json 目前 horizon_days=14；純函式介面未傳入該值，此為揭露的假設
 
 
-def esc(s): return html.escape(str(s))
+def _n1(x):
+    """價格類數字統一 1 位小數、不加千分位（合理價值區間需與敘事逐字比對，逗號會拆散數字）。"""
+    if x is None:
+        return "—"
+    return "{:.1f}".format(x)
 
 
-def ev_chips(ev):
-    return "".join(f'<span class="d">{esc(k)} <b>{esc(v)}</b></span>' for k, v in ev.items())
+def _clamp(x, lo, hi):
+    return max(lo, min(hi, x))
 
 
-def dim_card(no, title, block, narration):
-    code, emo, zh = LIGHT.get(block["light"], ("y", "🟡", "中性"))
-    return f"""
-    <div class="dim">
-      <div class="dimhead"><span class="tl {code}"></span><h3>{title}</h3><span class="lgt {code}"><span class="tl {code}"></span>{zh}</span></div>
-      <div class="evrow">{ev_chips(block['ev'])}</div>
-      <div class="say"><span class="who">{no}</span><p>{esc(narration)}</p></div>
-    </div>"""
+def _stance_cls(stance):
+    if "多" in stance:
+        return "up"
+    if "空" in stance:
+        return "down"
+    return "muted"
+
+
+def _split_label(s):
+    """「價格：收盤…（未觸發）」→ (「價格」, 「收盤…（未觸發）」)，字串已含中文冒號。"""
+    if "：" in s:
+        label, rest = s.split("：", 1)
+        return label, rest
+    return "", s
+
+
+def _hero(d, n, sid):
+    as_of_price = d.get("decision", {}).get("as_of_price")
+    asof = n.get("as_of", "—")
+    chips = [f'<span class="chip">現價 <span class="num">{_n1(as_of_price)}</span></span>']
+    chips.append(f'<span class="chip">資料時間 <span class="num">{rc.esc(asof)}</span></span>')
+    chips.append('<span class="chip">綠漲紅跌</span>')
+    return (
+        '<div class="topbar"><span class="brand">' + rc.icon("i-chart")
+        + 'Advisor War Room</span><span>真實資料 · FinMind × TWSE × Google News · '
+        + rc.esc(asof) + '</span></div>'
+        '<header class="hero"><div><h1>' + rc.esc(d.get("name", "")) + " "
+        + rc.esc(sid) + '<br>戰術決策報告</h1></div>'
+        '<div class="meta">' + "".join(chips) + "</div></header>"
+    )
+
+
+def _decision_card(dec, n):
+    rating = dec.get("rating", "—")
+    chief = n.get("roles", {}).get("chief", "")
+    pos = dec.get("position", {}) or {}
+    conf = dec.get("confidence", {}) or {}
+    stop = dec.get("stop", {}) or {}
+
+    note_html = ""
+    core_note = pos.get("core_note") or ""
+    if core_note:
+        note_html = ('<div class="note">' + rc.icon("i-shield")
+                     + "<span>" + rc.esc(core_note) + "</span></div>")
+
+    amount = pos.get("amount", 0) or 0
+    tier = pos.get("tier", "空手")
+    if amount == 0:
+        pos_strong = "空手｜0 元"
+    else:
+        pos_strong = f"{rc.esc(tier)}｜{amount:,} 元"
+    lots = pos.get("lots", 0) or 0
+    odd_shares = pos.get("odd_shares", 0) or 0
+    pos_small = f"{lots} 張" + (f" + {odd_shares} 股" if odd_shares > 0 else "")
+
+    stop_small = f"{rc.esc(stop.get('basis', '—'))}／{rc.esc(stop.get('note', ''))}"
+
+    return (
+        '<section class="card decision" aria-labelledby="decision-title">'
+        '<div class="decision-grid"><div>'
+        '<span class="eyebrow">決策卡 · 首屏優先</span>'
+        f'<h2 id="decision-title" class="rating">{rc.esc(rating)}</h2>'
+        f'<p class="reason">核心理由：{rc.esc(chief)}</p>'
+        f'{note_html}</div>'
+        f'{rc.confidence_gauge(conf.get("total", 0))}</div>'
+        '<div class="kpis">'
+        f'<div class="kpi"><small>部位金額建議</small><strong>{pos_strong}</strong><small>{pos_small}</small></div>'
+        f'<div class="kpi"><small>操作分級</small><strong>{rc.esc(rating)}</strong><small>買進、試單、續抱、觀望、減碼</small></div>'
+        f'<div class="kpi"><small>防守線</small><strong class="num">{_n1(stop.get("price"))}</strong><small>{stop_small}</small></div>'
+        '</div></section>'
+    )
+
+
+def _jump_nav():
+    items = (
+        ("#frames", "時間框架"), ("#value", "價值區間"), ("#entry", "進場失效"),
+        ("#signals", "紅綠燈"), ("#quality", "財報品質"), ("#inst", "法人分拆"),
+        ("#team", "角色觀點"),
+    )
+    return '<nav class="jump" aria-label="快速導覽">' + "".join(
+        f'<a href="{href}">{rc.esc(label)}</a>' for href, label in items) + "</nav>"
+
+
+def _time_frames(tf):
+    cards = []
+    for key in ("short", "swing", "mid"):
+        f = tf.get(key, {}) or {}
+        label, basis, ref = f.get("label", "—"), f.get("basis", ""), f.get("ref_price", "")
+        stance = f.get("stance", "")
+        cards.append(
+            f'<article class="card time"><h3>{rc.esc(label)}</h3><p>{rc.esc(basis)}</p>'
+            '<div class="tags">'
+            f'<span class="tag {_stance_cls(stance)}">{rc.esc(stance)}</span>'
+            f'<span class="tag">{rc.esc(ref)}</span>'
+            '</div></article>'
+        )
+    return ('<section id="frames">' + rc.section_head("i-chart", "三時間框架")
+           + '<div class="grid three">' + "".join(cards) + "</div></section>")
+
+
+def _value_section(dec):
+    fv = dec.get("fair_value", {}) or {}
+    val = dec.get("valuation", {}) or {}
+    bear, base, bull = fv.get("bear"), fv.get("base"), fv.get("bull")
+    as_of_price = dec.get("as_of_price")
+    if bear is not None and bull is not None and bull != bear and as_of_price is not None:
+        p = _clamp((as_of_price - bear) / (bull - bear) * 100, 2, 98)
+    else:
+        p = 50
+    path = val.get("path", "per")
+    method = (
+        "方法：純歷史 PBR 分位回歸推估合理倍數（Bear/Base/Bull＝25/50/75 分位）；"
+        "高本益比成長股的 Bull 情境偏樂觀，僅供區間參考、非目標價。"
+        if path == "pbr" else
+        "方法：純歷史 PER 分位回歸推估合理倍數（Bear/Base/Bull＝25/50/75 分位）；"
+        "高本益比成長股的 Bull 情境偏樂觀，僅供區間參考、非目標價。"
+    )
+    pbr_line = ""
+    if path == "pbr":
+        bvps, roe = val.get("bvps"), val.get("roe")
+        pbr_line = (f'<p class="source">每股淨值 <span class="num">{_n1(bvps)}</span>、'
+                    f'ROE {rc.fmt_pct(roe, False)}</p>')
+    return (
+        '<section id="value">' + rc.section_head("i-chart", "合理價值區間")
+        + '<div class="card">'
+        f'<div class="band" aria-label="Bear Base Bull valuation band"><i style="left:{p:.1f}%"></i></div>'
+        '<div class="legend">'
+        f'<span>Bear <b class="num">{_n1(bear)}</b></span>'
+        f'<span>Base <b class="num">{_n1(base)}</b></span>'
+        f'<span>Bull <b class="num">{_n1(bull)}</b></span>'
+        '</div>'
+        f'<p class="source">{rc.esc(val.get("disclosure", ""))}</p>'
+        f'{pbr_line}'
+        f'<p class="source">{method}</p>'
+        '</div></section>'
+    )
+
+
+def _rr_section(dec):
+    as_of_price = dec.get("as_of_price")
+    bull = (dec.get("fair_value") or {}).get("bull")
+    stop_price = (dec.get("stop") or {}).get("price")
+    up_pct = (bull - as_of_price) / as_of_price if (bull is not None and as_of_price) else None
+    down_pct = (stop_price - as_of_price) / as_of_price if (stop_price is not None and as_of_price) else None
+    rr = dec.get("risk_reward")
+    rr_disp = "—" if rr is None else "{:g}".format(rr)
+    return (
+        '<section>' + rc.section_head("i-shield", "風險報酬比")
+        + '<div class="rr">'
+        f'<div class="flat"><small>上檔至 Bull</small><strong class="up">{rc.fmt_pct(up_pct)}</strong></div>'
+        f'<div class="flat"><small>下檔至停損</small><strong class="down">{rc.fmt_pct(down_pct)}</strong></div>'
+        f'<div class="flat"><small>R/R</small><strong class="num">{rr_disp}</strong></div>'
+        '</div><p class="muted">R/R&lt;1.5 不建議追價</p></section>'
+    )
+
+
+def _entry_section(dec):
+    entry = dec.get("entry", {}) or {}
+    inv = dec.get("invalidation", {}) or {}
+    triggered = inv.get("any_triggered", False)
+    pill = '<span class="pill down">已觸發失效</span>' if triggered else ""
+    invalid_cards = []
+    for key in ("price", "fundamental", "chips"):
+        label, rest = _split_label(inv.get(key, "") or "")
+        invalid_cards.append(f'<div><b>{rc.esc(label)}：</b>{rc.esc(rest)}</div>')
+    # entry.pullback/breakout 字串本身已含「回測型：／突破型：」前綴，h3 已標題化，
+    # 顯示時去重複前綴避免「回測型／回測型：…」疊字。
+    _, pullback_rest = _split_label(entry.get("pullback", "") or "")
+    _, breakout_rest = _split_label(entry.get("breakout", "") or "")
+    return (
+        f'<section id="entry">{rc.section_head("i-check", "進場條件與失效")}{pill}'
+        '<div class="grid two conditions">'
+        f'<div class="card"><h3>回測型</h3><p>{rc.esc(pullback_rest)}</p></div>'
+        f'<div class="card"><h3>突破型</h3><p>{rc.esc(breakout_rest)}</p></div>'
+        '</div>'
+        f'<div class="invalid">{"".join(invalid_cards)}</div>'
+        '</section>'
+    )
+
+
+def _signals_section(d):
+    order = (("technical", "技術"), ("fundamental", "基本面"), ("chips", "籌碼"))
+    cards = []
+    for key, label in order:
+        block = d.get(key, {}) or {}
+        cls, zh = rc.traffic(block.get("light"))
+        evidence = "".join(
+            f'<span>{rc.esc(k)} {rc.esc(v)}</span>' for k, v in (block.get("ev") or {}).items())
+        cards.append(
+            '<article class="card light"><div class="light-head">'
+            f'<h3>{rc.esc(label)}</h3><span><span class="dot {cls}"></span> {rc.esc(zh)}</span>'
+            f'</div><div class="evidence">{evidence}</div></article>'
+        )
+    return ('<section id="signals">' + rc.section_head("i-chart", "三維紅綠燈")
+           + '<div class="lights">' + "".join(cards) + "</div></section>")
+
+
+def _quality_section(fq):
+    factors = fq.get("factors", {}) or {}
+    rows = []
+    for key, label in _FACTOR_ORDER:
+        f = factors.get(key, {}) or {}
+        applicable = f.get("applicable", True)
+        score = f.get("score", 0) or 0
+        width = 0 if not applicable else round(score / 2 * 100)
+        score_disp = "不適用" if not applicable else str(score)
+        rows.append(
+            f'<div class="factor"><span>{rc.esc(label)}</span>'
+            f'<span class="bar"><i style="width:{width}%"></i></span>'
+            f'<span class="score">{rc.esc(score_disp)}</span></div>'
+        )
+    total, mx = fq.get("total", 0), fq.get("max", 0)
+    return (
+        '<section id="quality">' + rc.section_head("i-check", "財報品質分數")
+        + '<div class="card quality">' + "".join(rows)
+        + f'<p class="source">總分 <span class="num">{total} / {mx}</span>；{rc.esc(fq.get("note", ""))}</p>'
+        + '</div></section>'
+    )
+
+
+def _inst_section(breakdown):
+    groups = breakdown.get("groups", {}) or {}
+    cards = []
+    for name in _GROUP_ORDER:
+        g = groups.get(name, {}) or {}
+        direction = g.get("dir", "—")
+        cls = "up" if direction == "買" else "down"
+        ratio = g.get("ratio_20d_vol")
+        ratio_txt = f" · 佔均量 {rc.fmt_pct(ratio, False)}" if ratio is not None else ""
+        cards.append(
+            f'<div class="card inst-item"><b>{rc.esc(name)}</b>'
+            f'<span><span class="{cls} num">{rc.zhang(g.get("net_latest"))}</span><br>'
+            f'<small>連{rc.esc(direction)} {g.get("streak", "—")} 日{ratio_txt}</small></span></div>'
+        )
+    note = ""
+    if breakdown.get("divergence"):
+        note = f'<span class="split-note">{rc.esc(breakdown.get("divergence_note", ""))}</span>'
+    return (
+        '<section id="inst">' + rc.section_head("i-chart", "法人分拆")
+        + '<div class="inst">' + "".join(cards) + "</div>" + note + "</section>"
+    )
+
+
+def _team_section(roles):
+    order = (
+        ("fundamental", "基本面分析師"), ("technical", "技術分析師"), ("news", "消息分析師"),
+        ("risk", "風控長"), ("devil", "魔鬼代言人"), ("chief", "投資長"),
+    )
+    cards = "".join(
+        f'<article class="card voice"><h3>{rc.esc(label)}</h3><p>{rc.esc(roles.get(key, ""))}</p></article>'
+        for key, label in order
+    )
+    return ('<section id="team">' + rc.section_head("i-check", "六角色觀點")
+           + '<div class="grid two team">' + cards + "</div></section>")
+
+
+def _news_events_track(d, stats, events):
+    news = d.get("news", []) or []
+    news_html = "".join(
+        f'<a href="{rc.esc(a.get("url", "#"))}" target="_blank" rel="noopener">'
+        f'<span class="date">{rc.rfc_to_mmdd(a.get("date", ""))}</span>'
+        f'<b>{rc.esc(a.get("title", ""))}</b><span class="muted">{rc.esc(a.get("src", ""))}</span></a>'
+        for a in news[:6]
+    ) or '<p class="muted">（本次未取得新聞）</p>'
+
+    events = events or []
+    events_html = "".join(
+        '<div class="event">'
+        f'<span class="date">{rc.esc(e.get("date", ""))}（+{e.get("days_ahead", 0)} 天）</span>'
+        f'<b>{rc.esc(e.get("name", ""))} · {rc.esc(e.get("detail", ""))}</b>'
+        f'<span>{rc.esc(e.get("type", ""))}／{rc.esc(e.get("confidence", ""))}｜來源 {rc.esc(e.get("source", ""))}</span>'
+        '</div>'
+        for e in events
+    ) or f'<p class="muted">（未來 {_DEFAULT_HORIZON_DAYS} 天無登錄事件）</p>'
+
+    stats = stats or {}
+    resolved = stats.get("resolved", 0) or 0
+    hit_rate = stats.get("hit_rate")
+    if resolved >= 5 and hit_rate is not None:
+        track_html = (
+            f'<div class="hit"><b>近 {resolved} 次已結案命中率 {rc.fmt_pct(hit_rate, False)}</b></div>'
+            f'<div class="hit"><b>平均 R {stats.get("avg_r", "—")}</b></div>'
+        )
+    else:
+        total_logged = stats.get("total_logged", 0) or 0
+        track_html = (
+            '<div class="hit"><b>資料累積中'
+            f'（已登錄 {total_logged} 筆、已結案 {resolved} 筆；達 5 筆結案後顯示命中率）</b></div>'
+        )
+
+    return (
+        '<section class="grid">'
+        f'<details open><summary>新聞列表 {rc.icon("i-chevron")}</summary>'
+        f'<div class="details-body">{news_html}</div></details>'
+        f'<details open><summary>事件日曆 {rc.icon("i-chevron")}</summary>'
+        f'<div class="details-body grid two">{events_html}</div></details>'
+        f'<details><summary>戰績牆 {rc.icon("i-chevron")}</summary>'
+        f'<div class="details-body grid two">{track_html}</div></details>'
+        '</section>'
+    )
+
+
+def render_stock_html(d, n, stats=None, events=None):
+    """純函式：組個股報告 HTML。d=data/<id>.json，n=narration，
+    stats=track_record.compute_stats(log)（可 None），events=events.json 過濾後 list（可 None）。"""
+    sid = d.get("stock_id", "")
+    dec = d.get("decision", {}) or {}
+    fq = d.get("fundamentals_quality", {}) or {}
+    chips_breakdown = d.get("chips", {}).get("breakdown", {}) or {}
+    roles = n.get("roles", {}) or {}
+
+    title = f'{d.get("name", "")} {sid} · 投顧戰情報告'
+    body = (
+        rc.head(title)
+        + '<div class="page">'
+        + _hero(d, n, sid)
+        + _decision_card(dec, n)
+        + _jump_nav()
+        + _time_frames(dec.get("time_frames", {}) or {})
+        + _value_section(dec)
+        + _rr_section(dec)
+        + _entry_section(dec)
+        + _signals_section(d)
+        + _quality_section(fq)
+        + _inst_section(chips_breakdown)
+        + _team_section(roles)
+        + _news_events_track(d, stats, events)
+        + rc.disclaimer(
+            "紅綠燈由「數據＋固定規則」計算（技術面均線／RSI／量能、基本面營收 YoY／PER 分位、"
+            "籌碼三大法人淨買），團隊觀點由分析師解讀與反駁，不憑感覺喊買賣。"
+            "<b>本報告為投資決策輔助，非投資建議、非保證獲利，最終決策與風險由使用者承擔。</b>"
+            "數據來源與抓取時間如上；抓不到即註記缺漏、絕不編造。",
+            dec.get("disclaimer", ""),
+        )
+        + "</div>"
+    )
+    return body
+
+
+def _load(path):
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _load_log(path="data/recommendation_log.json"):
+    if not os.path.exists(path):
+        return []
+    return _load(path)
+
+
+def _load_events(sid, path="data/events.json"):
+    if not os.path.exists(path):
+        return []
+    ev = _load(path).get("events", [])
+    return [e for e in ev if e.get("stock_id") in (sid, None)]
 
 
 def build(stock_id):
-    with open(f"data/{stock_id}.json", encoding="utf-8") as f:
-        d = json.load(f)
-    with open(f"data/{stock_id}.narration.json", encoding="utf-8") as f:
-        n = json.load(f)
+    d = _load(f"data/{stock_id}.json")
+    n = _load(f"data/{stock_id}.narration.json")
     from warroom.consistency import check_stock_consistency, assert_consistent
     assert_consistent(check_stock_consistency(d, n), f"個股報告 {stock_id}")
-    r = n["roles"]
-    s = d["summary"]
-    act = n["action"]
-    gen_time = datetime.now(TPE).strftime("%Y-%m-%d %H:%M")
-
-    news_html = "".join(
-        f'<a class="news" href="{esc(a.get("url","#"))}" target="_blank" rel="noopener">'
-        f'<span class="nt">{esc(a.get("title",""))}</span><span class="ns">{esc(a.get("src",""))}</span></a>'
-        for a in d.get("news", [])[:6]) or '<p class="muted">（本次未取得新聞）</p>'
-
-    dims = (
-        dim_card("基本面分析師", "基本面", d["fundamental"], r["fundamental"]) +
-        dim_card("技術分析師", "技術面", d["technical"], r["technical"]) +
-        dim_card("消息／籌碼分析師", "消息 · 籌碼", d["chips"], r["news"])
-    )
-
-    return TEMPLATE.format(
-        name=esc(d["name"]), sid=esc(stock_id), asof=esc(n["as_of"]), gen=esc(gen_time),
-        direction=esc(s["direction"]), conf=esc(act["confidence"]), score=esc(s["score"]),
-        chief=esc(r["chief"]), action_dir=esc(act["direction"]), action_stop=esc(act["stop"]),
-        risk=esc(r["risk"]), devil=esc(r["devil"]), dims=dims, news=news_html,
-    )
-
-
-TEMPLATE = """<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{name} {sid} · 投顧戰情報告</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-
-:root {{
-  --paper:#EFF2EA; --paper2:#E4EADF; --surface:#FBFDF7; --surface2:#F5F8F0;
-  --ink:#151713; --ink2:#30362C; --muted:#65705F; --faint:#647059;
-  --rule:#D8E0D1; --rule-dk:#AEB9A5; --ox:#A85C3A; --ox2:#6E3D2B;
-  --accent:#1A1D14; --acid:#C7F04A; --acid2:#E9FF9D;
-  --up:#167A54; --up-bg:#E2F4EB; --down:#B64238; --down-bg:#F8E4E0;
-  --warn:#8A5A14; --warn-bg:#F7EBCF; --neu:#5E6758; --neu-bg:#ECEFE6;
-  --disp:'Space Grotesk','IBM Plex Sans TC','PingFang TC','Noto Sans TC',sans-serif;
-  --text:'IBM Plex Sans TC','PingFang TC','Noto Sans TC',system-ui,sans-serif;
-  --mono:'Space Grotesk','SF Mono',ui-monospace,Menlo,monospace;
-}}
-* {{ box-sizing:border-box; }}
-html {{ background:var(--paper); }}
-body {{
-  margin:0; min-height:100vh; color:var(--ink2); font-family:var(--text);
-  font-size:16px; line-height:1.68; background:var(--paper);
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}}
-body::before {{
-  content:""; position:fixed; inset:0 0 auto; height:8px; z-index:0; pointer-events:none;
-  background:linear-gradient(90deg,var(--acid) 0 22%,var(--ox) 22% 34%,var(--accent) 34% 100%);
-}}
-.wrap {{ position:relative; z-index:1; max-width:820px; margin:0 auto; padding:48px 28px 92px; }}
-.up {{ color:var(--up); }} .down {{ color:var(--down); }} .muted {{ color:var(--muted); font-size:13px; }}
-.num {{ font-family:var(--mono); font-variant-numeric:tabular-nums; }}
-
-.real {{
-  display:inline-flex; align-items:center; gap:9px; max-width:100%; color:var(--ink2);
-  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em;
-  padding:7px 10px; border:1px solid var(--rule-dk); border-radius:999px; background:rgba(251,253,247,.64);
-}}
-.real::before {{ content:""; width:7px; height:7px; border-radius:50%; background:var(--acid); box-shadow:0 0 0 3px rgba(199,240,74,.22); }}
-header {{ margin-top:22px; }}
-h1 {{ margin:12px 0 0; color:var(--ink); font-family:var(--disp); font-size:44px; line-height:1.02; font-weight:700; letter-spacing:-.03em; text-wrap:balance; }}
-.tick {{ margin-left:10px; color:var(--faint); font-family:var(--mono); font-size:17px; font-weight:700; }}
-.mkt {{
-  margin-left:10px; vertical-align:middle; display:inline-flex; align-items:center;
-  padding:3px 9px; border:1px solid var(--rule-dk); border-radius:999px;
-  color:var(--ox2); background:transparent; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.04em;
-}}
-.meta {{ margin-top:14px; color:var(--muted); font-family:var(--mono); font-size:13px; letter-spacing:.02em; }}
-
-.card {{
-  position:relative; overflow:hidden; margin-top:26px; padding:28px; border-radius:8px;
-  color:#EEF4E8; background:var(--accent); box-shadow:0 14px 34px rgba(21,23,19,.18);
-}}
-.card::before {{ content:""; position:absolute; inset:0 0 auto; height:5px; background:linear-gradient(90deg,var(--acid),var(--ox)); }}
-.newscard {{
-  color:var(--ink2); background:var(--surface); border:1px solid var(--rule); box-shadow:none;
-}}
-.newscard::before {{ display:none; }}
-.chieftag {{ color:var(--acid2); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }}
-.dir {{ margin:13px 0 0; color:#FBFDF7; font-family:var(--disp); font-size:30px; line-height:1.16; font-weight:700; letter-spacing:-.025em; text-wrap:balance; }}
-.chief {{ max-width:70ch; margin:15px 0 0; color:#DDE6D5; font-size:16px; line-height:1.78; }}
-.kpis {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:22px; }}
-.kpi {{ min-width:0; padding:14px; border-radius:8px; background:rgba(251,253,247,.08); }}
-.kpi .t {{ color:#AEBBA5; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }}
-.kpi .b {{ margin-top:7px; color:#FBFDF7; font-family:var(--disp); font-size:19px; font-weight:700; line-height:1.2; word-break:break-word; }}
-.adv {{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }}
-.advbox {{ padding:15px 16px; border-radius:8px; background:rgba(251,253,247,.07); border:1px solid rgba(251,253,247,.14); }}
-.advbox .h {{ margin-bottom:7px; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#E9FF9D; }}
-.advbox.risk .h {{ color:#F3D28A; }}
-.advbox p {{ margin:0; font-size:14px; color:#D6DFCF; line-height:1.62; }}
-
-.sechead {{
-  margin:38px 0 0; padding-bottom:12px; border-bottom:1px solid var(--rule-dk);
-  color:var(--ink); font-family:var(--disp); font-size:15px; font-weight:700; letter-spacing:.02em;
-  display:flex; align-items:center; gap:10px;
-}}
-.sechead::before {{ content:""; width:10px; height:10px; border-radius:2px; background:var(--acid); flex:none; }}
-
-.dim {{ margin-top:14px; padding:20px; border:1px solid var(--rule); border-radius:8px; background:var(--surface); }}
-.dimhead {{ display:flex; align-items:center; gap:11px; }}
-.dimhead .tl {{ width:10px; height:10px; }}
-.dimhead h3 {{ margin:0; color:var(--ink); font-family:var(--disp); font-size:18px; font-weight:700; letter-spacing:-.01em; }}
-.dimhead .lgt {{ margin-left:auto; display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.04em; }}
-.lgt.g {{ color:var(--up); }} .lgt.y {{ color:var(--warn); }} .lgt.r {{ color:var(--down); }}
-.tl {{ width:10px; height:10px; border-radius:50%; flex:none; display:inline-block; }}
-.tl.g {{ background:var(--up); box-shadow:0 0 0 3px rgba(22,122,84,.12); }}
-.tl.y {{ background:var(--warn); box-shadow:0 0 0 3px rgba(154,104,24,.13); }}
-.tl.r {{ background:var(--down); box-shadow:0 0 0 3px rgba(182,66,56,.12); }}
-.evrow {{ display:flex; flex-wrap:wrap; gap:8px; margin:15px 0; }}
-.evrow .d {{ padding:7px 11px; border:1px solid var(--rule); border-radius:8px; background:var(--surface2); font-size:12.5px; color:var(--muted); }}
-.evrow .d b {{ margin-left:4px; color:var(--ink); font-family:var(--mono); font-weight:700; }}
-.say {{ margin-top:2px; padding:14px 15px; border-radius:8px; background:var(--surface2); border:1px solid var(--rule); }}
-.say .who {{ display:block; margin-bottom:7px; color:var(--ox2); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }}
-.say p {{ margin:0; color:var(--ink); font-size:15px; line-height:1.72; text-wrap:pretty; }}
-
-.news {{ display:flex; justify-content:space-between; gap:14px; align-items:baseline; text-decoration:none; padding:14px 2px; border-bottom:1px solid var(--rule); color:var(--ink); }}
-.news:last-child {{ border-bottom:0; }}
-.news .nt {{ font-size:15px; line-height:1.5; }}
-.news:hover .nt {{ color:var(--ox); }}
-.news .ns {{ flex:none; white-space:nowrap; color:var(--faint); font-family:var(--mono); font-size:12px; font-weight:700; }}
-
-footer {{ margin-top:26px; }}
-.discl {{ padding:16px 0 0; border-top:1px solid var(--rule-dk); color:var(--muted); font-size:13px; line-height:1.75; }}
-.discl b {{ color:var(--ink); font-weight:700; }}
-
-@media (max-width:700px) {{
-  .wrap {{ padding:36px 18px 70px; }}
-  h1 {{ font-size:34px; }}
-  .card {{ padding:22px; }}
-  .dir {{ font-size:25px; }}
-  .kpis {{ grid-template-columns:1fr; }}
-  .adv {{ grid-template-columns:1fr; }}
-  .tick {{ display:inline-block; margin-left:0; margin-top:6px; }}
-}}
-@media (prefers-reduced-motion:reduce) {{
-  *,*::before,*::after {{ animation-duration:.01ms !important; transition-duration:.01ms !important; }}
-}}
-</style>
-<div class="wrap">
-  <span class="real">真實資料 · FinMind × TWSE × Google News</span>
-  <header>
-    <h1>{name}<span class="tick">{sid}</span><span class="mkt">台股</span></h1>
-    <div class="meta">投顧戰情報告 · 資料日 {asof} · 產出 {gen}（台北）</div>
-  </header>
-
-  <div class="card">
-    <div class="chieftag">投資長 · 綜合研判</div>
-    <div class="dir">{direction}</div>
-    <p class="chief">{chief}</p>
-    <div class="kpis">
-      <div class="kpi"><div class="t">操作建議</div><div class="b">{action_dir}</div></div>
-      <div class="kpi"><div class="t">信心度</div><div class="b">{conf}</div></div>
-      <div class="kpi"><div class="t">加權分</div><div class="b">{score}</div></div>
-    </div>
-    <div class="kpi" style="margin-top:11px"><div class="t">防守 / 停損參考</div><div class="b" style="font-size:13.5px">{action_stop}</div></div>
-    <div class="adv">
-      <div class="advbox risk"><div class="h">⚠ 風控長</div><p>{risk}</p></div>
-      <div class="advbox"><div class="h">◆ 魔鬼代言人</div><p>{devil}</p></div>
-    </div>
-  </div>
-
-  <div class="sechead">三維度團隊研判</div>
-  {dims}
-
-  <div class="sechead">近期新聞</div>
-  <div class="card newscard" style="padding:8px 20px">{news}</div>
-
-  <footer>
-    <div class="discl">紅綠燈由「數據＋固定規則」計算（技術面均線／RSI／量能、基本面營收 YoY／PER 分位、籌碼三大法人淨買），團隊觀點由分析師解讀與反駁，不憑感覺喊買賣。<b style="color:var(--ink)">本報告為投資決策輔助，非投資建議、非保證獲利，最終決策與風險由使用者承擔。</b>數據來源與抓取時間如上；抓不到即註記缺漏、絕不編造。</div>
-  </footer>
-</div>
-"""
+    stats = track_record.compute_stats(_load_log())
+    events = _load_events(stock_id)
+    return render_stock_html(d, n, stats, events)
 
 
 if __name__ == "__main__":
