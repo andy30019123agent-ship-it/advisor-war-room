@@ -70,6 +70,13 @@ class TestRenderCommon(unittest.TestCase):
         self.assertIn("<p>第二段</p>", d1)
         self.assertIn('class="disclaimer"', d1)
 
+    def test_disclaimer_inline_bold_not_escaped(self):
+        # 迴歸：段落內嵌 <b> 要輸出成真標籤，不能被 esc 成 &lt;b&gt; 字面文字
+        d = rc.disclaimer("前段<b>重點句</b>後段", "")
+        self.assertIn("<b>重點句</b>", d)
+        self.assertNotIn("&lt;b&gt;", d)
+        self.assertNotIn("<p></p>", d)  # 空段落要略過
+
 
 if __name__ == "__main__":
     unittest.main()

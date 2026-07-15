@@ -85,8 +85,13 @@ def confidence_gauge(total):
 
 
 def disclaimer(*paragraphs):
-    """免責 footer（支援混合 HTML 與純文字段落）。"""
-    body = "".join("<p>" + esc(p) + "</p>" if not p.startswith("<") else p for p in paragraphs)
+    """免責 footer。段落一律轉義後包 <p>；僅允許靜態文案的 <b> 粗體穿透（防裸標籤變字面文字）。"""
+    body = ""
+    for p in paragraphs:
+        if not p:
+            continue
+        seg = esc(p).replace("&lt;b&gt;", "<b>").replace("&lt;/b&gt;", "</b>")
+        body += "<p>" + seg + "</p>"
     return '<footer><div class="disclaimer">' + body + "</div></footer>"
 
 
