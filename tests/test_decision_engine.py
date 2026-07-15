@@ -96,6 +96,15 @@ class TestDecisionEngine(unittest.TestCase):
         c = confidence_score(flags, ["green", "amber", "na"], rr=None, market_light="red")
         self.assertLess(c["total"], 50)
 
+    def test_confidence_score_consumes_valuation_penalty(self):
+        # 估值缺失的 confidence_penalty 要被消費、且在拆分欄位可見
+        flags = {"fundamental": True, "technical": True, "chips": True, "eps_statement": True}
+        base = confidence_score(flags, ["green", "green", "green"], rr=3.0, market_light="green")
+        penalized = confidence_score(flags, ["green", "green", "green"], rr=3.0,
+                                     market_light="green", valuation_penalty=30)
+        self.assertEqual(penalized["valuation_penalty"], 30)
+        self.assertEqual(penalized["total"], base["total"] - 30)
+
     def test_position_sizing_ladder(self):
         # 極高信心：R/R>3、信心>80、三燈一致、低波動
         p = position_sizing(3.5, 90, ["green", "green", "green"], "green",
@@ -114,13 +123,26 @@ class TestDecisionEngine(unittest.TestCase):
         self.assertEqual(pr["amount"], 0)
 
     def test_position_odd_lot_and_core_note(self):
-        # 股價 2420、試單 10 萬 → 一張要 242 萬 > 10 萬 → 零股
+        # 股價 2420、試單 10 萬 → 一張要 242 萬 > 10 萬 → 建議股數 41 股，含零股
         p = position_sizing(1.8, 58, ["green", "amber", "amber"], "amber",
                             atr_pct=0.02, atr_median_pct=0.02, data_incomplete=False,
                             profile=PROFILE, price=2420.0, stock_id="2330")
         self.assertEqual(p["tier"], "試單")
         self.assertTrue(p["odd_lot"])
+        self.assertEqual(p["lots"], 0)
+        self.assertEqual(p["odd_shares"], 41)
         self.assertIn("核心持股", p["core_note"])  # 2330 為核心
+
+    def test_position_lots_and_odd_shares_fields(self):
+        # 股價 100、加碼 40 萬 → 4000 股 = 4 張整、0 零股 → odd_lot=False
+        p = position_sizing(2.8, 78, ["green", "green", "amber"], "amber",
+                            atr_pct=0.01, atr_median_pct=0.02, data_incomplete=False,
+                            profile=PROFILE, price=100.0, stock_id="2454")
+        self.assertEqual(p["amount"], 400000)
+        self.assertEqual(p["shares"], 4000)
+        self.assertEqual(p["lots"], 4)
+        self.assertEqual(p["odd_shares"], 0)
+        self.assertFalse(p["odd_lot"])
 
     def test_entry_conditions(self):
         e = entry_conditions(100.0, atr=2.0, low20=95.0, high20=110.0, ma20=98.0,
@@ -141,6 +163,38 @@ class TestDecisionEngine(unittest.TestCase):
                            {"sell_streak_ge3": True, "ratio_gt_15pct": True})
         self.assertTrue(inv["any_triggered"])
         self.assertIn("已觸發", inv["fundamental"])
+
+    def test_build_decision_no_valuation_caps_rating_and_penalizes_confidence(self):
+        # 無估值（fair_value=None，如虧損股）＋三燈綠 → rating 上限觀望、信心被扣、附註估值不足
+        valuation_ok = {
+            "path": "per", "eps_ttm": 60.0, "eps_source": "financial_statement",
+            "eps_forward": 75.0, "growth_used": 0.25,
+            "fair_value": {"bear": 2050.0, "base": 2380.0, "bull": 2720.0},
+            "multiples": {"bear": 25.0, "base": 30.0, "bull": 35.0},
+            "current_multiple": 32.8, "current_percentile": 0.5,
+            "confidence_penalty": 0, "disclosure": "…",
+        }
+        valuation_insufficient = dict(valuation_ok, fair_value=None, confidence_penalty=30)
+        flags = {"fundamental": True, "technical": True, "chips": True, "eps_statement": False}
+        common = dict(
+            price=100.0, lights=["green", "green", "green"], per_percentile=0.5,
+            market_light="amber", atr=2.0, key_ma=98.0,
+            low20=95.0, high20=110.0, ma20=98.0, avg_vol20=1000.0,
+            atr_pct=0.02, atr_median_pct=0.02, data_flags=flags,
+            rev_signals={"yoy_negative": False, "below_6m_2months": False},
+            chip_signals={"sell_streak_ge3": False, "ratio_gt_15pct": False},
+            profile=PROFILE, stock_id="2454")
+
+        dec_ok = build_decision(valuation=valuation_ok, **common)
+        dec_no_val = build_decision(valuation=valuation_insufficient, **common)
+
+        self.assertEqual(dec_no_val["rating"], "觀望")
+        self.assertIsNone(dec_no_val["fair_value"])
+        self.assertEqual(dec_no_val["note"], "估值不足，僅供燈號參考")
+        self.assertIsNone(dec_ok["note"])
+        # 同樣輸入下，缺估值版信心應被扣分（valuation_penalty 消費進 confidence）
+        self.assertLess(dec_no_val["confidence"]["total"], dec_ok["confidence"]["total"])
+        self.assertEqual(dec_no_val["confidence"]["valuation_penalty"], 30)
 
     def test_build_decision_integration(self):
         valuation = {

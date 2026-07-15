@@ -127,8 +127,8 @@ def risk_reward(base_fair, price, stop_price) -> Optional[float]:
 
 
 # ---------- 信心 0-100 ----------
-def confidence_score(data_flags: Dict, lights, rr, market_light) -> Dict:
-    """完整度 30 + 一致性 30 + R/R 20 + regime 20。"""
+def confidence_score(data_flags: Dict, lights, rr, market_light, valuation_penalty: int = 0) -> Dict:
+    """完整度 30 + 一致性 30 + R/R 20 + regime 20，再扣估值缺失的 confidence_penalty。"""
     present = sum(1 for k in ("fundamental", "technical", "chips", "eps_statement")
                   if data_flags.get(k))
     completeness = round(30 * present / 4)
@@ -146,9 +146,10 @@ def confidence_score(data_flags: Dict, lights, rr, market_light) -> Dict:
     else:
         rr_score = 0
     regime = 20 if market_light == "green" else 10 if market_light == "amber" else 0
-    total = max(0, min(100, completeness + consistency + rr_score + regime))
+    raw = completeness + consistency + rr_score + regime
+    total = max(0, min(100, raw - (valuation_penalty or 0)))
     return {"total": total, "completeness": completeness, "consistency": consistency,
-            "rr": rr_score, "regime": regime}
+            "rr": rr_score, "regime": regime, "valuation_penalty": valuation_penalty or 0}
 
 
 # ---------- 部位金額 ----------
@@ -173,12 +174,15 @@ def position_sizing(rr, confidence, lights, market_light, atr_pct, atr_median_pc
     else:
         name, reason = "空手", "未達任一部位檔位門檻（保守）"
     amount = tiers[name]
-    odd_lot = amount > 0 and price * 1000 > amount
     shares = int(amount // price) if amount > 0 and price > 0 else 0
+    lots = shares // 1000       # 整張數
+    odd_shares = shares % 1000  # 零股數
+    odd_lot = odd_shares != 0   # 建議股數是否含零股
     core_note = ""
     if stock_id in profile.get("core_holdings", []):
         core_note = "此為核心持股，本建議僅供波段加減碼層判斷，不影響定期定額核心部位"
     return {"tier": name, "amount": amount, "odd_lot": odd_lot, "shares": shares,
+            "lots": lots, "odd_shares": odd_shares,
             "reason": reason, "core_note": core_note}
 
 
@@ -256,8 +260,15 @@ def build_decision(price, lights, per_percentile, market_light, valuation,
     base_fair = fv.get("base") if fv else None
     stop = stop_reference(price, atr, key_ma, low20)
     rr = risk_reward(base_fair, price, stop["price"])
-    conf = confidence_score(data_flags, lights, rr, market_light)
+    conf = confidence_score(data_flags, lights, rr, market_light,
+                            valuation_penalty=valuation.get("confidence_penalty", 0))
     rate = rating(lights[0], lights[1], lights[2], per_percentile, market_light, rr)
+    note = None
+    if fv is None:
+        # 估值不足（fair_value=None）：rating 上限為觀望，除非綜合分數已差到 <=-0.3 仍給減碼
+        score = composite_score(lights[0], lights[1], lights[2], per_percentile, market_light)
+        rate = "減碼" if score <= -0.3 else "觀望"
+        note = "估值不足，僅供燈號參考"
     data_incomplete = sum(1 for k in ("fundamental", "technical", "chips")
                           if data_flags.get(k)) < 3
     pos = position_sizing(rr, conf["total"], lights, market_light, atr_pct, atr_median_pct,
@@ -279,6 +290,7 @@ def build_decision(price, lights, per_percentile, market_light, valuation,
         "time_frames": frames,
         "invalidation": inval,
         "as_of_price": round(price, 1),
+        "note": note,
         "disclaimer": "本區塊為規則引擎輸出之決策輔助，非投資建議；"
                       "數字依固定規則計算，最終決策與風險由使用者承擔。",
     }
