@@ -34,25 +34,41 @@
       "連續方向天數": "賣 4 天",
       "最新日": "2026-07-14",
       "備註": "新聞情緒分類待 LLM 團隊層補上"
+    },
+    "breakdown": {
+      "as_of": "2026-07-14",
+      "groups": {
+        "外資": {
+          "net_latest": -12416209,
+          "net_5d": -31281582,
+          "streak": 4,
+          "dir": "賣",
+          "ratio_20d_vol": 0.3187
+        },
+        "投信": {
+          "net_latest": 1841069,
+          "net_5d": 3683146,
+          "streak": 9,
+          "dir": "買",
+          "ratio_20d_vol": 0.0473
+        },
+        "自營": {
+          "net_latest": 2569779,
+          "net_5d": 3513531,
+          "streak": 4,
+          "dir": "買",
+          "ratio_20d_vol": 0.066
+        }
+      },
+      "divergence": true,
+      "divergence_note": "外資賣、投信買（主力分歧）"
     }
   },
   "news": [
     {
-      "title": "台積電法說會前夕！盤中漲15元至2435元 分析師：買黑不買紅 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMihANBVV95cUxPTUNNdTRyblJLX2d2LUdNOVVqbS1sdWpRUHhNd1dfZU00bzJBOTB5UEs5UXJQZFJZMXZNbmxIbTdqc1Y2RmEwMmNRVHprSXZRZ080SEctOHlFU2pxekhZeno4SlQ3ZzlBYldTNGk3Y0wzM2J1c24ybDg3ZUh0b1U4WExQaThCdXRwbzNIZDFUNVhzMlYzOXA3Q0d2T0tMNzE4SmxjNGxjUGlwOXdETU4yOUtSUWhUbld6WHNmVHJ3bnYtTkU0dms1UXdFWTNxVVo3OGFtTnJ6NnRUb0YwbTdBUG43WlBpQ3dZaWJtcFE4eUUyNTcwN0xfaHlKYmc1SGJZUXh4SjZjdE9jVTQtS1UwbjV1TDYtZG15T2hXN0Zqd0M2RTB6R0xSWVlsSVpEb18tUkRib3Y1dUdGRVhTNS1PMl9wdDVzcUpDYTdvbWZCaklIQ1A3V01TTFFUMUJqV1dIV1dsY1lrNEJBSnpGMVpxMmdGbldjUVBUTk1xdkJVWExjdzJ1?oc=5",
-      "date": "Wed, 15 Jul 2026 01:22:33 GMT",
-      "src": "Google News"
-    },
-    {
       "title": "台積電目標價升至3800元 花旗理由全說了 - 自由財經",
       "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9Dd3VXZEJrU1doZmsyYnNaTTZWcUxJUFN1OTJPc0hReTlaRnFMeW0xLWFIM3liTzhTWUM0TXV3cFhpdWV0QVAwdUZORnc5Rm56R1ZtZlZaZ2pzTE9DbHZn0gFkQVVfeXFMUEFucVI3a0txY0N4d0kxakIzNWVmdEExWXpZRUxZTDNMallOQWVVeEkxbC1FQmRUdFhncnJZSTVCazJrN280U0FncFVubDVBX0kwYlc2Z3p0d2hWdFU0MXpRN0E0OQ?oc=5",
       "date": "Mon, 06 Jul 2026 07:00:00 GMT",
-      "src": "Google News"
-    },
-    {
-      "title": "台積電營收／月增6.2%、年增67.9%，上半年營收2.4兆，年增35.6，本周法說關注重點｜股市話題｜豐雲學堂2026 年 07 月 - sinotrade.com.tw",
-      "url": "https://news.google.com/rss/articles/CBMi9wNBVV95cUxOVlpEM1FtQUVvVWhVTmx5eFQ2M19vamh1czVVSGh6bGlncUZ0OXFtcTZTYlVrOTdQZE9KWVdQWkM3UDRGbzFHVS1zcm9mdHJBaG1nb25OYzktbFVDT1g5UndmMmdOa3NIYUpRUDFOV1dRNTYwQVBKQl8tLUF5RWhCWEdMZmUwZkIzUDM2dkRFTWNfOEVxZkZvaTJjSHh6ZTVqakM3VFVrQ3dmYksweFpxSGZsVVNmNUo3T1RYYXA4LWJKbV9PMVhjTE0xT3NOajVTYXRzT2lSQWZka3gwdUpVZFUxMzhrOWNmUDBJTmJNQ05BeXQzYXJ3VUk1SnVzdmQ1emdtOF9paGozMmxDZlhBdGZ1am1sLTZPcE85MzVhVGJzUGcxMjRmSE92MXQyX1RVZjc2MlVBMGZfa3VKeUV5d3NFaVdsQ0VPSDJNUXZiNVdPN3Q1VUk5OUZ0bGVtQXR1czlES3QyNEc2UjFMMTJFY19HNTgtS2NsckdvQmUwVExvVUp3X2dIcFhmbVpQMXdSZG5qTnlkdHNvbW5pWjdpSktSLWppdEFqZkZyZUNSY2VsWW1GREE1YWktOWdyd2swR0RyTDAyVzhDbnVqTHE1LVJUQTV6RG5ranhtUVdjcmxoWnBLcUUycGVxRHdLQU5GRlEzSnY5Zw?oc=5",
-      "date": "Mon, 13 Jul 2026 05:56:13 GMT",
       "src": "Google News"
     },
     {
@@ -62,15 +78,27 @@
       "src": "Google News"
     },
     {
-      "title": "台積電符合預期！明天股價會漲嗎？2投顧董座看法不一 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMi_AJBVV95cUxPM2NheG1wbF96X0lpLXAtQm9aU1lCVzU2ZEpGd0hLM0h0NDlDc3dEQXo4OVVqWmlFREJVN0VvZUtsVjY4eHAwLXhZNEx4WFZIMlpBVmFOanZnLV9Ebkl6MHZiZ1RLUXBsTWV3elFOVlZqUW1ZQW5laVcwZklrSGNXc0FOMjBLVHp3ME1pN01BeEJXVXVHcUU0N2VLLVNtU2hqcXMwMVlZWjUxdU1WNnQwZHRhbkpPTE94eHVkblJSU0lyaVFSRE1kdDNrX2xDeFp2WHpPWnR3QjdmUGw2WTdHMHdfLWF2d1NrdDZRZlF0SXctQnJQVldBRnlySnZPSXFnaUhhQUFIZkQzRDlSU3E5LXlYMHc5bkZCcjBjVTBhcW5ZcDdwUngzZWJlRmFqdExaeDZMZ1ZQZm0zUHV2RlQyVnVOazZKZ1EtYndMTFBlRUxEZk1lSnBLa0drS2VQSFBWMXFjX1NFU0dPRHJKQXVoSTVhdWFocmVRSUtUTQ?oc=5",
-      "date": "Mon, 13 Jul 2026 07:48:27 GMT",
+      "title": "台積電營收／月增6.2%、年增67.9%，上半年營收2.4兆，年增35.6，本周法說關注重點｜股市話題｜豐雲學堂2026 年 07 月 - sinotrade.com.tw",
+      "url": "https://news.google.com/rss/articles/CBMi9wNBVV95cUxOVlpEM1FtQUVvVWhVTmx5eFQ2M19vamh1czVVSGh6bGlncUZ0OXFtcTZTYlVrOTdQZE9KWVdQWkM3UDRGbzFHVS1zcm9mdHJBaG1nb25OYzktbFVDT1g5UndmMmdOa3NIYUpRUDFOV1dRNTYwQVBKQl8tLUF5RWhCWEdMZmUwZkIzUDM2dkRFTWNfOEVxZkZvaTJjSHh6ZTVqakM3VFVrQ3dmYksweFpxSGZsVVNmNUo3T1RYYXA4LWJKbV9PMVhjTE0xT3NOajVTYXRzT2lSQWZka3gwdUpVZFUxMzhrOWNmUDBJTmJNQ05BeXQzYXJ3VUk1SnVzdmQ1emdtOF9paGozMmxDZlhBdGZ1am1sLTZPcE85MzVhVGJzUGcxMjRmSE92MXQyX1RVZjc2MlVBMGZfa3VKeUV5d3NFaVdsQ0VPSDJNUXZiNVdPN3Q1VUk5OUZ0bGVtQXR1czlES3QyNEc2UjFMMTJFY19HNTgtS2NsckdvQmUwVExvVUp3X2dIcFhmbVpQMXdSZG5qTnlkdHNvbW5pWjdpSktSLWppdEFqZkZyZUNSY2VsWW1GREE1YWktOWdyd2swR0RyTDAyVzhDbnVqTHE1LVJUQTV6RG5ranhtUVdjcmxoWnBLcUUycGVxRHdLQU5GRlEzSnY5Zw?oc=5",
+      "date": "Mon, 13 Jul 2026 05:56:13 GMT",
       "src": "Google News"
     },
     {
-      "title": "台積電營收史上最強只「符合預期」？專家曝原因：爆表也不好 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMiqwNBVV95cUxOdnNiSmdPQTBwdVdpQmhhVVNOSVctU1J6Rjg5WGdOdVd1ZEdodnNObklhdUhrZ2xfSmVmU0I4cjk0aTNSZkhYYlMtdGwxenJ4Z1Z5Q1lIMlJDekt6R1lMSzRLS05aanRsMW9yeW9XWVFic1VyNFk3LTlqY3lJUEF6QzFrNmJHa2tlVG44WlozaVVqQW1UTnlaOHRiQWZiakxnYnBBVnpzcWg5ZmVTTk82M2tHNlJmRlFrZWlVQjlzVkdHbGZzVDlOWU10RFJrbmRSU1ZuX0hHNHA5TXROdUZXSXRXSkdsNjVaWXdUVDd0OTJITW1ZMHNRYm13RENSWTA0alN4VEhXYmxqYXROaFlfTUlUU1hGWmpCTjE5Z0NEQW9WZjQtLTZNeE4wV1piT1lSZDk4TE9sZE9nekJrZjJQNjVlNmtRS1JlRGtsTHc4TjdPWDh0Ym8zS2Z4V01lWkMtdEg3ZnNBaWF5c1FMeWh1Ri1KN2tFb3dQZW11RF9sUUlhMFZ6ZzRhMFZwekV4Y3VyTnc2NmlXMVVodEloTkhRTVFkU1NwWkxicUxj?oc=5",
-      "date": "Mon, 13 Jul 2026 08:28:28 GMT",
+      "title": "台積電法說會在即，這次哪裡不一樣？「法說後等回檔」這招還管用嗎？ - Smart自學網",
+      "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE9YTTVyTmg2MlhJV3dLWlVyOUJLc1VSaVQ3bkh2S2lEeF92NS1FV3ViSEVqWl9heWtqUFhUWTFrX2tMejFEcEVnZHgxblVDUFRJSG82VmlJQ0w4X0NjWF9VV3lic0VKX090clJtVW1CVGdnNzA2WldBMmhfbkM?oc=5",
+      "date": "Tue, 14 Jul 2026 10:13:54 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "台積電法說會前夕！盤中漲15元至2435元 分析師：買黑不買紅 - Yahoo股市",
+      "url": "https://news.google.com/rss/articles/CBMihANBVV95cUxPTUNNdTRyblJLX2d2LUdNOVVqbS1sdWpRUHhNd1dfZU00bzJBOTB5UEs5UXJQZFJZMXZNbmxIbTdqc1Y2RmEwMmNRVHprSXZRZ080SEctOHlFU2pxekhZeno4SlQ3ZzlBYldTNGk3Y0wzM2J1c24ybDg3ZUh0b1U4WExQaThCdXRwbzNIZDFUNVhzMlYzOXA3Q0d2T0tMNzE4SmxjNGxjUGlwOXdETU4yOUtSUWhUbld6WHNmVHJ3bnYtTkU0dms1UXdFWTNxVVo3OGFtTnJ6NnRUb0YwbTdBUG43WlBpQ3dZaWJtcFE4eUUyNTcwN0xfaHlKYmc1SGJZUXh4SjZjdE9jVTQtS1UwbjV1TDYtZG15T2hXN0Zqd0M2RTB6R0xSWVlsSVpEb18tUkRib3Y1dUdGRVhTNS1PMl9wdDVzcUpDYTdvbWZCaklIQ1A3V01TTFFUMUJqV1dIV1dsY1lrNEJBSnpGMVpxMmdGbldjUVBUTk1xdkJVWExjdzJ1?oc=5",
+      "date": "Wed, 15 Jul 2026 01:22:33 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "台積電還沒開法說就跌！他不解台股「為何開會前夕才放推」 網酸：吸韭菜的錢啊 - Yahoo股市",
+      "url": "https://news.google.com/rss/articles/CBMi4ANBVV95cUxQejZwOFlDMXNlZmVtSkpFMnVDaFQ4WUlzVE5DZGRnb1NGZjV3RHp5VXJPLVk1aHNjU2NjZnY2Q0RXMm5adHVRR1lrdlJRcVdmLUktRFI4cVdDUkxnS0FOY3ppN2VENDdiTXFrQVdpN2t5Zk9VZV8wX1NUUWE3aWc1Q0pjMXJhZk01SmNVNWR3ZG1Kb0REbkpDMDRQVE1GS21HTkhHWElNQ2FTMEllM2RtYUpDZnpabFJhZzZRV0Vublp6aS1reE9ZbGhWWkc2STdnUnlwWGFTVTdyVDIyb0N4WndhNG95T3lOR0pCUG9QSEJJclNlRHpyU3dYMk1nOTNuS1FqMEJ4eFVJeWh0S3pSR0RDTFI2RkxpTWZydDN4ZUdrUU1CYU55T3JKLVd5dDgwblZMdUZsUWlCZFk5UWFubHB3akthVWNRdmgzaW14TlNiSzFUNS1DSE1uakducmJTLU1WYW93UlFyaHBlWG9OTGszMjNCSi1pa1NwZkQ1OEpZV2ZDd1JQLTFTclNkZklUYkF5a1FOV3pucVh6ZWNZczNlX0p0WENJa3lrSU9sS3AxSlFKbDd5S0VwcHZtejJJd2RQajlpbnZGbWpub2pZdGJpQlVtQzU0VWRGRzNaZk8?oc=5",
+      "date": "Wed, 15 Jul 2026 02:02:36 GMT",
       "src": "Google News"
     }
   ],
@@ -86,6 +114,51 @@
     "technical": true,
     "chips": true,
     "eps_statement": true
+  },
+  "fundamentals_quality": {
+    "total": 14,
+    "max": 14,
+    "pct": 1.0,
+    "streak_bonus": 2,
+    "roe_value": 0.3249,
+    "factors": {
+      "revenue": {
+        "score": 2,
+        "applicable": true,
+        "value": "最新月 YoY +67.9%"
+      },
+      "eps": {
+        "score": 2,
+        "applicable": true,
+        "value": "TTM EPS 74.4 vs 前 50.5"
+      },
+      "gross_margin": {
+        "score": 2,
+        "applicable": true,
+        "value": "毛利率 61.9%（前 57.4%）"
+      },
+      "operating_margin": {
+        "score": 2,
+        "applicable": true,
+        "value": "營益率 53.3%（前 47.1%）"
+      },
+      "roe": {
+        "score": 2,
+        "applicable": true,
+        "value": "ROE 32.5%"
+      },
+      "fcf": {
+        "score": 2,
+        "applicable": true,
+        "value": "營業現金流 正、同季 YoY 增"
+      },
+      "debt": {
+        "score": 2,
+        "applicable": true,
+        "value": "負債比 32%"
+      }
+    },
+    "note": "7 因子各 0-2 分；缺科目標不適用不扣分；連續改善另加減分"
   },
   "decision": {
     "rating": "減碼",
@@ -160,7 +233,7 @@
       }
     },
     "invalidation": {
-      "price": "價格：跌破參考防守位 2226.4 且未快速收回",
+      "price": "價格：收盤 2420.0 vs 防守位 2226.4（未觸發）",
       "fundamental": "基本面：最新營收 YoY 轉負且連 2 月低於 6 月均（未觸發）",
       "chips": "籌碼：法人連 3 日同向賣且賣超佔 20 日均量>15%（已觸發）",
       "any_triggered": true

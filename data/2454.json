@@ -34,6 +34,34 @@
       "連續方向天數": "賣 5 天",
       "最新日": "2026-07-14",
       "備註": "新聞情緒分類待 LLM 團隊層補上"
+    },
+    "breakdown": {
+      "as_of": "2026-07-14",
+      "groups": {
+        "外資": {
+          "net_latest": 224947,
+          "net_5d": -2093865,
+          "streak": 1,
+          "dir": "買",
+          "ratio_20d_vol": 0.0191
+        },
+        "投信": {
+          "net_latest": 160726,
+          "net_5d": 241277,
+          "streak": 1,
+          "dir": "買",
+          "ratio_20d_vol": 0.0136
+        },
+        "自營": {
+          "net_latest": -528371,
+          "net_5d": -896879,
+          "streak": 1,
+          "dir": "賣",
+          "ratio_20d_vol": 0.0448
+        }
+      },
+      "divergence": false,
+      "divergence_note": ""
     }
   },
   "news": [
@@ -62,15 +90,15 @@
       "src": "Google News"
     },
     {
-      "title": "焦點股》聯發科：無差別式下殺！股價暴跌逾7％摜破季線 - 自由財經",
-      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE54bUpLTGs4RWgwMFd6M1hPX2lTclV6ekhFUFAtYzFBaFNJeXMwUWg0bE9OTU1KRDRZaTVWV2ZvZ01wSDdZcTh2aHRUSW03c1h0UUNHU09WUnhFWXhjZ0JF0gFkQVVfeXFMTXF5ekRDSThMbTMydHhOOHpQLWV3TjhLUUJFSEwyR2hEb2NYeUM2UUdpd2dfU0FVQXdWbDlJYWs2LUxSRmJMaTBfZ1FBMFI4X21FTXRscmJ3OVlNa2tkdmZ4SHNyTw?oc=5",
-      "date": "Tue, 14 Jul 2026 02:54:32 GMT",
-      "src": "Google News"
-    },
-    {
       "title": "聯發科Q2營收1521億元寫5季以來新高 飛越財測高標 - news.cnyes.com",
       "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5wWjFVUDNndEI2SEFzSDUtNVpPTEhwNHlfSS1yVzdxZEFxM19QQy1Zc0NsNUc4S1ZYSENjajZKQncyUjdxQk9OSk5NaENGVEU?oc=5",
       "date": "Fri, 10 Jul 2026 10:27:35 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "外資驚天狂喊聯發科上看10000元！蔡明翰狠揭「搓數字」黑幕：這家晶片老大哥才是Google真愛！ - 上市櫃 - 旺得富理財網",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE82aWNYMzJ6Z09GeEM0NnhSY1hKdEVFZWd0emZmWTQ1TFdsQmtxZjNXT0dBSFIyZW8wampZa0dYUUs5aENMNU5fRzczM2xtTnFZQkdmeDFFR1R3d3V0bkc2UFB2cDl3ck9xY1E?oc=5",
+      "date": "Thu, 09 Jul 2026 02:02:29 GMT",
       "src": "Google News"
     }
   ],
@@ -86,6 +114,51 @@
     "technical": true,
     "chips": true,
     "eps_statement": true
+  },
+  "fundamentals_quality": {
+    "total": 3,
+    "max": 14,
+    "pct": 0.214,
+    "streak_bonus": -1,
+    "roe_value": 0.2534,
+    "factors": {
+      "revenue": {
+        "score": 1,
+        "applicable": true,
+        "value": "最新月 YoY +2.8%"
+      },
+      "eps": {
+        "score": 0,
+        "applicable": true,
+        "value": "TTM EPS 62.9 vs 前 65.5"
+      },
+      "gross_margin": {
+        "score": 0,
+        "applicable": true,
+        "value": "毛利率 47.0%（前 48.6%）"
+      },
+      "operating_margin": {
+        "score": 0,
+        "applicable": true,
+        "value": "營益率 16.3%（前 18.2%）"
+      },
+      "roe": {
+        "score": 2,
+        "applicable": true,
+        "value": "ROE 25.3%"
+      },
+      "fcf": {
+        "score": 0,
+        "applicable": true,
+        "value": "營業現金流 -17,656,664,000（負）"
+      },
+      "debt": {
+        "score": 1,
+        "applicable": true,
+        "value": "負債比 46%"
+      }
+    },
+    "note": "7 因子各 0-2 分；缺科目標不適用不扣分；連續改善另加減分"
   },
   "decision": {
     "rating": "減碼",
@@ -160,7 +233,7 @@
       }
     },
     "invalidation": {
-      "price": "價格：跌破參考防守位 3144.0 且未快速收回",
+      "price": "價格：收盤 3660.0 vs 防守位 3144.0（未觸發）",
       "fundamental": "基本面：最新營收 YoY 轉負且連 2 月低於 6 月均（未觸發）",
       "chips": "籌碼：法人連 3 日同向賣且賣超佔 20 日均量>15%（未觸發）",
       "any_triggered": false
