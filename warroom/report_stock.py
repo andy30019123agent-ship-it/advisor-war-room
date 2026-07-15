@@ -401,6 +401,8 @@ if __name__ == "__main__":
     sid = sys.argv[1] if len(sys.argv) > 1 else "2330"
     os.makedirs("reports", exist_ok=True)
     out = f"reports/{sid}.html"
+    # 先 build 完才開檔寫入：避免一致性閘門中途 exit 時把舊報告截成空檔
+    html_out = build(sid)
     with open(out, "w", encoding="utf-8") as f:
-        f.write(build(sid))
+        f.write(html_out)
     print(f"→ 已產出 {out}")

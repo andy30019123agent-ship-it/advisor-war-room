@@ -449,6 +449,8 @@ footer {{ margin-top:24px; color:var(--muted); font-size:13px; }}
 
 if __name__ == "__main__":
     os.makedirs("reports", exist_ok=True)
+    # 先 build 完才開檔寫入：避免一致性閘門中途 exit 時把舊報告截成空檔
+    html_out = build()
     with open("reports/weekly.html", "w", encoding="utf-8") as f:
-        f.write(build())
+        f.write(html_out)
     print("→ 已產出 reports/weekly.html")
