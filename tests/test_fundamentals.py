@@ -3,7 +3,9 @@ import unittest
 
 import pandas as pd
 
-from warroom.fundamentals import compute_fundamentals, compute_roe
+from warroom.fundamentals import (
+    compute_fundamentals, compute_roe, _ttm, _series, _eps_factor, _fcf_factor,
+)
 
 
 def make_fs(quarters):
@@ -130,6 +132,77 @@ class TestFundamentals(unittest.TestCase):
         self.assertIsNone(out["pct"])
         self.assertIsNone(out["roe_value"])
         self.assertFalse(any(v["applicable"] for v in out["factors"].values()))
+
+    # ---------- P1 終審修復：#7 _ttm 連續性 ----------
+    def test_ttm_none_on_quarter_gap(self):
+        # 缺 2025Q2（EPS）→ keys 不連續，_ttm 應回 None，不得跳過缺季硬湊 4 筆
+        q_missing = [q for q in Q8 if q["date"] != "2025-06-30"]
+        fs = make_fs(q_missing)
+        eps_series = _series(fs, "EPS")
+        keys = sorted(eps_series.keys())
+        self.assertIsNone(_ttm(eps_series, keys, 0))
+
+    def test_eps_factor_na_on_quarter_gap(self):
+        q_missing = [q for q in Q8 if q["date"] != "2025-06-30"]
+        f = _eps_factor(make_fs(q_missing))
+        self.assertFalse(f["applicable"])
+
+    def test_compute_roe_none_on_quarter_gap(self):
+        # 缺一季淨利 → TTM 不連續，ROE 不得硬湊出膨脹值（避免污染 PBR 估值）
+        ni_missing = [q for q in Q8 if q["date"] != "2025-06-30"]
+        fs = make_fs(ni_missing)
+        bs = make_bs(equity=40000, liabilities=20000, total_assets=60000)
+        self.assertIsNone(compute_roe(fs, bs))
+
+    # ---------- P1 終審修復：#8 FCF 因子誠實化（OCF，未扣資本支出）----------
+    def test_fcf_factor_display_name_and_caveat(self):
+        f = _fcf_factor(make_cf([("2024-03-31", 1500), ("2024-06-30", 1600),
+                                 ("2025-03-31", 1700), ("2025-06-30", 1800)]))
+        self.assertTrue(f["applicable"])
+        self.assertIn("營業現金流", f["value"])
+        self.assertIn("OCF", f["value"])
+        self.assertIn("未扣資本支出", f["value"])
+        # key 名仍相容既有介面
+        out = compute_fundamentals({
+            "fs_df": None, "bs_df": None,
+            "cf_df": make_cf([("2025-06-30", 100)]),
+            "rev_df": None, "industry_category": None,
+        })
+        self.assertIn("fcf", out["factors"])
+
+    # ---------- P1 終審修復：#9 虧轉盈評分 ----------
+    def test_eps_factor_loss_to_profit_scores_high(self):
+        rows = [
+            {"date": "2024-03-31", "EPS": -3.0}, {"date": "2024-06-30", "EPS": -2.0},
+            {"date": "2024-09-30", "EPS": -3.0}, {"date": "2024-12-31", "EPS": -2.0},
+            {"date": "2025-03-31", "EPS": 1.0}, {"date": "2025-06-30", "EPS": 2.0},
+            {"date": "2025-09-30", "EPS": 1.0}, {"date": "2025-12-31", "EPS": 2.0},
+        ]
+        f = _eps_factor(make_fs(rows))
+        self.assertEqual(f["score"], 2)
+        self.assertIn("由虧轉盈", f["value"])
+
+    def test_eps_factor_loss_narrowing_scores_mid(self):
+        rows = [
+            {"date": "2024-03-31", "EPS": -5.0}, {"date": "2024-06-30", "EPS": -5.0},
+            {"date": "2024-09-30", "EPS": -5.0}, {"date": "2024-12-31", "EPS": -5.0},
+            {"date": "2025-03-31", "EPS": -3.0}, {"date": "2025-06-30", "EPS": -2.0},
+            {"date": "2025-09-30", "EPS": -3.0}, {"date": "2025-12-31", "EPS": -2.0},
+        ]
+        f = _eps_factor(make_fs(rows))
+        self.assertEqual(f["score"], 1)
+        self.assertIn("虧損收斂", f["value"])
+
+    def test_eps_factor_loss_widening_scores_zero(self):
+        rows = [
+            {"date": "2024-03-31", "EPS": -2.5}, {"date": "2024-06-30", "EPS": -2.5},
+            {"date": "2024-09-30", "EPS": -2.5}, {"date": "2024-12-31", "EPS": -2.5},
+            {"date": "2025-03-31", "EPS": -5.0}, {"date": "2025-06-30", "EPS": -5.0},
+            {"date": "2025-09-30", "EPS": -5.0}, {"date": "2025-12-31", "EPS": -5.0},
+        ]
+        f = _eps_factor(make_fs(rows))
+        self.assertEqual(f["score"], 0)
+        self.assertIn("虧損擴大", f["value"])
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """財報品質分數（規格 §3.3）＋ ROE（規格 §3.2.1 終審移交第 1 項）。
-7 因子各 0-2 分：營收/EPS/毛利率/營益率/ROE/FCF/負債；連續改善另加減分（streak_bonus）。
+7 因子各 0-2 分：營收/EPS/毛利率/營益率/ROE/營業現金流(OCF，key 名沿用 fcf 相容既有介面，
+未扣資本支出、非真正自由現金流)/負債；連續改善另加減分（streak_bonus）。
 資料源：FinMind 綜合損益表 / 資產負債表 / 現金流量表 / 月營收（皆長格式）。
 純規則、缺科目降級：金融股缺毛利/營益 → 該因子標「不適用」不扣分（max 只計可用因子）。
 資料事實（2026-07-15 真 API 實測）：
@@ -56,11 +57,21 @@ def _first_series(fs_df, type_names: List[str]) -> Tuple[Dict, Optional[str]]:
 
 
 def _ttm(series: Dict, keys: List, offset: int = 0) -> Optional[float]:
-    """近 4 季加總，offset=0 為最新 TTM、offset=4 為前一年 TTM。keys 需已升冪。"""
+    """近 4 季加總，offset=0 為最新 TTM、offset=4 為前一年 TTM。keys 需已升冪。
+    P1 fix #7：要求所選 4 季在時間序列上「連續」（無缺季），若中間缺一季即回 None
+    （上層標樣本不足），避免用不連續的 4 筆湊 TTM 膨脹指標（如 ROE 進而灌水 PBR 估值）。
+    跨年份時（例如 Q4→隔年Q1）正確處理。"""
     end = len(keys) - offset
     if end < 4:
         return None
-    return sum(series[k] for k in keys[end - 4:end])
+    window = keys[end - 4:end]
+    for i in range(1, 4):
+        y0, q0 = window[i - 1]
+        y1, q1 = window[i]
+        expected = (y0, q0 + 1) if q0 < 4 else (y0 + 1, 1)
+        if (y1, q1) != expected:
+            return None
+    return sum(series[k] for k in window)
 
 
 def compute_roe(fs_df, bs_df) -> Optional[float]:
@@ -147,7 +158,9 @@ def _margin_factor(num_series, rev_series, label: str) -> Dict:
 
 
 def _fcf_factor(cf_df) -> Dict:
-    """FCF 因子：營業現金流最新季 vs 去年同季（累計制→同季可比）。正且改善→2、正→1、負→0。"""
+    """營業現金流（OCF）因子：最新季 vs 去年同季（累計制→同季可比）。正且改善→2、正→1、負→0。
+    P1 fix #8 誠實化：此因子只讀「營業活動之淨現金流」，未扣資本支出，並非真正的自由現金流
+    （Free Cash Flow）。顯示名改「營業現金流」，避免掛 FCF 之名誤導；key 名維持 "fcf" 相容既有介面。"""
     op = _series(cf_df, "CashFlowsFromOperatingActivities")
     if not op:
         return _na("科目不適用（無營業現金流）")
@@ -157,11 +170,12 @@ def _fcf_factor(cf_df) -> Dict:
     prev_key = (keys[-1][0] - 1, keys[-1][1])  # 去年同季
     if prev_key in op:
         prev = op[prev_key]
+    suffix = "（以 OCF 評分，未扣資本支出）"
     if now <= 0:
-        return _factor(0, True, f"營業現金流 {now:,.0f}（負）")
+        return _factor(0, True, f"營業現金流 {now:,.0f}（負）{suffix}")
     if prev is not None and now > prev:
-        return _factor(2, True, "營業現金流 正、同季 YoY 增")
-    return _factor(1, True, "營業現金流 正、同季 YoY 持平或略降")
+        return _factor(2, True, f"營業現金流 正、同季 YoY 增{suffix}")
+    return _factor(1, True, f"營業現金流 正、同季 YoY 持平或略降{suffix}")
 
 
 def _debt_factor(bs_df, industry_category) -> Dict:
@@ -185,15 +199,24 @@ def _debt_factor(bs_df, industry_category) -> Dict:
 
 
 def _eps_factor(fs_df) -> Dict:
-    """EPS 因子：TTM EPS vs 前一年 TTM EPS 成長。需 ≥8 季，否則不適用。"""
+    """EPS 因子：TTM EPS vs 前一年 TTM EPS 成長。需 ≥8 季（且 _ttm 內建連續性檢查），否則不適用。
+    P1 fix #9：前期 TTM EPS<0（虧損）時，舊寫法一律 g=None→0 分，讓「虧轉盈」跟「雙虧損擴大」
+    拿一樣的最差分數，不合理。改為：虧轉盈→2 分；雙虧損但收斂（|now|<|prev|）→1 分；
+    雙虧損擴大或持平→0 分。前期為正時維持原本的成長率評分（_score_growth）。"""
     eps = _series(fs_df, "EPS")
     if not eps:
         return _na("無 EPS 科目")
     keys = sorted(eps.keys())
     now, prev = _ttm(eps, keys, 0), _ttm(eps, keys, 4)
     if now is None or prev is None or prev == 0:
-        return _na("EPS 樣本不足（需 8 季）")
-    g = now / prev - 1 if prev > 0 else None
+        return _na("EPS 樣本不足（需 8 季連續）")
+    if prev < 0:
+        if now > 0:
+            return _factor(2, True, f"TTM EPS {now:.1f} vs 前 {prev:.1f}（由虧轉盈）")
+        if now < 0 and abs(now) < abs(prev):
+            return _factor(1, True, f"TTM EPS {now:.1f} vs 前 {prev:.1f}（虧損收斂）")
+        return _factor(0, True, f"TTM EPS {now:.1f} vs 前 {prev:.1f}（虧損擴大或持平）")
+    g = now / prev - 1
     return _factor(_score_growth(g), True, f"TTM EPS {now:.1f} vs 前 {prev:.1f}")
 
 
