@@ -11,8 +11,10 @@ _ZH = {"green": "偏多", "amber": "中性", "red": "偏空", "na": "缺"}
 
 
 # ---------- 波動度 ----------
-def atr14(price_df, n: int = 14) -> Optional[float]:
-    """ATR14（Wilder EWMA）。需 max/min/close 欄；資料 <n+1 列或缺欄 → None。"""
+def atr14(price_df, n: int = 14, ex_div_map: Optional[Dict] = None) -> Optional[float]:
+    """ATR14（Wilder EWMA）。需 max/min/close 欄；資料 <n+1 列或缺欄 → None。
+    ex_div_map={除息日: 每股配息}：在除息日用「配息還原後前收」算 TR，抑制除權息跳空
+    對 ATR 的污染（規格 §3.2.1）。ex_div_map=None → 與 P0 行為一致。"""
     if price_df is None or len(price_df) < n + 1:
         return None
     df = price_df.sort_values("date").reset_index(drop=True)
@@ -23,6 +25,10 @@ def atr14(price_df, n: int = 14) -> Optional[float]:
     low = pd.to_numeric(df["min"], errors="coerce")
     close = pd.to_numeric(df["close"], errors="coerce")
     prev = close.shift(1)
+    if ex_div_map:
+        # 除息日的「前收」下修當日配息額 → 移除機械式跳空（僅影響該日 TR）
+        adj = df["date"].astype(str).map(lambda x: float(ex_div_map.get(x, 0.0)))
+        prev = prev - adj.values
     tr = pd.concat([(high - low).abs(), (high - prev).abs(), (low - prev).abs()],
                    axis=1).max(axis=1)
     atr = tr.ewm(alpha=1 / n, adjust=False).mean().iloc[-1]
@@ -236,17 +242,35 @@ def time_frames(lights, rating_main, fair_value, tech_ev, valuation) -> Dict:
 
 
 # ---------- 失效條件三層 ----------
-def invalidation(stop_price, rev_signals, chip_signals) -> Dict:
-    """價格（防守位）／基本面（營收 YoY 轉負且連 2 月低於 6 月均）／籌碼（法人連3日同向賣且佔20日均量>15%）。"""
+def invalidation(stop_price, rev_signals, chip_signals,
+                 price=None, ex_dividend_today=False, ex_div_amt=0.0) -> Dict:
+    """價格（防守位）／基本面（營收 YoY 轉負且連 2 月低於 6 月均）／籌碼（法人連3日同向賣且佔20日均量>15%）。
+    價格層：price 給定時判斷是否跌破防守位；除息日用配息還原後收盤比對，機械式跳空不觸發
+    （規格 §3.2.1）。price=None → 不納入 any_triggered（維持 P0 行為）。"""
     fund_hit = bool(rev_signals.get("yoy_negative") and rev_signals.get("below_6m_2months"))
     chip_hit = bool(chip_signals.get("sell_streak_ge3") and chip_signals.get("ratio_gt_15pct"))
+
+    price_hit = False
+    if price is not None and stop_price is not None:
+        cmp_close = price + ex_div_amt if ex_dividend_today else price  # 除息日還原配息
+        price_hit = cmp_close < stop_price
+    if price is None:
+        price_text = f"價格：跌破參考防守位 {stop_price} 且未快速收回"
+    elif ex_dividend_today:
+        price_text = ("價格：除息日，已用配息還原後收盤比對防守位 "
+                      f"{stop_price}（機械式跳空不計失效）"
+                      + ("（仍跌破，已觸發）" if price_hit else "（未觸發）"))
+    else:
+        price_text = (f"價格：收盤 {price} vs 防守位 {stop_price}"
+                      + ("（已觸發）" if price_hit else "（未觸發）"))
+
     return {
-        "price": f"價格：跌破參考防守位 {stop_price} 且未快速收回",
+        "price": price_text,
         "fundamental": "基本面：最新營收 YoY 轉負且連 2 月低於 6 月均"
                        + ("（已觸發）" if fund_hit else "（未觸發）"),
         "chips": "籌碼：法人連 3 日同向賣且賣超佔 20 日均量>15%"
                  + ("（已觸發）" if chip_hit else "（未觸發）"),
-        "any_triggered": fund_hit or chip_hit,
+        "any_triggered": fund_hit or chip_hit or price_hit,
     }
 
 
@@ -254,7 +278,7 @@ def invalidation(stop_price, rev_signals, chip_signals) -> Dict:
 def build_decision(price, lights, per_percentile, market_light, valuation,
                    atr, key_ma, low20, high20, ma20, avg_vol20,
                    atr_pct, atr_median_pct, data_flags, rev_signals, chip_signals,
-                   profile, stock_id) -> Dict:
+                   profile, stock_id, ex_dividend_today=False, ex_div_amt=0.0) -> Dict:
     """把所有純片段組裝成 data/<id>.json 的 "decision" 區塊（見計畫 §介面契約）。"""
     fv = valuation.get("fair_value")
     base_fair = fv.get("base") if fv else None
@@ -275,7 +299,9 @@ def build_decision(price, lights, per_percentile, market_light, valuation,
                           data_incomplete, profile, price, stock_id)
     entries = entry_conditions(price, atr, low20, high20, ma20, avg_vol20)
     frames = time_frames(lights, rate, fv or {}, {"MA20": ma20}, valuation)
-    inval = invalidation(stop["price"], rev_signals, chip_signals)
+    inval = invalidation(stop["price"], rev_signals, chip_signals,
+                         price=price, ex_dividend_today=ex_dividend_today,
+                         ex_div_amt=ex_div_amt)
     return {
         "rating": rate,
         "fair_value": fv,

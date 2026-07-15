@@ -12,6 +12,11 @@ from warroom.decision_engine import (
 )
 from warroom.chips_v2 import chips_breakdown
 from warroom.fundamentals import compute_fundamentals
+from warroom.events import (build_ex_div_map, has_upcoming_event,
+                            event_risk_downgrade, build_event_calendar)
+from datetime import datetime, timezone, timedelta
+import json as _json
+import os as _os
 
 LIGHT_SCORE = {"green": 1, "amber": 0, "red": -1, "na": 0}
 LIGHT_ZH = {"green": "🟢偏多", "amber": "🟡中性", "red": "🔴偏空", "na": "⚪資料缺"}
@@ -52,6 +57,7 @@ def fetch(stock_id):
         ("rev", "taiwan_stock_month_revenue", dict(stock_id=stock_id, start_date="2023-01-01")),
         ("val", "taiwan_stock_per_pbr", dict(stock_id=stock_id, start_date="2021-01-01")),
         ("chip", "taiwan_stock_institutional_investors", dict(stock_id=stock_id, start_date="2026-04-01")),
+        ("div", "taiwan_stock_dividend", dict(stock_id=stock_id, start_date="2025-01-01")),
         ("fs", "taiwan_stock_financial_statement", dict(stock_id=stock_id, start_date="2024-01-01")),
         ("bs", "taiwan_stock_balance_sheet", dict(stock_id=stock_id, start_date="2024-01-01")),
         ("cf", "taiwan_stock_cash_flows_statement", dict(stock_id=stock_id, start_date="2024-01-01")),
@@ -395,19 +401,42 @@ def _decide(stock_id, d, res, flags):
     low20, high20 = prior_n_high_low(pdf, hi_c, lo_c, 20)
     avg_vol20 = float(pd.to_numeric(pdf["Trading_Volume"], errors="coerce").tail(20).mean()) \
         if "Trading_Volume" in pdf.columns else None
-    atr = atr14(pdf)
+
+    ex_div_map = build_ex_div_map(d.get("div"))
+    latest_date = str(pdf["date"].iloc[-1])
+    ex_today = latest_date in ex_div_map
+    ex_amt = float(ex_div_map.get(latest_date, 0.0))
+    atr = atr14(pdf, ex_div_map=ex_div_map)
     atr_med = atr_percent_median(pdf)
     atr_pct = (atr / price) if (atr is not None and price) else None
     per_pctile = valuation.get("current_percentile")
 
-    return build_decision(
+    dec = build_decision(
         price=price, lights=lights, per_percentile=per_pctile, market_light=market_light,
         valuation=valuation, atr=atr, key_ma=ma20, low20=low20, high20=high20,
         ma20=ma20, avg_vol20=avg_vol20, atr_pct=atr_pct, atr_median_pct=atr_med,
         data_flags=flags,
         rev_signals=rev_signals_from_df(d.get("rev")),
         chip_signals=chip_signals_from_df(d.get("chip"), vol20=avg_vol20),
-        profile=load_profile(), stock_id=stock_id)
+        profile=load_profile(), stock_id=stock_id,
+        ex_dividend_today=ex_today, ex_div_amt=ex_amt)
+
+    # 事件前高估值＋籌碼弱 → 自動降級（規格 §3.3）
+    try:
+        earnings_json = None
+        ep = "../tw-earnings-calendar/data/latest.json"
+        if _os.path.exists(ep):
+            earnings_json = _json.load(open(ep, encoding="utf-8"))
+        today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+        has_ev = has_upcoming_event(stock_id, d.get("div"), earnings_json, {}, today, 14)
+        new_rating, ev_note = event_risk_downgrade(
+            dec["rating"], has_ev, per_pctile, res["chips"]["light"])
+        if ev_note:
+            dec["rating"] = new_rating
+            dec["event_downgrade"] = ev_note   # additive：渲染可顯示降級理由
+    except Exception:
+        pass
+    return dec
 
 
 def pretty(res):
@@ -435,3 +464,20 @@ if __name__ == "__main__":
     with open(f"data/{sid}.json", "w", encoding="utf-8") as f:
         json.dump(res, f, ensure_ascii=False, indent=2, default=str)
     print(f"\n→ 已寫 data/{sid}.json")
+
+    try:
+        from warroom.finmind_cache import cached_fetch as _cf
+        ep = "../tw-earnings-calendar/data/latest.json"
+        ej = _json.load(open(ep, encoding="utf-8")) if _os.path.exists(ep) else None
+        try:
+            _div = _cf("taiwan_stock_dividend", stock_id=sid, start_date="2025-01-01")
+        except Exception:
+            _div = None
+        today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+        # 單檔版事件日曆：本股除息 + 本股月營收 + 全域法說/FOMC/CPI（週報可另做全市場版）
+        cal = build_event_calendar(ej, {sid: (res["name"], _div)}, {sid: res["name"]}, today, 14)
+        with open("data/events.json", "w", encoding="utf-8") as f:
+            _json.dump(cal, f, ensure_ascii=False, indent=2)
+        print("→ 已寫 data/events.json")
+    except Exception as _e:
+        print(f"（events.json 落檔略過：{_e}）")
