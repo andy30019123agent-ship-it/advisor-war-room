@@ -14,7 +14,7 @@ CSS = r"""<style>
   --shadow-inset:inset 6px 6px 12px #c9c9d0,inset -6px -6px 12px #ffffff;
   --sans:'IBM Plex Sans TC','PingFang TC',system-ui,sans-serif;--display:'Nunito Sans','IBM Plex Sans TC',system-ui,sans-serif;--mono:'IBM Plex Mono','SF Mono',ui-monospace,Menlo,monospace;
 }
-*{box-sizing:border-box} html{background:var(--bg)} body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.68;letter-spacing:0;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+*{box-sizing:border-box} html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%} body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.68;letter-spacing:0;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 svg{display:block;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.icon{width:20px;height:20px;flex:none}.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:700}.up{color:var(--up)}.down{color:var(--down)}.muted{color:var(--muted)}
 .page{max-width:1080px;margin:0 auto;padding:18px 16px 80px}.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;min-height:48px;color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:700}.brand{display:inline-flex;align-items:center;gap:8px;color:var(--ink)}
 .hero{display:grid;gap:18px;padding:20px 0 10px}.eyebrow,.chip,.pill{display:inline-flex;align-items:center;gap:8px;min-height:32px;width:max-content;max-width:100%;padding:5px 11px;border-radius:999px;background:var(--soft);box-shadow:var(--shadow-soft);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700}.chip{color:var(--text);box-shadow:none;background:var(--pressed)}.chip.up,.pill.up{color:var(--up)}.chip.down,.pill.down{color:var(--down)}
@@ -58,9 +58,12 @@ def icon(symbol_id, cls="icon"):
 
 
 def head(title, viewport=True):
-    """頁面 head 區（viewport + title + CSS + SVG_DEFS）。"""
+    """頁面 head 區（doctype + viewport + title + CSS + SVG_DEFS）。
+    doctype 必加：GitHub Pages 原樣供應 HTML，缺 doctype 會進 Quirks Mode、grid/flex 全面跑版
+    （Artifact 發布會自動包骨架所以看不出來，2026-07-15 真機踩過）。"""
     vp = '<meta name="viewport" content="width=device-width, initial-scale=1">' if viewport else ""
-    return vp + "<title>" + esc(title) + "</title>\n" + CSS + "\n" + SVG_DEFS
+    return ('<!doctype html>\n<html lang="zh-Hant">\n<meta charset="utf-8">\n'
+            + vp + "<title>" + esc(title) + "</title>\n" + CSS + "\n" + SVG_DEFS)
 
 
 def section_head(symbol_id, title):
