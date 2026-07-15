@@ -25,10 +25,12 @@ class TestReportStock(unittest.TestCase):
         self.assertIn("width=device-width", self.htm)
 
     def test_decision_first_screen(self):
+        # 動態對照 data 檔（data/*.json 會隨每次更新戰情室刷新，不可寫死快照值）
+        dec = self.d["decision"]
         self.assertIn('class="rating"', self.htm)
-        self.assertIn("減碼", self.htm)                    # decision.rating
-        self.assertIn("--p:58%", self.htm)                 # confidence.total
-        self.assertIn("空手", self.htm)                    # position.tier
+        self.assertIn(dec["rating"], self.htm)
+        self.assertIn(f'--p:{dec["confidence"]["total"]}%', self.htm)
+        self.assertIn(dec["position"]["tier"], self.htm)
 
     def test_sections_present(self):
         for anchor in ('id="frames"', 'id="value"', 'id="entry"',
@@ -37,19 +39,27 @@ class TestReportStock(unittest.TestCase):
 
     def test_value_band_and_method_note(self):
         self.assertIn('class="band"', self.htm)
-        self.assertIn("2480.4", self.htm)                  # fair_value.base（legend）
+        fv = self.d["decision"].get("fair_value")
+        if fv and fv.get("base") is not None:
+            self.assertIn(str(fv["base"]), self.htm)       # fair_value.base（legend，動態）
         self.assertIn("方法", self.htm)                    # 估值方法說明必附
         self.assertIn("PER", self.htm.upper())
 
     def test_quality_seven_factors(self):
         for zh in ("營收", "EPS", "毛利率", "營益率", "ROE", "現金流", "負債"):
             self.assertIn(zh, self.htm)
-        self.assertIn("14 / 14".replace(" ", ""), self.htm.replace(" ", ""))  # total/max
+        fq = self.d.get("fundamentals_quality", {})
+        want = f'{fq.get("total")}/{fq.get("max")}'
+        self.assertIn(want, self.htm.replace(" ", ""))     # total/max（動態）
 
     def test_institution_split(self):
         self.assertIn("外資", self.htm)
-        self.assertIn("-12,416 張", self.htm)              # zhang(net_latest)
-        self.assertIn("外資賣", self.htm)                  # divergence_note
+        groups = self.d["chips"]["breakdown"]["groups"]
+        net = groups["外資"]["net_latest"]
+        self.assertIn(f'{net/1000:+,.0f} 張', self.htm)    # zhang(net_latest)，動態
+        div_note = self.d["chips"]["breakdown"].get("divergence_note")
+        if div_note:
+            self.assertIn(div_note, self.htm)
 
     def test_six_roles(self):
         for role in ("基本面分析師", "技術分析師", "消息分析師",

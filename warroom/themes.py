@@ -41,7 +41,7 @@ def gdelt_heat(query, tries=4):
 
 def us_mom(ticker):
     try:
-        c = yf.Ticker(ticker).history(period="1mo")["Close"]
+        c = yf.Ticker(ticker).history(period="1mo")["Close"].dropna()  # 盤前空 bar 會給 NaN 尾列
         return round((c.iloc[-1] / c.iloc[0] - 1) * 100, 1) if len(c) > 1 else None
     except Exception:
         return None

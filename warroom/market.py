@@ -33,7 +33,7 @@ def fetch_market():
     # 美股 / 總經（yfinance）
     for name, t, kind in US:
         try:
-            c = yf.Ticker(t).history(period="1mo")["Close"]
+            c = yf.Ticker(t).history(period="1mo")["Close"].dropna()  # 盤前空 bar 會給 NaN 尾列
             last = float(c.iloc[-1])
             base = float(c.iloc[-6]) if len(c) >= 6 else float(c.iloc[0])  # 約 5 個交易日前
             wk = (last / base - 1) * 100
