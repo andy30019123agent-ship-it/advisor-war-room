@@ -10,6 +10,7 @@ from warroom.valuation import compute_valuation
 from warroom.decision_engine import (
     atr14, atr_percent_median, build_decision,
 )
+from warroom.chips_v2 import chips_breakdown
 
 LIGHT_SCORE = {"green": 1, "amber": 0, "red": -1, "na": 0}
 LIGHT_ZH = {"green": "🟢偏多", "amber": "🟡中性", "red": "🔴偏空", "na": "⚪資料缺"}
@@ -310,13 +311,22 @@ def analyze(stock_id, with_news=True):
     else:
         c_light, c_ev = "na", {"備註": "法人資料缺"}; flags["chips"] = False
 
+    # 籌碼 v2 分組拆解（additive；vol20 用日線近 20 日均量，單位=股）
+    vol20_shares = None
+    if d.get("price") is not None and "Trading_Volume" in d["price"].columns:
+        _pv = pd.to_numeric(d["price"].sort_values("date")["Trading_Volume"],
+                            errors="coerce").tail(20)
+        if len(_pv) and pd.notna(_pv.mean()):
+            vol20_shares = float(_pv.mean())
+    chip_breakdown = chips_breakdown(d.get("chip"), vol20=vol20_shares)
+
     combo = synthesize(f_light, t_light, c_light)
     news = fetch_news(name, None, 6) if with_news else []
     res = {
         "stock_id": stock_id, "name": name,
         "fundamental": {"light": f_light, "ev": f_ev},
         "technical": {"light": t_light, "ev": t_ev},
-        "chips": {"light": c_light, "ev": c_ev},
+        "chips": {"light": c_light, "ev": c_ev, "breakdown": chip_breakdown},
         "news": news, "summary": combo, "data_flags": flags,
     }
     res["decision"] = _decide(stock_id, d, res, flags)
