@@ -552,8 +552,9 @@ class TestValuation(unittest.TestCase):
         self.assertAlmostEqual(fv["base"], 175.0)
 
     def test_compute_valuation_per_path(self):
-        fs = make_fs([("2025-03-31", 3), ("2025-06-30", 7), ("2025-09-30", 12),
-                      ("2025-12-31", 20), ("2026-03-31", 4)])  # TTM=21
+        # 單季制 fixture（2026-07-15 實測定案；實作時已同步修正）
+        fs = make_fs([("2025-03-31", 3), ("2025-06-30", 4), ("2025-09-30", 5),
+                      ("2025-12-31", 8), ("2026-03-31", 4)])  # TTM=21
         inp = {
             "price": 700.0, "industry_category": "半導體業", "market_light": "amber",
             "fs_df": fs, "rev_df": make_rev([(2025, m, 100) for m in range(1, 13)] +
