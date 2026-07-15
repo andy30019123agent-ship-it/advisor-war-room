@@ -230,22 +230,32 @@ def compute_valuation(inp: Dict) -> Dict:
             penalty += 15  # 無財報、用現價反推 → 降估值信心
         else:
             return _insufficient("per", 30, "無 EPS 亦無有效 PER，無法給估值區間")
+    if eps_ttm <= 0:
+        # 虧損/零盈餘股：相對估值（PER）無意義，不得硬套（會算出負且倒序的 Bear/Base/Bull）
+        return _insufficient("per", 30, "虧損/零盈餘，不適用相對估值（PER）")
     per_series = inp.get("per_series") or []
     per_pcts = multiple_percentiles(per_series)
     if per_pcts is None:
         return _insufficient("per", 25, "PER 歷史樣本不足，無法給估值區間")
     g = weighted_revenue_yoy(inp.get("rev_df"))
     fwd = forward_eps(eps_ttm, g)
+    if fwd <= 0:
+        return _insufficient("per", 30, "虧損/零盈餘，不適用相對估值（PER）")
     fv = fair_value_per_path(fwd, per_pcts, market_light)
     src_zh = "財報 TTM" if eps_source == "financial_statement" else "現價/PER 反推（降信心）"
+    g_used = max(-0.20, min(0.40, g)) if g is not None else 0.0
+    if g is not None and abs(g_used - g) > 1e-9:
+        growth_note = f"成長 g={_pct(g_used)}（原始 {_pct(g)} 已封頂）"
+    else:
+        growth_note = f"成長 g={_pct(g_used)}（clamp -20%~+40%）"
     disclosure = (
-        f"TTM EPS {eps_ttm}（{src_zh}）、成長 g={_pct(g)}（clamp -20%~+40%）、"
+        f"TTM EPS {eps_ttm}（{src_zh}）、{growth_note}、"
         f"Forward EPS {fwd}；PER 25/50/75={per_pcts['p25']}/{per_pcts['p50']}/{per_pcts['p75']}"
         f"（現值 {per_cur}，分位 {_pct(current_percentile(per_series, per_cur))}）"
         + ("；大盤紅燈倍數下修一檔" if market_light == "red" else ""))
     return {
         "path": "per", "eps_ttm": eps_ttm, "eps_source": eps_source, "eps_forward": fwd,
-        "growth_used": max(-0.20, min(0.40, g)) if g is not None else 0.0,
+        "growth_used": g_used,
         "fair_value": {"bear": fv["bear"], "base": fv["base"], "bull": fv["bull"]},
         "multiples": fv["multiples"], "current_multiple": per_cur,
         "current_percentile": current_percentile(per_series, per_cur),

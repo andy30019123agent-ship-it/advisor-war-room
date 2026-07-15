@@ -117,6 +117,56 @@ class TestValuation(unittest.TestCase):
         self.assertAlmostEqual(out["eps_ttm"], 25.0)  # 500/20
         self.assertGreater(out["confidence_penalty"], 0)
 
+    def test_compute_valuation_negative_eps_no_per_valuation(self):
+        # 虧損股（TTM EPS<0）：不得走 PER 相對估值，fair_value=None，disclosure 註明虧損
+        fs = make_fs([("2025-03-31", -2), ("2025-06-30", -3), ("2025-09-30", -1),
+                      ("2025-12-31", -4), ("2026-03-31", -2)])  # 近4季皆虧損 → TTM<0
+        inp = {
+            "price": 30.0, "industry_category": "半導體業", "market_light": "amber",
+            "fs_df": fs, "rev_df": make_rev([(2025, m, 100) for m in range(1, 13)] +
+                                            [(2026, m, 340) for m in range(1, 13)]),  # 若誤用會有極端g
+            "per_series": [float(x) for x in range(10, 30)], "per_current": None,
+            "pbr_series": [], "pbr_current": None, "roe": None,
+        }
+        out = compute_valuation(inp)
+        self.assertIsNone(out["fair_value"])
+        self.assertIsNone(out["eps_ttm"])  # 走既有估值不足路徑，不回傳負 EPS
+        self.assertIn("虧損", out["disclosure"])
+        self.assertGreater(out["confidence_penalty"], 0)
+
+    def test_compute_valuation_zero_eps_no_per_valuation(self):
+        # 零盈餘（TTM EPS==0）同樣不適用相對估值
+        fs = make_fs([("2025-03-31", 0), ("2025-06-30", 0), ("2025-09-30", 0),
+                      ("2025-12-31", 0), ("2026-03-31", 0)])
+        inp = {
+            "price": 30.0, "industry_category": "半導體業", "market_light": "amber",
+            "fs_df": fs, "rev_df": None,
+            "per_series": [float(x) for x in range(10, 30)], "per_current": None,
+            "pbr_series": [], "pbr_current": None, "roe": None,
+        }
+        out = compute_valuation(inp)
+        self.assertIsNone(out["fair_value"])
+        self.assertIn("虧損", out["disclosure"])
+
+    def test_disclosure_shows_clamped_growth_not_raw(self):
+        # 8299 型案例：加權YoY遠超 +40% 上限 → disclosure 要顯示封頂後 g，並附註原始值
+        fs = make_fs([("2025-03-31", 3), ("2025-06-30", 4), ("2025-09-30", 5),
+                      ("2025-12-31", 8), ("2026-03-31", 4)])  # TTM=21
+        months = [(2025, m, 100) for m in range(1, 13)] + \
+                 [(2026, m, 340) for m in range(1, 13)]  # 今年營收暴增 → 加權YoY遠 >40%
+        inp = {
+            "price": 700.0, "industry_category": "半導體業", "market_light": "amber",
+            "fs_df": fs, "rev_df": make_rev(months),
+            "per_series": [float(x) for x in range(10, 30)], "per_current": 25.0,
+            "pbr_series": [], "pbr_current": None, "roe": None,
+        }
+        out = compute_valuation(inp)
+        self.assertAlmostEqual(out["growth_used"], 0.40)  # 已封頂 +40%
+        self.assertIn("+40.0%", out["disclosure"])
+        self.assertIn("已封頂", out["disclosure"])
+        # 原始加權YoY遠高於 40%，也要附註出現在 disclosure
+        self.assertNotIn("g=+240", out["disclosure"])  # 不能把原始值當成 g= 顯示
+
     def test_compute_valuation_pbr_path(self):
         inp = {
             "price": 60.0, "industry_category": "金融保險", "market_light": "amber",
