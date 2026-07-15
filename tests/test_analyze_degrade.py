@@ -51,6 +51,36 @@ class TestDegrade(unittest.TestCase):
         self.assertEqual(rev_signals_from_df(None)["yoy_negative"], False)
         self.assertEqual(chip_signals_from_df(pd.DataFrame())["sell_streak_ge3"], False)
 
+    def test_chip_signals_ratio_gt_15pct_true(self):
+        # 連 3 日各淨賣 1000 股：日均淨賣超 1000／vol20=5000 → 20% > 15% → True
+        rows = []
+        for d in ("2026-07-10", "2026-07-11", "2026-07-14"):
+            rows.append({"date": d, "buy": 0, "sell": 1000, "name": "Foreign_Investor"})
+        chip = pd.DataFrame(rows)
+        sig = chip_signals_from_df(chip, vol20=5000)
+        self.assertTrue(sig["sell_streak_ge3"])
+        self.assertTrue(sig["ratio_gt_15pct"])
+
+    def test_chip_signals_ratio_le_15pct_false(self):
+        # 同樣連 3 日各淨賣 1000 股，但 vol20=10000 → 日均淨賣超佔比 10% < 15% → False
+        rows = []
+        for d in ("2026-07-10", "2026-07-11", "2026-07-14"):
+            rows.append({"date": d, "buy": 0, "sell": 1000, "name": "Foreign_Investor"})
+        chip = pd.DataFrame(rows)
+        sig = chip_signals_from_df(chip, vol20=10000)
+        self.assertTrue(sig["sell_streak_ge3"])
+        self.assertFalse(sig["ratio_gt_15pct"])
+
+    def test_chip_signals_vol20_missing_false(self):
+        # 連 3 日同向賣，但 vol20 缺（None）→ 資料缺不誤報，ratio 維持 False
+        rows = []
+        for d in ("2026-07-10", "2026-07-11", "2026-07-14"):
+            rows.append({"date": d, "buy": 0, "sell": 1000, "name": "Foreign_Investor"})
+        chip = pd.DataFrame(rows)
+        sig = chip_signals_from_df(chip, vol20=None)
+        self.assertTrue(sig["sell_streak_ge3"])
+        self.assertFalse(sig["ratio_gt_15pct"])
+
 
 if __name__ == "__main__":
     unittest.main()

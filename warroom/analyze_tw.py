@@ -220,8 +220,11 @@ def rev_signals_from_df(rev_df):
     return out
 
 
-def chip_signals_from_df(chip_df):
-    """失效條件-籌碼：法人連 3 日同向賣，且賣超佔 20 日均量>15%。空表安全回 False。"""
+def chip_signals_from_df(chip_df, vol20=None):
+    """失效條件-籌碼：法人連 3 日同向賣，且賣超佔 20 日均量>15%。
+    vol20＝20 日均量（股）；缺（None/0/NaN）視為資料缺，ratio 維持 False 不誤報。
+    空表安全回 False。
+    """
     out = {"sell_streak_ge3": False, "ratio_gt_15pct": False}
     if chip_df is None or len(chip_df) == 0:
         return out
@@ -239,6 +242,13 @@ def chip_signals_from_df(chip_df):
         else:
             break
     out["sell_streak_ge3"] = streak >= 3
+
+    # 佔 20 日均量比例：僅當連賣 ≥3 天且 vol20 有效（>0）才計算，避免資料缺誤報
+    if out["sell_streak_ge3"] and vol20 is not None and pd.notna(vol20) and vol20 > 0:
+        last3_net_sum = daily.tail(3).sum()  # 最近 3 個交易日日淨額合計（賣超為負）
+        avg_daily_sell = abs(last3_net_sum) / 3
+        ratio = avg_daily_sell / vol20
+        out["ratio_gt_15pct"] = ratio > 0.15
     return out
 
 
@@ -354,7 +364,7 @@ def _decide(stock_id, d, res, flags):
         ma20=ma20, avg_vol20=avg_vol20, atr_pct=atr_pct, atr_median_pct=atr_med,
         data_flags=flags,
         rev_signals=rev_signals_from_df(d.get("rev")),
-        chip_signals=chip_signals_from_df(d.get("chip")),
+        chip_signals=chip_signals_from_df(d.get("chip"), vol20=avg_vol20),
         profile=load_profile(), stock_id=stock_id)
 
 
