@@ -482,3 +482,11 @@ if __name__ == "__main__":
         print("→ 已寫 data/events.json")
     except Exception as _e:
         print(f"（events.json 落檔略過：{_e}）")
+
+    try:
+        from warroom.track_record import log_recommendation
+        _today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+        log_recommendation(res, _today)
+        print("→ 已落一筆 data/recommendation_log.json")
+    except Exception as _e:
+        print(f"（recommendation_log 落檔略過：{_e}）")
