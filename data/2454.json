@@ -15,15 +15,15 @@
   "technical": {
     "light": "amber",
     "ev": {
-      "收盤": 3660.0,
-      "MA20": 4197.2,
-      "MA60": 3727.8,
-      "MA120": 2700.3,
-      "RSI14": 38.0,
-      "量能": "1.1×20日均量",
+      "收盤": 3740.0,
+      "MA20": 4160.8,
+      "MA60": 3758.1,
+      "MA120": 2719.6,
+      "RSI14": 41.0,
+      "量能": "0.6×20日均量",
       "排列": "均線糾結",
-      "買入參考區": "MA120 2,700",
-      "壓力參考位": "MA60 3,728 · 近20日低 3,825",
+      "買入參考區": "近20日低 3,515 · MA120 2,720",
+      "壓力參考位": "MA60 3,758 · MA20 4,161",
       "備註": "—"
     }
   },
@@ -43,21 +43,21 @@
           "net_5d": -2093865,
           "streak": 1,
           "dir": "買",
-          "ratio_20d_vol": 0.0191
+          "ratio_20d_vol": 0.0195
         },
         "投信": {
           "net_latest": 160726,
           "net_5d": 241277,
           "streak": 1,
           "dir": "買",
-          "ratio_20d_vol": 0.0136
+          "ratio_20d_vol": 0.0139
         },
         "自營": {
           "net_latest": -528371,
           "net_5d": -896879,
           "streak": 1,
           "dir": "賣",
-          "ratio_20d_vol": 0.0448
+          "ratio_20d_vol": 0.0458
         }
       },
       "divergence": false,
@@ -66,9 +66,9 @@
   },
   "news": [
     {
-      "title": "最高可以衝到5,800元？野村一口氣調升「9檔台廠」目標價 聯發科狂升70%、信驊衝1.91萬元 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMipwJBVV95cUxPMTFFZUp5enNCOUItbjA2M0tsazN4TXhnX3YzMnhHTl9PV25idWo5Vk5Wc3Vmcjhjd2pRNWZEZGFRYWtNOEoxWjdOLUpWbXh1TXZBMGxaTldEak5hM1hhT1lYNnJqUllNNV9UUERuOWpKWi1Qd2d2U2dzZDVHTnlaeENfQkRLZXBNOV92X24xY3ZnRlhIX0czX1ZtQlllbk9QVmtIUHBadmgzZThOdWN0M0lBT3gzZkNsRzF3OHY3OU9scFVhcFNKWTl2WGZrVHh0Y0ZqVEVOeGw3TThudVNoT2hRZC1EUHNMNlB5ZllVU2dHR2ljcjNRNTlVeEhpaXJYc0tNdENaME9UX0QyTFNwMVJrUi1NVkVOODItX29mLUFlZkZVMTY0?oc=5",
-      "date": "Wed, 01 Jul 2026 07:00:00 GMT",
+      "title": "聯發科秒填息！史上第4次當日達陣 股價勁揚逾3% - Yahoo股市",
+      "url": "https://news.google.com/rss/articles/CBMizwJBVV95cUxNNGt1VVotNng2bnVpbl9iSE91RnVYV21qQXhZa3pyTmtta2VidkYzLUFxeDR0SlFld01NdHJ5VGZKaHQtc1E0Vk5FQUZRbVF3bHk4NkFySGhGaVp0dV8tUWptbGtxLUJuZFBQTEpNZ0hHMk9TLW0ySTZ1WEcwNkdGOXV5ODF1X0o5VWYzZGNab1JBVU9aZDU3enFnX3Vlb3FhaUlNT1lrZW9vYkNkUFVTY1lOcTZSZTkwS05aUE5ULXhEU2lwTzlGM0VSRVZiSDJrN3pJcWtUaG9PR3dFbWF5SkZsMUl5UFpJZkwwQXZKUHpJR1hTOF96WXVYZEhNU3ljUWI1eTdxUG1hb0hfd1VQRjJzUzZwQmdUS3llUEpPU1NuWWF2aDlOMFN5dDBIRGZPRjVISmVwRi04bTl6aVA1bXVmSEdYdFRSYTJVSVhZQQ?oc=5",
+      "date": "Mon, 06 Jul 2026 07:00:00 GMT",
       "src": "Google News"
     },
     {
@@ -184,17 +184,17 @@
       "bvps": null,
       "roe": null
     },
-    "risk_reward": -5.5,
+    "risk_reward": -9.75,
     "stop": {
-      "price": 3144.0,
-      "pct": -0.141,
-      "basis": "ATR",
-      "clamped": false,
+      "price": 3440.8,
+      "pct": -0.08,
+      "basis": "近20日低",
+      "clamped": true,
       "note": "參考防守位，接回自行判斷"
     },
     "entry": {
-      "pullback": "回測型：回檔至支撐 4197.2±129.0（0.5×ATR）、隔日收盤站回不破再進",
-      "breakout": "突破型：收盤帶量突破近20日高 4785.0、且量>1.3×20日均量（約 15,321,193）"
+      "pullback": "回測型：回檔至支撐 4160.8±124.4（0.5×ATR）、隔日收盤站回不破再進",
+      "breakout": "突破型：收盤帶量突破近20日高 4785.0、且量>1.3×20日均量（約 15,011,664）"
     },
     "position": {
       "tier": "空手",
@@ -219,7 +219,7 @@
         "label": "短線 1-4 週",
         "stance": "偏空",
         "basis": "技術中性＋籌碼偏空為主",
-        "ref_price": "參考 MA20 4197.2"
+        "ref_price": "參考 MA20 4160.8"
       },
       "swing": {
         "label": "波段 1-3 月（主）",
@@ -235,12 +235,12 @@
       }
     },
     "invalidation": {
-      "price": "價格：收盤 3660.0 vs 防守位 3144.0（未觸發）",
+      "price": "價格：收盤 3740.0 vs 防守位 3440.8（未觸發）",
       "fundamental": "基本面：最新營收 YoY 轉負且連 2 月低於 6 月均（未觸發）",
       "chips": "籌碼：法人連 3 日同向賣且賣超佔 20 日均量>15%（未觸發）",
       "any_triggered": false
     },
-    "as_of_price": 3660.0,
+    "as_of_price": 3740.0,
     "note": null,
     "disclaimer": "本區塊為規則引擎輸出之決策輔助，非投資建議；數字依固定規則計算，最終決策與風險由使用者承擔。"
   }

@@ -17,12 +17,14 @@ def _dot(wk, kind):
 
 
 def fetch_market():
+    from warroom.finmind_cache import cached_fetch  # 同日快取：確保同一刊內各段落用同一份指數資料（FinMind 曾兩次呼叫回不同版本）
     dl = DataLoader()
     items = []
-    # 台股指數（FinMind）
+    # 台股指數（FinMind，走快取）
     for name, sid in [("加權指數", "TAIEX"), ("櫃買 TPEx", "TPEx")]:
         try:
-            df = dl.taiwan_stock_daily(stock_id=sid, start_date="2026-05-01").sort_values("date").reset_index(drop=True)
+            df = cached_fetch("taiwan_stock_daily", loader=dl, stock_id=sid,
+                              start_date="2026-05-01").sort_values("date").reset_index(drop=True)
             last = df.iloc[-1]["close"]
             wk = (last / df.iloc[-6]["close"] - 1) * 100
             ma20 = df["close"].rolling(20).mean().iloc[-1]

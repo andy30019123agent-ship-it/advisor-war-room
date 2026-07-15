@@ -32,8 +32,9 @@ class TestBuildWeekly(unittest.TestCase):
 
     def test_first_screen(self):
         self.assertIn('class="rating"', self.htm)
-        self.assertIn(load("data/weekly_narration.json")["exposure"], self.htm)
-        self.assertIn("--p:80%", self.htm)                 # risk_temp 8 → 80%
+        n = load("data/weekly_narration.json")
+        self.assertIn(n["exposure"], self.htm)
+        self.assertIn(f'--p:{n["risk_temp"] * 10}%', self.htm)  # risk_temp 動態（資料檔會隨每期更新）
 
     def test_stock_mini_cards(self):
         self.assertIn("2330", self.htm)
