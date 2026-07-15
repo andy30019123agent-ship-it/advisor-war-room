@@ -12,7 +12,13 @@ def make_engine():
         "technical": {"ev": {"MA20": 2426.2, "MA60": 2305.5, "MA120": 2076.7,
                              "收盤": 2420.0}},
         "chips": {"ev": {"最新日": "2026-07-14"}},
-        "decision": {"fair_value": {"bear": 2050.0, "base": 2380.0, "bull": 2720.0}},
+        "decision": {
+            "fair_value": {"bear": 2050.0, "base": 2380.0, "bull": 2720.0},
+            "stop": {"price": 2226.0},
+            "risk_reward": 2.4,
+            "position": {"amount": 200000},
+            "confidence": {"total": 68},
+        },
     }
 
 
@@ -21,6 +27,20 @@ class TestConsistency(unittest.TestCase):
         a = build_stock_anchors(make_engine())
         self.assertAlmostEqual(a["MA20"], 2426.2)
         self.assertAlmostEqual(a["Base"], 2380.0)
+        self.assertAlmostEqual(a["停損"], 2226.0)
+        self.assertAlmostEqual(a["R/R"], 2.4)
+        self.assertAlmostEqual(a["部位金額"], 200000.0)
+        self.assertAlmostEqual(a["信心"], 68.0)
+
+    def test_decision_anchor_mismatch_flagged(self):
+        # 敘事寫錯停損價（差 >1%）→ 要抓到
+        diffs = check_numbers("防守 / 停損參考 2,000 元", build_stock_anchors(make_engine()))
+        self.assertTrue(any("停損" in d for d in diffs))
+
+    def test_decision_anchor_not_mentioned_no_false_positive(self):
+        # 敘事完全沒提到停損/R-R/部位/信心關鍵字 → 不誤報（沿用「找得到關鍵字才比對」機制）
+        diffs = check_numbers("收盤站上 MA20 2,426 保持多頭", build_stock_anchors(make_engine()))
+        self.assertEqual(diffs, [])
 
     def test_numbers_match_within_tolerance(self):
         # 敘事寫 MA20 2,426（與 2426.2 差 <1%）→ 無 diff

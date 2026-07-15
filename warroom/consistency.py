@@ -50,6 +50,17 @@ def build_stock_anchors(engine: Dict) -> Dict[str, float]:
         for k, label in (("bear", "Bear"), ("base", "Base"), ("bull", "Bull")):
             if isinstance(fv.get(k), (int, float)):
                 a[label] = float(fv[k])
+    stop = dec.get("stop") or {}
+    if isinstance(stop.get("price"), (int, float)):
+        a["停損"] = float(stop["price"])
+    if isinstance(dec.get("risk_reward"), (int, float)):
+        a["R/R"] = float(dec["risk_reward"])
+    pos = dec.get("position") or {}
+    if isinstance(pos.get("amount"), (int, float)):
+        a["部位金額"] = float(pos["amount"])
+    conf = dec.get("confidence") or {}
+    if isinstance(conf.get("total"), (int, float)):
+        a["信心"] = float(conf["total"])
     return a
 
 
