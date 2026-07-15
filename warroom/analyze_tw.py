@@ -2,11 +2,16 @@
 每個維度回傳 (燈號, 證據)：燈號 = green/amber/red，證據 = 說得出依據的數字。
 投顧紀律：燈由規則算、門檻寫死、缺資料降級；LLM 之後只負責解讀與反駁，不改燈。
 """
-from FinMind.data import DataLoader
 import pandas as pd
 from warroom.news import fetch_news
+from warroom.finmind_cache import get_loader, cached_fetch
+from warroom.profile import load_profile
+from warroom.valuation import compute_valuation
+from warroom.decision_engine import (
+    atr14, atr_percent_median, build_decision,
+)
 
-LIGHT_SCORE = {"green": 1, "amber": 0, "red": -1}
+LIGHT_SCORE = {"green": 1, "amber": 0, "red": -1, "na": 0}
 LIGHT_ZH = {"green": "🟢偏多", "amber": "🟡中性", "red": "🔴偏空", "na": "⚪資料缺"}
 
 _INFO_CACHE = None
@@ -17,22 +22,43 @@ def stock_name(stock_id):
     global _INFO_CACHE
     try:
         if _INFO_CACHE is None:
-            _INFO_CACHE = DataLoader().taiwan_stock_info()
+            _INFO_CACHE = get_loader().taiwan_stock_info()
         row = _INFO_CACHE[_INFO_CACHE["stock_id"] == stock_id]
         return row.iloc[0]["stock_name"] if len(row) else stock_id
     except Exception:
         return stock_id
 
 
+def stock_industry(stock_id):
+    """個股產業別（去重取第一筆；判斷金融/循環股走 PBR 路徑用）。"""
+    global _INFO_CACHE
+    try:
+        if _INFO_CACHE is None:
+            _INFO_CACHE = get_loader().taiwan_stock_info()
+        row = _INFO_CACHE[_INFO_CACHE["stock_id"] == stock_id].drop_duplicates("stock_id")
+        return row.iloc[0]["industry_category"] if len(row) else None
+    except Exception:
+        return None
+
+
 # ---------- 抓資料 ----------
 def fetch(stock_id):
-    dl = DataLoader()
-    return {
-        "price": dl.taiwan_stock_daily(stock_id=stock_id, start_date="2025-01-01"),
-        "rev": dl.taiwan_stock_month_revenue(stock_id=stock_id, start_date="2023-01-01"),
-        "val": dl.taiwan_stock_per_pbr(stock_id=stock_id, start_date="2024-01-01"),
-        "chip": dl.taiwan_stock_institutional_investors(stock_id=stock_id, start_date="2026-04-01"),
-    }
+    """抓個股所需各資料源。任一源失敗回 None（該維度後續標「資料缺」）。"""
+    out = {}
+    sources = [
+        ("price", "taiwan_stock_daily", dict(stock_id=stock_id, start_date="2024-01-01")),
+        ("rev", "taiwan_stock_month_revenue", dict(stock_id=stock_id, start_date="2023-01-01")),
+        ("val", "taiwan_stock_per_pbr", dict(stock_id=stock_id, start_date="2021-01-01")),
+        ("chip", "taiwan_stock_institutional_investors", dict(stock_id=stock_id, start_date="2026-04-01")),
+        ("fs", "taiwan_stock_financial_statement", dict(stock_id=stock_id, start_date="2024-01-01")),
+    ]
+    for key, method, kw in sources:
+        try:
+            df = cached_fetch(method, **kw)
+            out[key] = df if (df is not None and len(df) > 0) else None
+        except Exception:
+            out[key] = None
+    return out
 
 
 # ---------- 技術面 ----------
@@ -49,14 +75,16 @@ def rsi(series, n=14):
 def technical(price):
     df = price.sort_values("date").reset_index(drop=True)
     c = df["close"]
-    ma = {n: c.rolling(n).mean().iloc[-1] for n in (5, 20, 60, 120)}
+    n_rows = len(c)
+    # 最少筆數門檻：不足者標「樣本不足」，不進燈號判斷（規格 §4 backlog ②）
+    ma = {n: (c.rolling(n).mean().iloc[-1] if n_rows >= n else None) for n in (5, 20, 60, 120)}
     last = c.iloc[-1]
     r = rsi(c).iloc[-1]
     vol = df["Trading_Volume"]
     vol_ratio = vol.iloc[-1] / vol.tail(20).mean()
 
-    bull = last > ma[20] > ma[60] > ma[120]
-    bear = last < ma[20] and ma[20] < ma[60]
+    bull = (None not in (ma[20], ma[60], ma[120])) and last > ma[20] > ma[60] > ma[120]
+    bear = (ma[20] is not None and ma[60] is not None) and last < ma[20] and ma[20] < ma[60]
     light = "green" if bull else "red" if bear else "amber"
     # 過熱保護：多頭但 RSI 過熱 → 降一級到中性（提醒別追高）
     note = []
@@ -72,9 +100,10 @@ def technical(price):
     # 技術位（純規則參考，非買賣建議）：從均線＋近期高低點挑最靠近的支撐/壓力
     hi_c = "max" if "max" in df.columns else "high" if "high" in df.columns else "close"
     lo_c = "min" if "min" in df.columns else "low" if "low" in df.columns else "close"
-    cand = {"MA20": ma[20], "MA60": ma[60], "MA120": ma[120],
-            "近20日高": df[hi_c].tail(20).max(), "近60日高": df[hi_c].tail(60).max(),
-            "近20日低": df[lo_c].tail(20).min()}
+    cand = {k: v for k, v in {
+        "MA20": ma[20], "MA60": ma[60], "MA120": ma[120],
+        "近20日高": df[hi_c].tail(20).max(), "近60日高": df[hi_c].tail(60).max(),
+        "近20日低": df[lo_c].tail(20).min()}.items() if v is not None}
 
     def _px(v):
         return f"{v:,.0f}" if v >= 100 else f"{v:.1f}"
@@ -84,9 +113,12 @@ def technical(price):
     buy_ref = " · ".join(f"{k} {_px(v)}" for v, k in sup[:2]) or "無明顯支撐（探底中）"
     res_ref = " · ".join(f"{k} {_px(v)}" for v, k in res[:2]) or "無明顯壓力（波段創高）"
 
+    def _ma(v):
+        return round(v, 1) if v is not None else "樣本不足"
+
     return light, {
-        "收盤": round(last, 1), "MA20": round(ma[20], 1), "MA60": round(ma[60], 1),
-        "MA120": round(ma[120], 1), "RSI14": round(r, 0),
+        "收盤": round(last, 1), "MA20": _ma(ma[20]), "MA60": _ma(ma[60]),
+        "MA120": _ma(ma[120]), "RSI14": round(r, 0),
         "量能": f"{vol_ratio:.1f}×20日均量",
         "排列": "多頭排列" if bull else "空頭排列" if bear else "均線糾結",
         "買入參考區": buy_ref,
@@ -165,6 +197,51 @@ def chips(chip):
     }
 
 
+def rev_signals_from_df(rev_df):
+    """失效條件-基本面：最新月營收 YoY 轉負，且最近連 2 月低於近 6 月均。空表安全回 False。"""
+    out = {"yoy_negative": False, "below_6m_2months": False}
+    if rev_df is None or len(rev_df) == 0:
+        return out
+    r = rev_df.copy()
+    r["revenue"] = pd.to_numeric(r["revenue"], errors="coerce")
+    r = r.dropna(subset=["revenue"])
+    r["ym"] = r["revenue_year"].astype(int) * 100 + r["revenue_month"].astype(int)
+    r = r.sort_values("ym").reset_index(drop=True)
+    if len(r) < 8:
+        return out
+    lookup = {int(row["ym"]): float(row["revenue"]) for _, row in r.iterrows()}
+    last = r.iloc[-1]
+    py_ym = (int(last["revenue_year"]) - 1) * 100 + int(last["revenue_month"])
+    base = lookup.get(py_ym)
+    if base and base != 0:
+        out["yoy_negative"] = (float(last["revenue"]) / base - 1) < 0
+    avg6 = r["revenue"].tail(6).mean()
+    out["below_6m_2months"] = bool((r["revenue"].tail(2) < avg6).all())
+    return out
+
+
+def chip_signals_from_df(chip_df):
+    """失效條件-籌碼：法人連 3 日同向賣，且賣超佔 20 日均量>15%。空表安全回 False。"""
+    out = {"sell_streak_ge3": False, "ratio_gt_15pct": False}
+    if chip_df is None or len(chip_df) == 0:
+        return out
+    df = chip_df.copy()
+    df["buy"] = pd.to_numeric(df["buy"], errors="coerce").fillna(0)
+    df["sell"] = pd.to_numeric(df["sell"], errors="coerce").fillna(0)
+    df["net"] = df["buy"] - df["sell"]
+    daily = df.groupby("date")["net"].sum().sort_index()
+    if len(daily) == 0:
+        return out
+    streak = 0
+    for v in reversed(daily.tolist()):
+        if v < 0:
+            streak += 1
+        else:
+            break
+    out["sell_streak_ge3"] = streak >= 3
+    return out
+
+
 # ---------- 綜合 ----------
 def synthesize(f_light, t_light, c_light):
     W = {"fund": 0.4, "tech": 0.3, "chip": 0.3}
@@ -185,20 +262,100 @@ def synthesize(f_light, t_light, c_light):
 def analyze(stock_id, with_news=True):
     d = fetch(stock_id)
     name = stock_name(stock_id)
-    f_light, f_ev = fundamental(d["rev"], d["val"])
-    t_light, t_ev = technical(d["price"])
-    c_light, c_ev = chips(d["chip"])
+    flags = {}
+
+    if d.get("rev") is not None and d.get("val") is not None:
+        f_light, f_ev = fundamental(d["rev"], d["val"]); flags["fundamental"] = True
+    else:
+        f_light, f_ev = "na", {"備註": "營收/估值資料缺"}; flags["fundamental"] = False
+
+    if d.get("price") is not None:
+        t_light, t_ev = technical(d["price"]); flags["technical"] = True
+    else:
+        t_light, t_ev = "na", {"備註": "日線資料缺"}; flags["technical"] = False
+
+    if d.get("chip") is not None:
+        c_light, c_ev = chips(d["chip"]); flags["chips"] = True
+    else:
+        c_light, c_ev = "na", {"備註": "法人資料缺"}; flags["chips"] = False
+
     combo = synthesize(f_light, t_light, c_light)
     news = fetch_news(name, None, 6) if with_news else []
-    return {
-        "stock_id": stock_id,
-        "name": name,
+    res = {
+        "stock_id": stock_id, "name": name,
         "fundamental": {"light": f_light, "ev": f_ev},
         "technical": {"light": t_light, "ev": t_ev},
         "chips": {"light": c_light, "ev": c_ev},
-        "news": news,
-        "summary": combo,
+        "news": news, "summary": combo, "data_flags": flags,
     }
+    res["decision"] = _decide(stock_id, d, res, flags)
+    return res
+
+
+def _decide(stock_id, d, res, flags):
+    """組估值 + 決策區塊。任何一步缺資料都降級，不讓整檔 fail。"""
+    try:
+        from warroom.market import fetch_market
+        market_light = fetch_market().get("light", "amber")
+    except Exception:
+        market_light = "amber"
+
+    price_df = d.get("price")
+    if price_df is None or len(price_df) == 0:
+        return {"rating": "觀望", "fair_value": None, "risk_reward": None,
+                "position": {"tier": "空手", "amount": 0, "odd_lot": False, "shares": 0,
+                             "reason": "日線資料缺，無法計算", "core_note": ""},
+                "confidence": {"total": 0, "completeness": 0, "consistency": 0,
+                               "rr": 0, "regime": 0},
+                "note": "日線資料缺，決策降級", "as_of_price": None,
+                "disclaimer": "資料不足，僅供參考。"}
+
+    pdf = price_df.sort_values("date").reset_index(drop=True)
+    price = float(pd.to_numeric(pdf["close"], errors="coerce").iloc[-1])
+
+    # PER/PBR 序列
+    per_series, per_current, pbr_series, pbr_current = [], None, [], None
+    if d.get("val") is not None:
+        v = d["val"].sort_values("date")
+        per_series = [float(x) for x in pd.to_numeric(v["PER"], errors="coerce").dropna().tolist()]
+        pbr_series = [float(x) for x in pd.to_numeric(v["PBR"], errors="coerce").dropna().tolist()]
+        per_current = per_series[-1] if per_series else None
+        pbr_current = pbr_series[-1] if pbr_series else None
+
+    valuation = compute_valuation({
+        "price": price, "industry_category": stock_industry(stock_id),
+        "market_light": market_light, "fs_df": d.get("fs"), "rev_df": d.get("rev"),
+        "per_series": per_series, "per_current": per_current,
+        "pbr_series": pbr_series, "pbr_current": pbr_current, "roe": None,
+    })
+    flags["eps_statement"] = (valuation.get("eps_source") == "financial_statement")
+
+    lights = [res["fundamental"]["light"], res["technical"]["light"], res["chips"]["light"]]
+    t_ev = res["technical"]["ev"]
+
+    def _num(x):
+        return float(x) if isinstance(x, (int, float)) else None
+
+    ma20 = _num(t_ev.get("MA20"))
+    hi_c = "max" if "max" in pdf.columns else "close"
+    lo_c = "min" if "min" in pdf.columns else "close"
+    low20 = float(pd.to_numeric(pdf[lo_c], errors="coerce").tail(20).min())
+    high20 = float(pd.to_numeric(pdf[hi_c], errors="coerce").tail(20).max())
+    avg_vol20 = float(pd.to_numeric(pdf["Trading_Volume"], errors="coerce").tail(20).mean()) \
+        if "Trading_Volume" in pdf.columns else None
+    atr = atr14(pdf)
+    atr_med = atr_percent_median(pdf)
+    atr_pct = (atr / price) if (atr is not None and price) else None
+    per_pctile = valuation.get("current_percentile")
+
+    return build_decision(
+        price=price, lights=lights, per_percentile=per_pctile, market_light=market_light,
+        valuation=valuation, atr=atr, key_ma=ma20, low20=low20, high20=high20,
+        ma20=ma20, avg_vol20=avg_vol20, atr_pct=atr_pct, atr_median_pct=atr_med,
+        data_flags=flags,
+        rev_signals=rev_signals_from_df(d.get("rev")),
+        chip_signals=chip_signals_from_df(d.get("chip")),
+        profile=load_profile(), stock_id=stock_id)
 
 
 def pretty(res):
