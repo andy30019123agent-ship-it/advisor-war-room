@@ -5,7 +5,7 @@
 import json, os, html
 from datetime import datetime, timezone, timedelta
 from warroom.market import fetch_market
-from warroom.sectors import fetch_sectors
+from warroom.sectors import fetch_sectors, fetch_tw_sectors
 
 TPE = timezone(timedelta(hours=8))
 LIGHT = {"green": ("g", "🟢", "偏多"), "amber": ("y", "🟡", "中性"), "red": ("r", "🔴", "偏空")}
@@ -127,6 +127,10 @@ def stock_card(sid, data, one_liner):
 def build():
     m = fetch_market()
     sec = fetch_sectors()
+    try:
+        tw_sec = fetch_tw_sectors()
+    except Exception:
+        tw_sec = []
     n = json.load(open("data/weekly_narration.json", encoding="utf-8"))
     stocks = {}
     for sid in n["stocks"]:
@@ -149,6 +153,12 @@ def build():
     theme_stocks = json.load(open("data/theme_stocks.json", encoding="utf-8")) if os.path.exists("data/theme_stocks.json") else {}
     events = "".join(f'<div class="ev"><div class="d">{esc(e["d"])}</div><div class="et"><b>{esc(e["t"])}</b><div class="mm">{esc(e["m"])}</div></div></div>' for e in n["events"])
     gen = datetime.now(TPE).strftime("%Y-%m-%d %H:%M")
+
+    try:
+        with open("data/tw_sectors.json", "w", encoding="utf-8") as f:
+            json.dump(tw_sec, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
     return TEMPLATE.format(
         period=esc(n["period"]), asof=esc(n["asof"]), gen=esc(gen),
