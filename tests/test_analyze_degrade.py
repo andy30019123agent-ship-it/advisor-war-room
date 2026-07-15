@@ -4,8 +4,13 @@ import unittest
 import pandas as pd
 
 from warroom.analyze_tw import (
-    technical, rev_signals_from_df, chip_signals_from_df,
+    technical, rev_signals_from_df, chip_signals_from_df, fundamental, prior_n_high_low,
 )
+
+
+def make_val(n=10):
+    return pd.DataFrame([{"date": f"2026-{(i % 12) + 1:02d}-01", "PER": 15.0,
+                         "dividend_yield": 3.0} for i in range(n)])
 
 
 def price_df(n):
@@ -70,6 +75,52 @@ class TestDegrade(unittest.TestCase):
         sig = chip_signals_from_df(chip, vol20=10000)
         self.assertTrue(sig["sell_streak_ge3"])
         self.assertFalse(sig["ratio_gt_15pct"])
+
+    def test_fundamental_yoy_none_when_prior_year_base_zero(self):
+        # 去年同月營收為 0（無效基期）→ YoY 回 None，不得產生 inf
+        months = [(2025, m, 0 if m == 6 else 100) for m in range(1, 13)] + [(2026, 6, 150)]
+        rev = pd.DataFrame([{"date": f"{y}-{m:02d}-01", "revenue": r,
+                             "revenue_year": y, "revenue_month": m}
+                            for (y, m, r) in months])
+        light, ev, flags = fundamental(rev, make_val())
+        self.assertEqual(ev["營收YoY"], "去年同月基期無效")
+        self.assertTrue(flags["revenue_yoy_base_invalid"])
+
+    def test_fundamental_yoy_none_when_prior_year_base_negative(self):
+        # 去年同月營收為負（財報異常值）→ 同樣視為無效基期，不得產生負值或 inf
+        months = [(2025, m, -50 if m == 6 else 100) for m in range(1, 13)] + [(2026, 6, 150)]
+        rev = pd.DataFrame([{"date": f"{y}-{m:02d}-01", "revenue": r,
+                             "revenue_year": y, "revenue_month": m}
+                            for (y, m, r) in months])
+        light, ev, flags = fundamental(rev, make_val())
+        self.assertEqual(ev["營收YoY"], "去年同月基期無效")
+        self.assertTrue(flags["revenue_yoy_base_invalid"])
+
+    def test_fundamental_yoy_normal_when_base_valid(self):
+        months = [(2025, m, 100) for m in range(1, 13)] + [(2026, m, 130) for m in range(1, 7)]
+        rev = pd.DataFrame([{"date": f"{y}-{m:02d}-01", "revenue": r,
+                             "revenue_year": y, "revenue_month": m}
+                            for (y, m, r) in months])
+        light, ev, flags = fundamental(rev, make_val())
+        self.assertEqual(ev["營收YoY"], "+30.0%")
+        self.assertFalse(flags["revenue_yoy_base_invalid"])
+
+    def test_prior_n_high_low_excludes_today(self):
+        # 前 20 天平盤 100，最後一天（今日）飆高到 200 → 前20完整交易日的高低不應含今日
+        rows = []
+        for i in range(21):
+            c = 200.0 if i == 20 else 100.0
+            rows.append({"date": f"2026-01-{i+1:02d}", "max": c, "min": c})
+        df = pd.DataFrame(rows)
+        low, high = prior_n_high_low(df, "max", "min", 20)
+        self.assertEqual(high, 100.0)  # 不含今日的 200
+        self.assertEqual(low, 100.0)
+
+    def test_prior_n_high_low_insufficient_data(self):
+        df = pd.DataFrame([{"date": "2026-01-01", "max": 100.0, "min": 90.0}])
+        low, high = prior_n_high_low(df, "max", "min", 20)
+        self.assertIsNone(low)
+        self.assertIsNone(high)
 
     def test_chip_signals_vol20_missing_false(self):
         # 連 3 日同向賣，但 vol20 缺（None）→ 資料缺不誤報，ratio 維持 False

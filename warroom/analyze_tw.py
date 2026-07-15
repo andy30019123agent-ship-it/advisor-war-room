@@ -72,6 +72,18 @@ def rsi(series, n=14):
     return out
 
 
+def prior_n_high_low(df, hi_c, lo_c, n=20):
+    """前 n 個「完整」交易日的高低點（不含當日，shift(1) 後再 tail(n)）。
+    用於突破/停損參考：避免當日本身即創高時，「破近20日高」永遠不成立、也避免 lookahead。
+    df 需已依 date 排序。回 (low_n, high_n)，資料不足時可能為 NaN。
+    """
+    hi = pd.to_numeric(df[hi_c], errors="coerce").shift(1).tail(n)
+    lo = pd.to_numeric(df[lo_c], errors="coerce").shift(1).tail(n)
+    hi_max, lo_min = hi.max(), lo.min()
+    return (float(lo_min) if pd.notna(lo_min) else None,
+            float(hi_max) if pd.notna(hi_max) else None)
+
+
 def technical(price):
     df = price.sort_values("date").reset_index(drop=True)
     c = df["close"]
@@ -100,10 +112,11 @@ def technical(price):
     # 技術位（純規則參考，非買賣建議）：從均線＋近期高低點挑最靠近的支撐/壓力
     hi_c = "max" if "max" in df.columns else "high" if "high" in df.columns else "close"
     lo_c = "min" if "min" in df.columns else "low" if "low" in df.columns else "close"
+    low20_prior, high20_prior = prior_n_high_low(df, hi_c, lo_c, 20)
     cand = {k: v for k, v in {
         "MA20": ma[20], "MA60": ma[60], "MA120": ma[120],
-        "近20日高": df[hi_c].tail(20).max(), "近60日高": df[hi_c].tail(60).max(),
-        "近20日低": df[lo_c].tail(20).min()}.items() if v is not None}
+        "近20日高": high20_prior, "近60日高": df[hi_c].tail(60).max(),
+        "近20日低": low20_prior}.items() if v is not None}
 
     def _px(v):
         return f"{v:,.0f}" if v >= 100 else f"{v:.1f}"
@@ -132,18 +145,25 @@ def fundamental(rev, val):
     r = rev.sort_values(["revenue_year", "revenue_month"]).reset_index(drop=True)
     r["ym"] = r["revenue_year"] * 100 + r["revenue_month"]
     latest = r.iloc[-1]
-    # YoY：同月比去年
+    # YoY：同月比去年。去年同月營收（分母）<=0 視為無效基期 → yoy 回 None，不產生 inf
     prev_year = r[(r["revenue_year"] == latest["revenue_year"] - 1) &
                   (r["revenue_month"] == latest["revenue_month"])]
     yoy = None
+    yoy_base_invalid = False
     if len(prev_year):
-        yoy = (latest["revenue"] / prev_year.iloc[0]["revenue"] - 1) * 100
-    # 近 3 月平均 YoY（趨勢）
+        base = prev_year.iloc[0]["revenue"]
+        if base and base > 0:
+            yoy = (latest["revenue"] / base - 1) * 100
+        else:
+            yoy_base_invalid = True
+    # 近 3 月平均 YoY（趨勢）；同樣排除基期<=0 的月份
     yoys = []
     for _, row in r.tail(3).iterrows():
         py = r[(r["revenue_year"] == row["revenue_year"] - 1) & (r["revenue_month"] == row["revenue_month"])]
         if len(py):
-            yoys.append((row["revenue"] / py.iloc[0]["revenue"] - 1) * 100)
+            py_base = py.iloc[0]["revenue"]
+            if py_base and py_base > 0:
+                yoys.append((row["revenue"] / py_base - 1) * 100)
     avg_yoy = sum(yoys) / len(yoys) if yoys else None
 
     v = val.sort_values("date").reset_index(drop=True)
@@ -162,12 +182,12 @@ def fundamental(rev, val):
 
     return light, {
         "最新營收月": f"{int(latest['revenue_year'])}/{int(latest['revenue_month'])}",
-        "營收YoY": f"{yoy:+.1f}%" if yoy is not None else "—",
+        "營收YoY": f"{yoy:+.1f}%" if yoy is not None else ("去年同月基期無效" if yoy_base_invalid else "—"),
         "近3月平均YoY": f"{avg_yoy:+.1f}%" if avg_yoy is not None else "—",
         "PER": round(per_last, 1) if per_last is not None else "—",
         "PER歷史分位": f"{per_pctile*100:.0f}%" if per_pctile is not None else "—",
         "殖利率": f"{div_yield}%" if div_yield is not None else "—",
-    }
+    }, {"revenue_yoy_base_invalid": yoy_base_invalid}
 
 
 # ---------- 消息/籌碼面（籌碼部分先做；新聞情緒待 LLM 層）----------
@@ -275,7 +295,8 @@ def analyze(stock_id, with_news=True):
     flags = {}
 
     if d.get("rev") is not None and d.get("val") is not None:
-        f_light, f_ev = fundamental(d["rev"], d["val"]); flags["fundamental"] = True
+        f_light, f_ev, f_flags = fundamental(d["rev"], d["val"]); flags["fundamental"] = True
+        flags.update(f_flags)
     else:
         f_light, f_ev = "na", {"備註": "營收/估值資料缺"}; flags["fundamental"] = False
 
@@ -349,8 +370,8 @@ def _decide(stock_id, d, res, flags):
     ma20 = _num(t_ev.get("MA20"))
     hi_c = "max" if "max" in pdf.columns else "close"
     lo_c = "min" if "min" in pdf.columns else "close"
-    low20 = float(pd.to_numeric(pdf[lo_c], errors="coerce").tail(20).min())
-    high20 = float(pd.to_numeric(pdf[hi_c], errors="coerce").tail(20).max())
+    # 前20個完整交易日（不含當日）→ 突破/停損參考不會有 lookahead、也不會在創高日永遠不成立
+    low20, high20 = prior_n_high_low(pdf, hi_c, lo_c, 20)
     avg_vol20 = float(pd.to_numeric(pdf["Trading_Volume"], errors="coerce").tail(20).mean()) \
         if "Trading_Volume" in pdf.columns else None
     atr = atr14(pdf)
