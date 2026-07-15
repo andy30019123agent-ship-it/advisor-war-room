@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>投顧戰情室 · Advisor War Room</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;700&family=Nunito+Sans:wght@800;900&family=IBM+Plex+Mono:wght@600&display=swap');
+:root{--bg:#f0f0f3;--surface:#fbfbfe;--soft:#f6f6f9;--ink:#141823;--text:#262b38;--muted:#566071;
+--pink:#e8b4c0;--pink-soft:#f7e8ec;--pink-ink:#6d3040;
+--shadow-extrude:10px 10px 22px #c9c9d0,-10px -10px 22px #ffffff;
+--shadow-soft:6px 6px 14px #d0d0d7,-6px -6px 14px #ffffff;
+--sans:'IBM Plex Sans TC','PingFang TC',system-ui,sans-serif;
+--display:'Nunito Sans','IBM Plex Sans TC',sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.7;
+display:grid;place-items:center;min-height:100vh;padding:24px}
+main{max-width:520px;width:100%}
+h1{margin:0 0 6px;color:var(--ink);font-family:var(--display);font-size:34px;font-weight:900;text-wrap:balance}
+.sub{margin:0 0 28px;color:var(--muted);font-size:14px}
+a.card{display:block;background:var(--surface);border-radius:16px;box-shadow:var(--shadow-extrude);
+padding:20px;margin-bottom:18px;text-decoration:none;color:var(--text);transition:box-shadow .18s ease}
+a.card:hover{box-shadow:var(--shadow-soft)}
+a.card b{display:block;color:var(--ink);font-family:var(--display);font-size:20px;font-weight:900;margin-bottom:4px}
+a.card small{color:var(--muted)}
+.tag{display:inline-block;margin-bottom:10px;padding:4px 12px;border-radius:999px;background:var(--pink-soft);
+color:var(--pink-ink);font-family:var(--mono);font-size:12px;font-weight:600}
+.foot{margin-top:20px;color:var(--muted);font-size:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+<span class="tag">Advisor War Room</span>
+<h1>投顧戰情室</h1>
+<p class="sub">AI 投顧團隊 · 真實資料 · 規則引擎決策</p>
+<a class="card" href="reports/weekly.html"><b>📊 戰情週報（最新一期）</b><small>大盤 → 類股 → 個股決策卡 → 主題雷達 → 事件</small></a>
+<a class="card" href="reports/2330.html"><b>📈 台積電 2330 個股決策報告</b><small>決策卡 · 合理價值區間 · 風報比 · 法人分拆 · 六角色觀點</small></a>
+<p class="foot">投資決策輔助，非投資建議、非保證獲利，風險自負。</p>
+</main>
+</body>
+</html>
