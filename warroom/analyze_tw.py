@@ -11,6 +11,7 @@ from warroom.decision_engine import (
     atr14, atr_percent_median, build_decision,
 )
 from warroom.chips_v2 import chips_breakdown
+from warroom.fundamentals import compute_fundamentals
 
 LIGHT_SCORE = {"green": 1, "amber": 0, "red": -1, "na": 0}
 LIGHT_ZH = {"green": "🟢偏多", "amber": "🟡中性", "red": "🔴偏空", "na": "⚪資料缺"}
@@ -52,6 +53,8 @@ def fetch(stock_id):
         ("val", "taiwan_stock_per_pbr", dict(stock_id=stock_id, start_date="2021-01-01")),
         ("chip", "taiwan_stock_institutional_investors", dict(stock_id=stock_id, start_date="2026-04-01")),
         ("fs", "taiwan_stock_financial_statement", dict(stock_id=stock_id, start_date="2024-01-01")),
+        ("bs", "taiwan_stock_balance_sheet", dict(stock_id=stock_id, start_date="2024-01-01")),
+        ("cf", "taiwan_stock_cash_flows_statement", dict(stock_id=stock_id, start_date="2024-01-01")),
     ]
     for key, method, kw in sources:
         try:
@@ -320,6 +323,12 @@ def analyze(stock_id, with_news=True):
             vol20_shares = float(_pv.mean())
     chip_breakdown = chips_breakdown(d.get("chip"), vol20=vol20_shares)
 
+    # 財報品質分數（additive）＋ ROE（供 valuation）
+    fundamentals_quality = compute_fundamentals({
+        "fs_df": d.get("fs"), "bs_df": d.get("bs"), "cf_df": d.get("cf"),
+        "rev_df": d.get("rev"), "industry_category": stock_industry(stock_id),
+    })
+
     combo = synthesize(f_light, t_light, c_light)
     news = fetch_news(name, None, 6) if with_news else []
     res = {
@@ -328,6 +337,7 @@ def analyze(stock_id, with_news=True):
         "technical": {"light": t_light, "ev": t_ev},
         "chips": {"light": c_light, "ev": c_ev, "breakdown": chip_breakdown},
         "news": news, "summary": combo, "data_flags": flags,
+        "fundamentals_quality": fundamentals_quality,
     }
     res["decision"] = _decide(stock_id, d, res, flags)
     return res
@@ -367,7 +377,8 @@ def _decide(stock_id, d, res, flags):
         "price": price, "industry_category": stock_industry(stock_id),
         "market_light": market_light, "fs_df": d.get("fs"), "rev_df": d.get("rev"),
         "per_series": per_series, "per_current": per_current,
-        "pbr_series": pbr_series, "pbr_current": pbr_current, "roe": None,
+        "pbr_series": pbr_series, "pbr_current": pbr_current,
+        "roe": res.get("fundamentals_quality", {}).get("roe_value"),
     })
     flags["eps_statement"] = (valuation.get("eps_source") == "financial_statement")
 
