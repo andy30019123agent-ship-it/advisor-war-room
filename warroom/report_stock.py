@@ -30,6 +30,8 @@ def build(stock_id):
         d = json.load(f)
     with open(f"data/{stock_id}.narration.json", encoding="utf-8") as f:
         n = json.load(f)
+    from warroom.consistency import check_stock_consistency, assert_consistent
+    assert_consistent(check_stock_consistency(d, n), f"個股報告 {stock_id}")
     r = n["roles"]
     s = d["summary"]
     act = n["action"]

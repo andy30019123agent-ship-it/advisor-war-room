@@ -133,6 +133,8 @@ def build():
         p = f"data/{sid}.json"
         if os.path.exists(p):
             stocks[sid] = json.load(open(p, encoding="utf-8"))
+    from warroom.consistency import check_weekly_consistency, assert_consistent
+    assert_consistent(check_weekly_consistency(stocks, n), "週報")
 
     code, emo, zh = LIGHT[m["light"]]
     foreign = ""
