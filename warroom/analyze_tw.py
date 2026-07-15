@@ -346,6 +346,15 @@ def analyze(stock_id, with_news=True):
         "fundamentals_quality": fundamentals_quality,
     }
     res["decision"] = _decide(stock_id, d, res, flags)
+
+    # 落一筆戰績牆建議（規格 §3.3）。P1 fix #4：搬進 analyze() 尾端，讓 update.py 的批次
+    # 入口（直接呼叫 analyze()，不經 __main__）也會落 log；缺資料/寫檔失敗降級不 crash。
+    try:
+        from warroom.track_record import log_recommendation
+        _today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+        log_recommendation(res, _today)
+    except Exception:
+        pass
     return res
 
 
@@ -483,10 +492,6 @@ if __name__ == "__main__":
     except Exception as _e:
         print(f"（events.json 落檔略過：{_e}）")
 
-    try:
-        from warroom.track_record import log_recommendation
-        _today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
-        log_recommendation(res, _today)
-        print("→ 已落一筆 data/recommendation_log.json")
-    except Exception as _e:
-        print(f"（recommendation_log 落檔略過：{_e}）")
+    # P1 fix #4：recommendation_log 落檔已搬進 analyze() 尾端統一處理（見上方 analyze()
+    # 呼叫時已落過一筆），這裡不再重複落，避免兩個入口各落一次。
+    print("→ recommendation_log 已於 analyze() 內落檔（見上方）")
