@@ -3,7 +3,7 @@ import unittest
 
 import pandas as pd
 
-from warroom.sectors import stock_momentum, tw_group_metrics
+from warroom.sectors import stock_momentum, tw_group_metrics, _tier_for
 
 
 def make_price(closes, vols=None):
@@ -58,6 +58,27 @@ class TestTwSectors(unittest.TestCase):
         g = tw_group_metrics("空族群", [], None)
         self.assertIsNone(g["m5"])
         self.assertIsNone(g["score"])   # 無資料 → score None（排名時濾掉）
+        self.assertEqual(g["coverage"], 0)
+
+    # ---------- P1 終審修復 #10：缺窗口重新歸一化，不當 0 計分 ----------
+    def test_tw_group_metrics_coverage_and_renormalized_weight(self):
+        # 只有 25 天資料：m5/m20 可算，m60 需 61 筆 → None
+        up = make_price([100.0 + i * 1.0 for i in range(25)])
+        twii = make_price([100.0 + i * 0.2 for i in range(25)])
+        g = tw_group_metrics("短資料族群", [up], twii)
+        self.assertIsNone(g["m60"])
+        self.assertIsNotNone(g["m20"])
+        self.assertEqual(g["coverage"], 2)   # m5、m20 可用；m60 不可用
+        # 不得把 m60 當 0：score 應為「可用窗口」重新歸一化後的加權平均 + rs 加成
+        expected_base = (0.4 * g["m5"] + 0.35 * g["m20"]) / 0.75
+        expected_score = round(expected_base + 0.3 * (g["rs_vs_twii"] or 0), 2)
+        self.assertAlmostEqual(g["score"], expected_score, places=2)
+
+    def test_tier_for_lead_requires_m20(self):
+        self.assertEqual(_tier_for(5.0, 10.0), "lead")
+        self.assertEqual(_tier_for(5.0, None), "mid")    # m20 缺 → 不得列 lead，但仍可列 mid
+        self.assertEqual(_tier_for(-5.0, None), "lag")
+        self.assertEqual(_tier_for(None, 10.0), "na")
 
 
 if __name__ == "__main__":

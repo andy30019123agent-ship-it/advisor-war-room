@@ -101,9 +101,26 @@ def _avg(vals: List[Optional[float]]) -> Optional[float]:
     return round(sum(xs) / len(xs), 2) if xs else None
 
 
+_MOM_WEIGHTS = {"m5": 0.4, "m20": 0.35, "m60": 0.25}
+
+
+def _tier_for(score: Optional[float], m20: Optional[float]) -> str:
+    """依分數判 tier。P1 fix #10：m20 缺（資料不足）不得列 lead tier，
+    避免資料短的族群（動能窗口不足、靠殘缺權重灌出高分）被誤判領頭。"""
+    if score is None:
+        return "na"
+    if score > 3 and m20 is not None:
+        return "lead"
+    if score < -3:
+        return "lag"
+    return "mid"
+
+
 def tw_group_metrics(group_name: str, stock_dfs: List, twii_df) -> Dict:
     """族群等權彙整（見計畫 §介面契約 3，不含 rank/tier）。
-    score = 0.4×m5 + 0.35×m20 + 0.25×m60 + rs 加成（相對加權指數）。"""
+    score = Σ(可用動能窗口權重×值)/Σ(可用權重) + rs 加成（相對加權指數）。
+    P1 fix #10：舊寫法把缺的 m20/m60 當 0 算進加權平均，資料短的族群會被錯誤拉低/排序；
+    改為只對「可用」窗口重新歸一化權重計分，並附 coverage（幾個窗口可用，0-3）供上層判斷。"""
     moms = [stock_momentum(df) for df in stock_dfs]
     m5 = _avg([m["r5"] for m in moms])
     m20 = _avg([m["r20"] for m in moms])
@@ -119,13 +136,18 @@ def tw_group_metrics(group_name: str, stock_dfs: List, twii_df) -> Dict:
         if twii_m20 is not None:
             rs = round(m20 - twii_m20, 2)
 
+    components = {"m5": m5, "m20": m20, "m60": m60}
+    avail = {k: v for k, v in components.items() if v is not None}
+    coverage = len(avail)
     score = None
-    if any(v is not None for v in (m5, m20, m60)):
-        score = round(0.4 * (m5 or 0) + 0.35 * (m20 or 0) + 0.25 * (m60 or 0)
-                      + 0.3 * (rs or 0), 2)
+    if avail:
+        w_sum = sum(_MOM_WEIGHTS[k] for k in avail)
+        base = sum(_MOM_WEIGHTS[k] * v for k, v in avail.items()) / w_sum
+        score = round(base + 0.3 * (rs or 0), 2)
 
     return {"group": group_name, "stock_ids": [], "m5": m5, "m20": m20, "m60": m60,
-            "vol_expansion": vol_expansion, "rs_vs_twii": rs, "score": score}
+            "vol_expansion": vol_expansion, "rs_vs_twii": rs, "score": score,
+            "coverage": coverage}
 
 
 def fetch_tw_sectors() -> List[Dict]:
@@ -151,7 +173,7 @@ def fetch_tw_sectors() -> List[Dict]:
                     key=lambda r: r["score"], reverse=True)
     for i, r in enumerate(ranked):
         r["rank"] = i + 1
-        r["tier"] = "lead" if r["score"] > 3 else "lag" if r["score"] < -3 else "mid"
+        r["tier"] = _tier_for(r["score"], r["m20"])
     # score 缺者附在後面（rank/tier 標記為缺）
     for r in rows:
         if r["score"] is None:
