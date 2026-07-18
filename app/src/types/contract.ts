@@ -65,6 +65,34 @@ export const AlertSnapshotSchema = z.object({
   direction: z.enum(['below', 'above']),
 })
 
+// ---------- v1.1 增補（docs/contracts/data-contract-v1.md「v1.1 增補」節）----------
+// schema_version 仍為 1；全部新欄位 optional/nullable，缺席不炸（向後相容 v1 fixture）。
+
+export const ExposureGuidanceSchema = z.object({
+  risk_temp: z.number(),
+  max_equity_pct: z.number(),
+  min_cash_pct: z.number(),
+  new_position: z.enum(['禁止新增部位', '僅限試單', '可正常布局']),
+  note: z.string(),
+})
+
+export const DailyEventSchema = z.object({
+  date: z.string(),
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  label: z.string(),
+})
+
+export const TrackStatsSchema = z.object({
+  n: z.number(),
+  closed: z.number(),
+  hit_rate_5d: z.number().nullable(),
+  hit_rate_20d: z.number().nullable(),
+  hit_rate_60d: z.number().nullable(),
+  note: z.string(),
+})
+
 export const DailySchema = z.object({
   meta: MetaSchema,
   market: MarketSchema,
@@ -72,13 +100,34 @@ export const DailySchema = z.object({
   tracked: z.array(TrackedStockSchema),
   watch: z.array(WatchItemSchema),
   alerts_snapshot: z.array(AlertSnapshotSchema),
+  exposure_guidance: ExposureGuidanceSchema.optional().nullable(),
+  events: z.array(DailyEventSchema).optional(),
+  track_stats: TrackStatsSchema.optional().nullable(),
 })
 
 export type Daily = z.infer<typeof DailySchema>
 export type TrackedStock = z.infer<typeof TrackedStockSchema>
 export type WatchItem = z.infer<typeof WatchItemSchema>
+export type ExposureGuidance = z.infer<typeof ExposureGuidanceSchema>
+export type DailyEvent = z.infer<typeof DailyEventSchema>
+export type TrackStats = z.infer<typeof TrackStatsSchema>
 
 // ---------- stocks/<id>.json ----------
+
+export const AdvicePlanStepSchema = z.object({
+  trigger: z.string(),
+  act: z.string(),
+})
+
+export const AdviceVariantSchema = z.object({
+  action_text: z.string(),
+  plan: z.array(AdvicePlanStepSchema),
+})
+
+export const AdviceSchema = z.object({
+  holder: AdviceVariantSchema,
+  nonholder: AdviceVariantSchema,
+})
 
 export const PrimaryDecisionSchema = z.object({
   action: ActionSchema,
@@ -100,6 +149,8 @@ export const PrimaryDecisionSchema = z.object({
     .nullable(),
   reeval_date: z.string(),
   core_note: z.string().optional(),
+  advice: AdviceSchema.optional().nullable(),
+  defense_explain: z.string().optional().nullable(),
 })
 
 export const TimeframeSchema = z.object({

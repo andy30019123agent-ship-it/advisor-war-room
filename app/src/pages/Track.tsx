@@ -1,7 +1,67 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail, SchemaMismatchError } from '../lib/api'
 import { FreshnessBadge } from '../components/FreshnessBadge'
-import type { TrackEntry } from '../types/contract'
+import { IconChevron } from '../components/icons'
+import type { TrackEntry, TrackStats } from '../types/contract'
+
+function fmtHitRate(rate: number | null): string {
+  return rate == null ? '樣本累積中' : `${rate.toFixed(0)}%`
+}
+
+// 戰績統計卡（契約 v1.1 track_stats）：null 一律顯示「樣本累積中」，不編數字；
+// note 講清楚何時開始有數字。track_stats 整組缺席（舊 daily.json）就整卡不顯示。
+function TrackStatsCard({ stats }: { stats: TrackStats }) {
+  return (
+    <div className="group">
+      <div className="summary-card">
+        <div className="summary-inner">
+          <div className="portfolio-grid">
+            <div className="stat">
+              <span className="stat-label">累計建議</span>
+              <span className="stat-value mono">{stats.n}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">已結案</span>
+              <span className="stat-value mono">{stats.closed}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">5 日命中率</span>
+              <span className={`stat-value mono${stats.hit_rate_5d == null ? ' muted' : ''}`}>
+                {fmtHitRate(stats.hit_rate_5d)}
+              </span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">20 日命中率</span>
+              <span className={`stat-value mono${stats.hit_rate_20d == null ? ' muted' : ''}`}>
+                {fmtHitRate(stats.hit_rate_20d)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="hairline" />
+        <p className="stat-note">{stats.note}</p>
+      </div>
+    </div>
+  )
+}
+
+function MethodExplainer() {
+  return (
+    <div className="group">
+      <div className="list-card">
+        <details className="disclosure">
+          <summary>
+            方法說明
+            <IconChevron />
+          </summary>
+          <div className="disclosure-body">
+            <p>每筆建議記錄當日收盤價，5／20／60 天後回填報酬，方向對即算命中；樣本數要 ≥5 筆才會顯示命中率。</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  )
+}
 
 const MILESTONES = [5, 20, 60] as const
 
@@ -75,6 +135,12 @@ export function Track() {
           {dailyQuery.error instanceof SchemaMismatchError ? '請更新 App' : '資料讀取失敗，請稍後再試'}
         </div>
       )}
+
+      {!isLoading && !dailyQuery.isError && dailyQuery.data?.track_stats && (
+        <TrackStatsCard stats={dailyQuery.data.track_stats} />
+      )}
+
+      {!isLoading && !dailyQuery.isError && <MethodExplainer />}
 
       {!isLoading && !dailyQuery.isError && entries.length === 0 && (
         <div className="empty-state">

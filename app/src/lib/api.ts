@@ -74,6 +74,38 @@ export async function fetchStockDetail(id: string, trackedIds?: ReadonlySet<stri
   return parsed.data
 }
 
+// POST /api/track（契約 v1.1）：一鍵加入監控。回傳前端要分流的結果種類，讓呼叫端只管
+// 顯示對應文案，不用自己解析 status code。
+export type TrackResult =
+  | { kind: 'added' }
+  | { kind: 'already' }
+  | { kind: 'full' }
+  | { kind: 'unavailable'; message: string }
+
+export async function postTrack(id: string): Promise<TrackResult> {
+  let res: Response
+  try {
+    res = await fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stock: id }),
+    })
+  } catch {
+    return { kind: 'unavailable', message: '網路異常，請稍後再試' }
+  }
+  if (res.status === 201) return { kind: 'added' }
+  if (res.status === 200) return { kind: 'already' }
+  if (res.status === 409) return { kind: 'full' }
+  let message = '暫時無法加入監控，請稍後再試'
+  try {
+    const body = (await res.json()) as { error?: string }
+    if (body?.error) message = body.error
+  } catch {
+    // 非 JSON 回應：用預設文案
+  }
+  return { kind: 'unavailable', message }
+}
+
 async function fetchLiveStockDetail(id: string): Promise<unknown> {
   const res = await fetch(`/api/analyze?stock=${encodeURIComponent(id)}`)
   if (res.status === 404) {
