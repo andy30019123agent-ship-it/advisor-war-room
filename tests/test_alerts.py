@@ -127,6 +127,74 @@ def test_run_not_triggered_no_send(tmp_path, monkeypatch):
 
 # ── graceful exit：無資料 / 非盤中 ──────────────────────────────────
 
+def test_run_telegram_failure_does_not_mark_sent_retries_next_run(tmp_path, monkeypatch):
+    # 10：send_telegram 失敗（回 False）不該 mark_sent——這輪沒發成功，下一輪要能重試，
+    # 不能把「發送失敗」誤標成「已發過」而永久吃掉這則提醒。run() 的回傳值只是 rc（固定 0），
+    # 不代表發送則數，所以這裡跟既有測試一樣改用 sent_msgs／state 驗證實際行為。
+    data_path = _write_daily(tmp_path, [
+        {"id": "2330", "name": "台積電", "type": "defense", "price": 999999, "direction": "below"},
+    ])
+    state_path = str(tmp_path / "alerts_state.json")
+
+    monkeypatch.setattr(alerts, "get_price", lambda sid: 2238)
+    call_count = {"n": 0}
+
+    def _flaky_send(msg, **kw):
+        call_count["n"] += 1
+        return False  # 模擬每次都發送失敗（網路掛掉等）
+
+    monkeypatch.setattr(alerts, "send_telegram", _flaky_send)
+
+    now = datetime(2026, 7, 17, 10, 0, tzinfo=_TPE)
+    alerts.run(data_path=data_path, state_path=state_path, force=True, now=now)
+    alerts.run(data_path=data_path, state_path=state_path, force=True, now=now)
+
+    # 兩輪都該嘗試發送（沒被去重擋掉），因為第一輪失敗沒有 mark_sent
+    assert call_count["n"] == 2
+    state = json.loads(open(state_path, encoding="utf-8").read())
+    assert "2330:defense:999999" not in (state.get("2026-07-17") or [])
+
+
+def test_run_telegram_recovers_after_earlier_failure(tmp_path, monkeypatch):
+    data_path = _write_daily(tmp_path, [
+        {"id": "2330", "name": "台積電", "type": "defense", "price": 999999, "direction": "below"},
+    ])
+    state_path = str(tmp_path / "alerts_state.json")
+
+    monkeypatch.setattr(alerts, "get_price", lambda sid: 2238)
+    outcomes = [False, True]
+    sent_msgs = []
+
+    def _send(msg, **kw):
+        ok = outcomes.pop(0)
+        if ok:
+            sent_msgs.append(msg)
+        return ok
+
+    monkeypatch.setattr(alerts, "send_telegram", _send)
+
+    now = datetime(2026, 7, 17, 10, 0, tzinfo=_TPE)
+    alerts.run(data_path=data_path, state_path=state_path, force=True, now=now)
+    alerts.run(data_path=data_path, state_path=state_path, force=True, now=now)
+
+    assert len(sent_msgs) == 1  # 第一輪失敗沒發成、第二輪重試才真的發成一則
+    state = json.loads(open(state_path, encoding="utf-8").read())
+    assert "2330:defense:999999" in state["2026-07-17"]
+
+
+def test_check_market_move_telegram_failure_does_not_mark_sent(monkeypatch):
+    monkeypatch.setattr(alerts, "fetch_taiex", lambda **kw: (17000.0, 17650.1))  # -3.68%
+    monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: False)  # 模擬發送失敗
+
+    state = {}
+    sent1 = alerts.check_market_move(state, "2026-07-19")
+    sent2 = alerts.check_market_move(state, "2026-07-19")  # 沒被 mark_sent，該再試一次
+
+    assert sent1 == 0
+    assert sent2 == 0
+    assert "2026-07-19" not in state or "market_move_down" not in state["2026-07-19"]
+
+
 def test_run_missing_data_file_graceful(tmp_path, monkeypatch):
     missing_path = str(tmp_path / "does_not_exist.json")
     state_path = str(tmp_path / "alerts_state.json")
@@ -347,7 +415,7 @@ def test_build_market_move_message_down():
     msg = alerts.build_market_move_message("down", 17205.3, -2.52)
     assert msg == (
         "📉 大盤劇烈波動：加權指數 17,205.30（-2.5%）。"
-        "風險溫度已高，記得回 App 看持股防守價。"
+        "盤中波動放大，記得回 App 看持股防守價。"
     )
 
 

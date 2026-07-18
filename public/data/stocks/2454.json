@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-07-17",
-    "generated_at": "2026-07-18T17:05:48+08:00",
+    "generated_at": "2026-07-18T17:45:42+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -62,11 +62,11 @@
         ]
       },
       "nonholder": {
-        "action_text": "先不進場，等站回 MA60 3,809 且法人連 2 日買超。",
+        "action_text": "暫不進場（大盤禁新倉），站回 MA60 3,809 且法人連 2 日買超後再評估。",
         "plan": [
           {
             "trigger": "站回 MA60 3,809 且法人連 2 日買超",
-            "act": "試單 10 萬"
+            "act": "暫不進場（大盤禁新倉），站回 MA60 3,809 且法人連 2 日買超後再評估"
           }
         ]
       }

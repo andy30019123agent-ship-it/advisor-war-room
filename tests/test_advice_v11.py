@@ -76,6 +76,99 @@ class TestAdvice(unittest.TestCase):
         self.assertIn("MA60", labels)
         self.assertNotIn("MA20", labels)  # 4063 距現價 20.6% 被排除
 
+    def test_add_action_plan_amount_reflects_tier_amount(self):
+        # 加碼 action：plan 金額該講「第一段 20 萬、總上限 X 萬」，X 來自 position.tier_amount
+        # （Andy 0/10/20/40/60 萬級距），不是固定寫死 20 萬跟級距脫鉤。
+        adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False, tier_amount=400000)
+        holder_acts = " ".join(p["act"] for p in adv["holder"]["plan"])
+        self.assertIn("第一段", holder_acts)
+        self.assertIn("20 萬", holder_acts)
+        self.assertIn("40 萬", holder_acts)  # 總上限＝tier_amount 40 萬
+        nonholder_acts = " ".join(p["act"] for p in adv["nonholder"]["plan"])
+        self.assertIn("40 萬", nonholder_acts)
+        self.assertIn("40 萬", adv["nonholder"]["action_text"])
+
+    def test_add_action_high_confidence_tier_reflected_as_60_wan(self):
+        adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False, tier_amount=600000)
+        self.assertIn("60 萬", " ".join(p["act"] for p in adv["holder"]["plan"]))
+
+    def test_add_action_missing_tier_amount_degrades_to_plain_20_wan(self):
+        # tier_amount 沒給（None）→ 降級成舊文案「可加碼 20 萬」，不帶總上限，不炸不編數字
+        adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False)
+        holder_acts = " ".join(p["act"] for p in adv["holder"]["plan"])
+        self.assertIn("可加碼 20 萬", holder_acts)
+        self.assertNotIn("總上限", holder_acts)
+
+    def test_market_banned_overrides_nonholder_regardless_of_action(self):
+        # 大盤禁止新增部位：無論個股 action 是什麼，nonholder plan/文案都不得出現
+        # 試單/買進金額，改講「暫不進場（大盤禁新倉）」。
+        for action in ("加碼", "續抱", "試單", "減碼", "出場"):
+            adv = build_advice(action=action, reason_codes=["trend_ok"],
+                               price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                               entry_condition=None, is_core_holding=False,
+                               tier_amount=400000, market_new_position="禁止新增部位")
+            non = adv["nonholder"]
+            self.assertIn("大盤禁新倉", non["action_text"], f"{action} 文案未反映禁新倉")
+            all_acts = " ".join(p["act"] for p in non["plan"])
+            self.assertNotIn("試單", all_acts, f"{action} plan 不該出現試單字樣")
+            self.assertNotIn("買進", all_acts, f"{action} plan 不該出現買進字樣")
+            self.assertNotIn("萬", all_acts, f"{action} plan 不該出現金額")
+            # holder 版不受影響：既有持股的紀律不因「新增部位」限制被改寫
+            self.assertNotIn("大盤禁新倉", adv["holder"]["action_text"])
+
+    def test_market_trial_only_caps_add_action_to_10_wan(self):
+        # 僅限試單：加碼 action 的空手版本收斂回 10 萬試單額度，不是 20/40 萬階梯
+        adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False,
+                           tier_amount=400000, market_new_position="僅限試單")
+        non = adv["nonholder"]
+        self.assertIn("試單 10 萬", non["plan"][0]["act"])
+        self.assertNotIn("40 萬", non["plan"][0]["act"])
+        self.assertIn("10 萬", non["action_text"])
+
+    def test_market_unrestricted_or_none_keeps_normal_add_action_amount(self):
+        # 大盤可正常布局／沒有 market_new_position 資訊時，維持原本的級距文案
+        for mnp in (None, "可正常布局"):
+            adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                               price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                               entry_condition=None, is_core_holding=False,
+                               tier_amount=400000, market_new_position=mnp)
+            self.assertIn("40 萬", adv["nonholder"]["plan"][0]["act"])
+
+    def test_build_all_daily_banned_no_stock_nonholder_suggests_entry_amount(self):
+        # 一致性測試：daily 若判定禁新倉，所有股票的 nonholder plan 都不得出現「試單/買進 N 萬」。
+        FAKE_MARKET_BANNED = {
+            "taiex": {"close": 20000.0, "change_pct": -3.0},
+            "us": [{"id": "SOX", "name": "費城半導體", "change_pct": -3.5},
+                   {"id": "VIX", "name": "VIX", "change_pct": 15.0}],
+            "foreign_net_yi": -300, "trade_date": "2026-07-18",
+        }
+        daily, stocks, _ = build_all(market_inputs=FAKE_MARKET_BANNED)
+        self.assertEqual(daily["exposure_guidance"]["new_position"], "禁止新增部位")
+        for sid, detail in stocks.items():
+            non = detail["primary_decision"]["advice"]["nonholder"]
+            all_acts = " ".join(p["act"] for p in non["plan"])
+            self.assertNotIn("試單", all_acts, f"{sid} nonholder plan 仍出現試單")
+            self.assertNotIn("買進", all_acts, f"{sid} nonholder plan 仍出現買進")
+
+    def test_small_entry_and_reduce_amounts_unaffected_by_tier_amount(self):
+        # 試單／回補金額固定 10 萬起，不受 tier_amount 影響（Andy 試單檔位本就是 10 萬）
+        adv_small = build_advice(action="試單", reason_codes=["trend_ok"],
+                                 price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                                 entry_condition=None, is_core_holding=False, tier_amount=400000)
+        self.assertIn("試單 10 萬", adv_small["nonholder"]["plan"][0]["act"])
+        adv_reduce = build_advice(action="減碼", reason_codes=["trend_weak"],
+                                  price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                                  entry_condition=None, is_core_holding=False, tier_amount=100000)
+        self.assertIn("試單 10 萬", adv_reduce["nonholder"]["plan"][0]["act"])
+
     def test_holder_action_text_direction_matches_action(self):
         # 一致性：holder action_text 動詞方向與 action 同向（6 種 action 全覆蓋）
         for action in ("加碼", "續抱", "試單", "觀望", "減碼", "出場"):
@@ -193,6 +286,51 @@ class TestTrackStats(unittest.TestCase):
         st = build_track_stats("/nonexistent/log.json")
         self.assertEqual(st["n"], 0)
         self.assertIsNone(st["hit_rate_5d"])
+
+    def test_defensive_rating_flips_hit_direction(self):
+        # 減碼（防禦動作）：股價真的跌（r<=0）才算命中，不是漲才算命中
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "log.json")
+            entries = [
+                {"date": f"2026-06-{10+i:02d}", "stock_id": "2330", "rating": "減碼",
+                 "price": 100.0, "outcome": {"r5": (-3.0 if i < 4 else 1.0), "r20": None, "r60": None}}
+                for i in range(5)
+            ]
+            json.dump(entries, open(p, "w"))
+            st = build_track_stats(p)
+        self.assertEqual(st["hit_rate_5d"], 0.8)  # 4/5 為負（防禦動作猜對下跌）
+
+    def test_watch_rating_defensive_direction_includes_zero(self):
+        # 觀望也是防禦動作；r==0（不漲不跌）視為「沒漲」→ 算命中
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "log.json")
+            entries = [
+                {"date": f"2026-06-{10+i:02d}", "stock_id": "2330", "rating": "觀望",
+                 "price": 100.0, "outcome": {"r5": (0.0 if i < 3 else 2.0), "r20": None, "r60": None}}
+                for i in range(5)
+            ]
+            json.dump(entries, open(p, "w"))
+            st = build_track_stats(p)
+        self.assertEqual(st["hit_rate_5d"], 0.6)  # 3/5 為 <=0
+
+    def test_bullish_vs_defensive_computed_per_entry_not_globally(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "log.json")
+            entries = [
+                {"date": "2026-06-10", "stock_id": "2330", "rating": "買進",
+                 "price": 100.0, "outcome": {"r5": 2.0, "r20": None, "r60": None}},   # 看多＋漲 → 命中
+                {"date": "2026-06-11", "stock_id": "2454", "rating": "減碼",
+                 "price": 100.0, "outcome": {"r5": -2.0, "r20": None, "r60": None}},  # 防禦＋跌 → 命中
+                {"date": "2026-06-12", "stock_id": "2603", "rating": "買進",
+                 "price": 100.0, "outcome": {"r5": -1.0, "r20": None, "r60": None}},  # 看多＋跌 → 沒中
+                {"date": "2026-06-13", "stock_id": "2882", "rating": "減碼",
+                 "price": 100.0, "outcome": {"r5": 1.0, "r20": None, "r60": None}},   # 防禦＋漲 → 沒中
+                {"date": "2026-06-14", "stock_id": "2317", "rating": "觀望",
+                 "price": 100.0, "outcome": {"r5": -0.5, "r20": None, "r60": None}},  # 防禦＋跌 → 命中
+            ]
+            json.dump(entries, open(p, "w"))
+            st = build_track_stats(p)
+        self.assertEqual(st["hit_rate_5d"], 0.6)  # 3/5 命中
 
 
 # ---------- 六角色人話化 ----------

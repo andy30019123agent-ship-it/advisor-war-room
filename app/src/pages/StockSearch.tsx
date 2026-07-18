@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail, postTrack, NotFoundError, SchemaMismatchError } from '../lib/api'
 import { loadHoldings } from '../lib/holdings'
 import { loadWatchlist, addToWatchlist } from '../lib/watchlist'
+import { formatShares, SHARES_PER_LOT } from '../lib/shares'
 import { IconSearch } from '../components/icons'
 import type { Daily, StockDetail } from '../types/contract'
 
@@ -246,7 +247,7 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
             <span className="k">部位</span>
             <span className="v">
               {pd.position.tier_amount > 0
-                ? `${(pd.position.tier_amount / 10000).toFixed(0)} 萬（${pd.position.lots} 張 ${pd.position.odd_shares} 股）`
+                ? `${(pd.position.tier_amount / 10000).toFixed(0)} 萬（${formatShares(pd.position.lots * SHARES_PER_LOT + pd.position.odd_shares)}）`
                 : '空手'}
             </span>
           </div>

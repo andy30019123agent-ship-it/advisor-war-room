@@ -160,10 +160,19 @@ export function Holdings() {
     }
   })
 
+  // 曝險用市值：現價未知時退回成本價估市值，避免曝險被低估成 0（優於直接漏算）。
   const totalMarketValue = enriched.reduce((sum, e) => sum + e.marketValue, 0)
-  const totalCost = enriched.reduce((sum, e) => sum + e.costBasis, 0)
-  const totalPnlAmt = totalMarketValue - totalCost
-  const totalPnlPct = totalCost > 0 ? (totalPnlAmt / totalCost) * 100 : null
+
+  // 總損益：跟曝險用不同的分母——缺現價的部位若沿用成本價退回，等於默默假設它「損益 0」，
+  // 會把總損益算低／算高而不自知。改成只用「確定有現價」的部位算總損益，缺價的部位整筆
+  // 排除，並在旁邊標「（部分持股缺報價未計入）」，寧可少算也不要算錯又不吭聲。
+  const pricedEntries = enriched.filter((e) => e.currentPrice != null)
+  const hasMissingPrice = enriched.length > pricedEntries.length
+  const pricedMarketValue = pricedEntries.reduce((sum, e) => sum + (e.currentPrice as number) * e.holding.shares, 0)
+  const pricedCost = pricedEntries.reduce((sum, e) => sum + e.costBasis, 0)
+  const totalPnlAmt = pricedEntries.length > 0 ? pricedMarketValue - pricedCost : null
+  const totalPnlPct = totalPnlAmt != null && pricedCost > 0 ? (totalPnlAmt / pricedCost) * 100 : null
+
   const exposurePct = totalCapital > 0 ? (totalMarketValue / totalCapital) * 100 : null
   const cashPct = exposurePct != null ? Math.max(0, 100 - exposurePct) : null
   const maxEquityPct = daily?.exposure_guidance?.max_equity_pct ?? null
@@ -203,11 +212,18 @@ export function Holdings() {
                   </div>
                   <div className="stat">
                     <span className="stat-label">總損益</span>
-                    <span className={`stat-value mono ${totalPnlAmt > 0 ? 'up' : totalPnlAmt < 0 ? 'down' : ''}`}>
-                      {totalPnlAmt > 0 ? '+' : ''}
-                      {Math.round(totalPnlAmt).toLocaleString()}
-                      {totalPnlPct != null && ` (${totalPnlPct > 0 ? '+' : ''}${totalPnlPct.toFixed(1)}%)`}
+                    <span
+                      className={`stat-value mono ${totalPnlAmt != null && totalPnlAmt > 0 ? 'up' : totalPnlAmt != null && totalPnlAmt < 0 ? 'down' : ''}`}
+                    >
+                      {totalPnlAmt == null
+                        ? '—'
+                        : `${totalPnlAmt > 0 ? '+' : ''}${Math.round(totalPnlAmt).toLocaleString()}${
+                            totalPnlPct != null ? ` (${totalPnlPct > 0 ? '+' : ''}${totalPnlPct.toFixed(1)}%)` : ''
+                          }`}
                     </span>
+                    {hasMissingPrice && (
+                      <span style={{ fontSize: 11, color: 'var(--text-soft)' }}>（部分持股缺報價未計入）</span>
+                    )}
                   </div>
                   <div className="stat">
                     <span className="stat-label">股票曝險</span>

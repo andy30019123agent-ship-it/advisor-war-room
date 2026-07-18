@@ -4,8 +4,14 @@ import { FreshnessBadge } from '../components/FreshnessBadge'
 import { IconChevron } from '../components/icons'
 import type { TrackEntry, TrackStats } from '../types/contract'
 
+// hit_rate_* 與 outcome.r5/r20/r60 在契約裡都是 ratio（0.8＝80%、0.0567＝5.67%），
+// 顯示要乘 100，直接接 % 會把 0.8 顯示成「1%」（07-18 覆核 #4）。
 function fmtHitRate(rate: number | null): string {
-  return rate == null ? '樣本累積中' : `${rate.toFixed(0)}%`
+  return rate == null ? '樣本累積中' : `${(rate * 100).toFixed(0)}%`
+}
+
+function fmtReturn(r: number | null): string {
+  return r == null ? '—' : `${(r * 100).toFixed(1)}%`
 }
 
 // 戰績統計卡（契約 v1.1 track_stats）：null 一律顯示「樣本累積中」，不編數字；
@@ -179,9 +185,9 @@ export function Track() {
                       </>
                     ) : (
                       <div className="row-tags" style={{ marginTop: 8 }}>
-                        <span className="pill neutral">R5 {t.outcome.r5 ?? '—'}%</span>
-                        <span className="pill neutral">R20 {t.outcome.r20 ?? '—'}%</span>
-                        <span className="pill neutral">R60 {t.outcome.r60 ?? '—'}%</span>
+                        <span className="pill neutral">R5 {fmtReturn(t.outcome.r5)}</span>
+                        <span className="pill neutral">R20 {fmtReturn(t.outcome.r20)}</span>
+                        <span className="pill neutral">R60 {fmtReturn(t.outcome.r60)}</span>
                       </div>
                     )}
                   </div>

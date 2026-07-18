@@ -260,12 +260,14 @@ def build_market_move_message(direction, price, change_pct):
         )
     return (
         f"📉 大盤劇烈波動：加權指數 {price_s}（{pct_s}）。"
-        "風險溫度已高，記得回 App 看持股防守價。"
+        "盤中波動放大，記得回 App 看持股防守價。"
     )
 
 
 def check_market_move(state, today_str):
-    """抓 TAIEX、判斷是否劇烈波動、依 state 去重後發送。回傳已發送則數（0 或 1）。"""
+    """抓 TAIEX、判斷是否劇烈波動、依 state 去重後發送。回傳已發送則數（0 或 1）。
+    send_telegram 失敗（回 False）不 mark_sent——留到下一輪再試，不能把「發送失敗」
+    誤標成「已發過」，否則這則警報就永久消失，使用者永遠收不到。"""
     current, prev_close = fetch_taiex()
     change_pct = compute_change_pct(current, prev_close)
     direction = evaluate_market_move(change_pct)
@@ -275,7 +277,8 @@ def check_market_move(state, today_str):
     if already_sent(state, today_str, key):
         return 0
     msg = build_market_move_message(direction, current, change_pct)
-    send_telegram(msg)
+    if not send_telegram(msg):
+        return 0
     mark_sent(state, today_str, key)
     return 1
 
@@ -328,9 +331,11 @@ def run(data_path=DEFAULT_DATA_PATH, state_path=DEFAULT_STATE_PATH, force=False,
                 continue
             if evaluate(alert, price):
                 msg = build_message(alert, price)
-                send_telegram(msg)
-                mark_sent(state, today, key)
-                sent += 1
+                # send_telegram 失敗（回 False）不 mark_sent：留到下一輪重試，不能把
+                # 「發送失敗」誤標成「已發過」，否則這則到價提醒就永久消失（見 check_market_move 同語意）。
+                if send_telegram(msg):
+                    mark_sent(state, today, key)
+                    sent += 1
 
     save_state(state, state_path)
     print(f"本輪觸發並發送 {sent} 則提醒。")

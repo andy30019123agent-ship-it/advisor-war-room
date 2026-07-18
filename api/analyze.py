@@ -56,6 +56,21 @@ def _lite_market_light() -> str:
         return "amber"
 
 
+def _lite_exposure_new_position():
+    """讀已部署 daily.json 的 exposure_guidance.new_position，讓即時查詢（非追蹤清單股票）
+    的 advice 也跟大盤當下的曝險規則一致，不會出現「大盤禁新倉，即時查某股卻叫空手試單」
+    的矛盾（見 warroom.build_snapshots._build_advice_and_defense 同語意用法）。
+    讀不到／格式不對回 None＝不受限（build_advice 的 market_new_position=None 就是原行為），
+    寧可不限制也不要資料源掛掉時錯誤鎖死所有查詢。"""
+    try:
+        path = os.path.join(_ROOT, "public", "data", "daily.json")
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+        return (d.get("exposure_guidance") or {}).get("new_position")
+    except Exception:
+        return None
+
+
 def _setup_lite_env() -> None:
     """把 warroom.finmind_cache 的單例換成 REST 直連 loader、把 warroom.market
     換成讀靜態快照的假模組，避免 import 到真 FinMind SDK／yfinance。
@@ -140,7 +155,7 @@ def run_analyze(stock_id: str) -> dict:
 
     profile = load_profile(os.path.join(_ROOT, "data", "investor_profile.json"))
     meta = build_meta(sources=["FinMind REST (lite)"], data_date=res.get("as_of_date"))
-    detail = build_stock_detail(stock_id, res, profile, meta)
+    detail = build_stock_detail(stock_id, res, profile, meta, _lite_exposure_new_position())
     _write_cache(stock_id, detail)
     return detail
 

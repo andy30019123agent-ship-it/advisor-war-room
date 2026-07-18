@@ -370,9 +370,24 @@ def _add_calendar_days(date_str: str, days: int) -> str:
         return ""
 
 
+# 命中率方向感知（見 build_track_stats._rate）：看多動作（買進/續抱/試單）猜對＝股價漲，
+# r>0 算命中；防禦動作（減碼——含出場，兩者 apply_derivations 都存成「減碼」——與觀望）
+# 猜對＝股價沒漲甚至跌，r<=0 才算命中。不分方向、一律「r>0 算命中」會系統性低估防禦建議
+# 的命中率（正確喊「先撤」結果股價真的跌，照舊規則反而算「沒中」）。未知/缺 rating 一律
+# 照舊視為看多，維持既有預設行為。
+_DEFENSIVE_RATINGS = {"減碼", "觀望"}
+
+
+def _is_hit(rating: Optional[str], r: float) -> bool:
+    if rating in _DEFENSIVE_RATINGS:
+        return r <= 0
+    return r > 0
+
+
 def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
-    """戰績統計：n＝總建議數；closed＝outcome.r5 非 null 的筆數；各期命中率＝該期報酬為正
-    的比例，樣本 <5 給 null。note 動態寫最快回填日（最早 pending 日 +7 曆日 ≈ +5 交易日）。"""
+    """戰績統計：n＝總建議數；closed＝outcome.r5 非 null 的筆數；各期命中率＝該期報酬方向
+    對（見 _is_hit：看多 r>0、防禦 r<=0）的比例，樣本 <5 給 null。note 動態寫最快回填日
+    （最早 pending 日 +7 曆日 ≈ +5 交易日）。"""
     entries = []
     if os.path.exists(log_path):
         try:
@@ -383,11 +398,11 @@ def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
     n = len(entries)
 
     def _rate(field: str) -> Optional[float]:
-        vals = [_num((e.get("outcome") or {}).get(field)) for e in entries]
-        vals = [v for v in vals if v is not None]
-        if len(vals) < 5:
+        pairs = [(_num((e.get("outcome") or {}).get(field)), e.get("rating")) for e in entries]
+        pairs = [(v, rating) for v, rating in pairs if v is not None]
+        if len(pairs) < 5:
             return None
-        return round(sum(1 for v in vals if v > 0) / len(vals), 3)
+        return round(sum(1 for v, rating in pairs if _is_hit(rating, v)) / len(pairs), 3)
 
     closed = sum(1 for e in entries if _num((e.get("outcome") or {}).get("r5")) is not None)
     pending_dates = [e.get("date") for e in entries
@@ -538,9 +553,15 @@ def _clean_primary(primary: Dict) -> Dict:
     return out
 
 
-def _build_advice_and_defense(res: Dict, is_core: bool) -> Tuple[Dict, str]:
+def _build_advice_and_defense(res: Dict, is_core: bool,
+                              market_new_position: Optional[str] = None) -> Tuple[Dict, str]:
     """v1.1：由已存的 primary_decision（唯一結論源）＋context facts＋decision.stop 派生
-    雙版建議與防守價說明。全部從權威欄位重算，故與 primary 不會打架（契約硬規則 1）。"""
+    雙版建議與防守價說明。全部從權威欄位重算，故與 primary 不會打架（契約硬規則 1）。
+
+    market_new_position＝當下 exposure_guidance.new_position（見 build_exposure_guidance）：
+    大盤「禁止新增部位」或「僅限試單」時，個股層級的 action 不該自己算出跟大盤矛盾的
+    空手建議（例如大盤禁新倉，個股卻叫空手的人試單），交給 build_advice 依此收斂
+    nonholder 那一版（見該函式 market_new_position 參數說明）。"""
     primary = res["primary_decision"]
     ctx = res.get("context") or {}
     dec = res.get("decision") or {}
@@ -551,17 +572,20 @@ def _build_advice_and_defense(res: Dict, is_core: bool) -> Tuple[Dict, str]:
         action=primary["action"], reason_codes=primary.get("reason_codes") or [],
         price=price, defense_price=defense_price, tech_facts=tech_facts,
         entry_condition=primary.get("entry_condition"), is_core_holding=is_core,
-        valuation=ctx.get("valuation"))
+        valuation=ctx.get("valuation"),
+        tier_amount=(primary.get("position") or {}).get("tier_amount"),
+        market_new_position=market_new_position)
     defense_explain = build_defense_explain(defense_price, dec.get("stop"))
     return advice, defense_explain
 
 
-def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict) -> Dict:
+def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
+                       market_new_position: Optional[str] = None) -> Dict:
     t_ev = (res.get("technical") or {}).get("ev") or {}
     dec = res.get("decision") or {}
     is_core = stock_id in profile.get("core_holdings", [])
     primary = _clean_primary(res["primary_decision"])
-    advice, defense_explain = _build_advice_and_defense(res, is_core)
+    advice, defense_explain = _build_advice_and_defense(res, is_core, market_new_position)
     primary["advice"] = advice
     primary["defense_explain"] = defense_explain
     # 角色觀點由權威 reason_codes＋facts 重新生成（升級版六角色人話文案），不用舊 narration。
@@ -606,7 +630,10 @@ def build_all(data_dir: str = DATA_DIR,
                       data_date=market_inputs.get("trade_date"))
     market_block = build_market_block(market_inputs)
     daily = build_daily(profile, results, meta, market_block)
-    stock_details = {sid: build_stock_detail(sid, res, profile, meta)
+    # 個股 advice 要跟大盤 exposure_guidance 一致（見 _build_advice_and_defense docstring）：
+    # 直接重用 daily 已算好的那份，不重算一次（同一份 risk_temp 只該有一個真結果）。
+    market_new_position = daily["exposure_guidance"]["new_position"]
+    stock_details = {sid: build_stock_detail(sid, res, profile, meta, market_new_position)
                      for sid, res in results.items()}
     return daily, stock_details, skipped
 

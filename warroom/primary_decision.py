@@ -390,16 +390,44 @@ def _text_direction(action_text):
     return "hold"
 
 
+def _fmt_wan(amount) -> Optional[str]:
+    """金額（元）→『X 萬』人話字串；缺值或非正數回 None（呼叫端降級成不帶總上限的文案）。"""
+    try:
+        amount = float(amount)
+    except (TypeError, ValueError):
+        return None
+    if amount <= 0:
+        return None
+    return f"{amount / 10000:.0f} 萬"
+
+
 def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
-                 entry_condition, is_core_holding, valuation=None):
+                 entry_condition, is_core_holding, valuation=None, tier_amount=None,
+                 market_new_position=None):
     """雙版建議：holder（已持有）＋nonholder（空手），各含 action_text＋plan 階梯。
     plan 每條 trigger 含具體價位/條件、act 含比例或金額；價位錨一律 ≤15%（見 _executable_anchors）。
-    文案由 action + reason_codes + 價位錨生成，與 action 同向（一致性測試把關）。"""
+    文案由 action + reason_codes + 價位錨生成，與 action 同向（一致性測試把關）。
+
+    tier_amount＝該股 position 級距金額（元，見 _position／Andy 0/10/20/40/60 萬檔位）：
+    action=="加碼" 時代表這次加碼的『總上限』，不是一次全押；plan 金額改講「第一段 20 萬
+    （總上限 X 萬）」，避免使用者誤讀成分批階梯之外還能再加碼到 20 萬（回歸：舊文案固定寫
+    死「加碼 20 萬」，跟該股實際核准到 40／60 萬的級距脫鉤）。試單／回補金額不受級距影響，
+    維持固定 10 萬起（Andy 試單檔位就是 10 萬，不需要另外接級距）。
+
+    market_new_position＝當下 exposure_guidance.new_position（見 build_exposure_guidance，
+    daily.json 的大盤層級規則）。只影響 nonholder（空手）那一版——holder 已經有部位，
+    「新增部位」限制管的是還沒進場的人，不該逆推去改持有者的既有紀律：
+    - "禁止新增部位"：不管個股 action 算出什麼，空手一律不建議進場，plan／文案改講
+      「暫不進場（大盤禁新倉）」，不得出現任何試單／買進金額（回歸：個股層級沒看大盤，
+      大盤都喊禁新倉了，某些股票的 nonholder 建議還在講「試單 10 萬」，兩層互相矛盾）。
+    - "僅限試單"：空手若原本因為 action=="加碼" 會看到 20/40/60 萬階梯，收斂回 10 萬
+      試單額度，其餘 action（本來就是 10 萬起）不受影響。"""
     codes = reason_codes or []
     anchors = _executable_anchors(price, tech_facts, defense_price)
     defense_exec = _anchor_executable(defense_price, price)
     core_txt = "（核心不動）" if is_core_holding else ""
     core_act = "，核心不動" if is_core_holding else ""
+    add_cap = _fmt_wan(tier_amount) if action == "加碼" else None
 
     # ---- holder ----
     hplan = []
@@ -421,7 +449,10 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
                            key=lambda a: a["price"])
         if ma_aboves:
             a = ma_aboves[0]
-            add_act = "可加碼 20 萬" if action == "加碼" else "可回補 10 萬"
+            if action == "加碼":
+                add_act = f"第一段可加碼 20 萬（總上限 {add_cap}）" if add_cap else "可加碼 20 萬"
+            else:
+                add_act = "可回補 10 萬"
             hplan.append({"trigger": f"站回 {a['label']} {_fmt_price(a['price'])} 且法人連 2 日買超",
                           "act": f"{add_act}{core_act}"})
 
@@ -438,23 +469,34 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
 
     # ---- nonholder ----
     entry = _nonholder_entry(price, tech_facts, entry_condition, anchors)
+    market_banned = market_new_position == "禁止新增部位"
+    trial_only = market_new_position == "僅限試單"
     nplan = []
     if entry:
-        if action in ("減碼", "出場"):
+        if market_banned:
+            nplan.append({"trigger": entry["trigger"],
+                          "act": f"暫不進場（大盤禁新倉），{entry['trigger']}後再評估"})
+        elif action in ("減碼", "出場"):
             nplan.append({"trigger": entry["trigger"], "act": "確認止穩後再考慮試單 10 萬"})
-        elif action == "加碼":
-            nplan.append({"trigger": entry["trigger"], "act": "分批布局 20 萬"})
+        elif action == "加碼" and not trial_only:
+            act = f"分批布局，第一段 20 萬（總上限 {add_cap}）" if add_cap else "分批布局 20 萬"
+            nplan.append({"trigger": entry["trigger"], "act": act})
         else:
             nplan.append({"trigger": entry["trigger"], "act": "試單 10 萬"})
 
     if entry is None:
         nonholder_text = "資料不足，暫不列進場條件，先觀望。"
+    elif market_banned:
+        nonholder_text = f"暫不進場（大盤禁新倉），{entry['trigger']}後再評估。"
     elif action in ("減碼", "出場"):
         nonholder_text = f"空手續抱觀望，法人止賣、{entry['trigger']}前不接刀。"
     elif action == "觀望":
         nonholder_text = f"先不進場，等{entry['trigger']}。"
     else:
-        amt = "20 萬" if action == "加碼" else "10 萬"
+        if action == "加碼" and not trial_only:
+            amt = f"第一段 20 萬（總上限 {add_cap}）" if add_cap else "20 萬"
+        else:
+            amt = "10 萬"
         nonholder_text = f"空手可等{entry['trigger']}再試單 {amt}，不追高。"
 
     return {
