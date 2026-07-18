@@ -1,4 +1,4 @@
-# 資料契約 v1（前端 ⇄ 引擎共同介面，2026-07-18）
+# 資料契約 v1.1（前端 ⇄ 引擎共同介面，2026-07-18；v1.1 新增欄位見文末「v1.1 增補」）
 
 > 權威文件。引擎產出與前端讀取都以本檔為準；欄位要改必須先改這裡再改兩端。
 > 形式化 schema 放 `schema/*.json`（由引擎端依本檔生成並加測試）；前端用 Zod 對齊。
@@ -123,3 +123,59 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 2. 數字一律數值型（不含千分位字串）；日期 ISO 格式；金額單位＝元。
 3. 缺資料：欄位給 `null` ＋ 在 `meta.sources` 反映，不得編數字、不得讓整檔 build 失敗（graceful degrade）。
 4. 前端遇到 `schema_version` 不認識時顯示「請更新 App」而非白屏。
+
+---
+
+## v1.1 增補（2026-07-18 晚，Andy 拍板三包全做）
+
+> schema_version 仍為 1（只增不改既有欄位，向後相容；前端 zod 新欄位一律 optional/nullable）。
+
+### stocks/<id>.json 的 primary_decision 新增
+
+```jsonc
+"advice": {                        // 持有/空手雙版建議（取代單一 readable_reason 的呈現主角；readable_reason 保留）
+  "holder": {                      // 已持有這檔的人看這版
+    "action_text": "續抱不動，跌破 2,107 收盤再降一半波段部位。",
+    "plan": [                      // 分批計畫階梯（可執行、有價位、有數量語意）
+      { "trigger": "收盤跌破 2,107（防守價）", "act": "賣出波段部位的 1/2" },
+      { "trigger": "收盤跌破 1,950（MA120）", "act": "波段部位全部出場，核心不動" },
+      { "trigger": "站回 MA20 2,428 且法人連 2 日買超", "act": "可回補 10 萬" }
+    ]
+  },
+  "nonholder": {                   // 空手的人看這版
+    "action_text": "先不進場，等站回 MA60 且法人回補。",
+    "plan": [ { "trigger": "站回 MA60 3,809 且法人連 2 日買超", "act": "試單 10 萬" } ]
+  }
+},
+"defense_explain": "防守價 2,107＝近 20 日低點與 -8%~-15% 停損帶取較近者；跌破代表波段結構破壞。"
+```
+
+規則：plan 每條 trigger 必含具體價位或條件、act 必含具體動作與數量語意（比例或金額）；價位錨距現價 ≤15%（沿用 entry 錨點規則）。文案由 reason_codes＋數據模板生成，禁止與 action 打架（一致性測試涵蓋）。
+
+### daily.json 新增
+
+```jsonc
+"exposure_guidance": {             // 風險溫度 → 白話曝險規則（規則表寫死在引擎，可揭露）
+  "risk_temp": 9,
+  "max_equity_pct": 40,            // 建議股票總曝險上限 %
+  "min_cash_pct": 60,
+  "new_position": "禁止新增部位",  // 禁止新增部位｜僅限試單｜可正常布局（三檔）
+  "note": "風險溫度 9/10：市場劇烈波動，現金至少留六成，今天不開新倉。"
+},
+"events": [                        // 未來 14 天事件（法說/除息/月營收公布），來源：tw-earnings-calendar latest.json＋股利資料
+  { "date": "2026-07-22", "id": "2330", "name": "台積電", "type": "earnings", "label": "法說會" }
+],
+"track_stats": {                   // 戰績統計（樣本不足時 rate 給 null，n 照實）
+  "n": 6, "closed": 0,
+  "hit_rate_5d": null, "hit_rate_20d": null, "hit_rate_60d": null,
+  "note": "樣本累積中，5 日結果最快 07-24 開始回填"
+}
+```
+
+### 新 API：POST /api/track
+
+`{"stock": "2603"}` → 透過 GitHub contents API 把代號加進 `data/tracked_stocks.json`（Vercel env `GH_PAT`），201 回 `{"ok":true,"pending":"次一交易日 14:30 起納入每日更新與防守價監控"}`。上限 20 檔（超過回 409）；重複回 200 idempotent；代號格式驗證同 /api/analyze。加入後 App 前端立即把該股放進 localStorage watchlist 顯示「監控生效中（明日起）」。
+
+### 前端本地新設定（localStorage，不進契約檔案）
+
+`total_capital`（預設 1,000,000）：持股頁可改；組合總覽卡用它算曝險 %／現金水位，與 exposure_guidance 比對超標提示。
