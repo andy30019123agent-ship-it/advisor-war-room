@@ -1,0 +1,155 @@
+"""GET /api/analyze?stock=<id> — 即時單股分析（契約 v1 stocks/<id>.json 同構）。
+
+即時查詢路徑：追蹤清單以外的股票沒有預先算好的 public/data/stocks/<id>.json，
+使用者查詢時才現算。直接複用 warroom/analyze_tw.py 的 analyze()（規則引擎本體：
+primary_decision/context/evidence 六層優先序）與 warroom/build_snapshots.py 的
+build_stock_detail()（legacy → 契約 JSON 的組裝邏輯），不重寫任何決策規則。
+
+serverless 限制下的兩個妥協（都是為了不把 FinMind SDK／yfinance 那堆重依賴
+——pyarrow 108MB／aiohttp／lxml／curl_cffi 等——塞進 250MB bundle，見
+api/_lib/finmind_lite.py 檔頭說明）：
+1. FinMind 改走 REST API 直連（見 finmind_lite.LiteLoader），不用官方 SDK。
+2. 大盤燈號改讀已部署的 public/data/daily.json（每日排程算好的真結果），
+   不現場打 yfinance；讀不到就降級 amber（跟原本 warroom/market.py 失敗時的
+   行為一致，見 warroom/analyze_tw.py _decide() 的 try/except）。
+"""
+import json
+import os
+import re
+import sys
+import time
+import traceback
+from datetime import datetime, timedelta, timezone
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+_TPE = timezone(timedelta(hours=8))
+_STOCK_ID_RE = re.compile(r"^\d{4,6}$")
+_TMP_CACHE_DIR = "/tmp/analyze_cache"
+
+_ready = False  # 冷啟只需設一次的 lite 環境（見 _setup_lite_env）
+
+
+def _today() -> str:
+    return datetime.now(_TPE).strftime("%Y-%m-%d")
+
+
+def _lite_market_light() -> str:
+    """讀已部署的 public/data/daily.json（每日排程真算出來的大盤燈），
+    讀不到／格式不對一律降級 amber（不現場打 yfinance）。"""
+    try:
+        path = os.path.join(_ROOT, "public", "data", "daily.json")
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+        status = (d.get("market") or {}).get("status")
+        return {"偏多進攻": "green", "中性": "amber", "偏空防禦": "red"}.get(status, "amber")
+    except Exception:
+        return "amber"
+
+
+def _setup_lite_env() -> None:
+    """把 warroom.finmind_cache 的單例換成 REST 直連 loader、把 warroom.market
+    換成讀靜態快照的假模組，避免 import 到真 FinMind SDK／yfinance。
+    只需做一次；同一個 warm lambda 實例重複呼叫時直接略過。"""
+    global _ready
+    if _ready:
+        return
+    import types
+
+    from api._lib.finmind_lite import LiteLoader
+    import warroom.finmind_cache as fc
+    if fc._LOADER is None:
+        fc._LOADER = LiteLoader()
+
+    fake_market = types.ModuleType("warroom.market")
+    fake_market.fetch_market = lambda: {"light": _lite_market_light()}
+    sys.modules["warroom.market"] = fake_market
+
+    _ready = True
+
+
+def _cache_path(stock_id: str) -> str:
+    return os.path.join(_TMP_CACHE_DIR, _today(), f"{stock_id}.json")
+
+
+def _read_cache(stock_id: str):
+    path = _cache_path(stock_id)
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+    return None
+
+
+def _write_cache(stock_id: str, payload) -> None:
+    path = _cache_path(stock_id)
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False)
+    except Exception:
+        pass  # /tmp 快取只是防連點，寫失敗不影響本次回應
+
+
+def run_analyze(stock_id: str) -> dict:
+    """回 (status_code, body_dict)。同一代號同一天命中 /tmp 快取直接回，
+    防連點轟炸 FinMind 免費額度。"""
+    cached = _read_cache(stock_id)
+    if cached is not None:
+        return cached
+
+    _setup_lite_env()
+    from warroom.analyze_tw import analyze
+    from warroom.build_snapshots import build_meta, build_stock_detail
+    from warroom.profile import load_profile
+
+    res = analyze(stock_id, with_news=False)  # with_news=False：news.py 打 GDELT/Google 序列重試最壞近 1 分鐘，不符合即時查詢的延遲預算
+
+    if not res.get("data_flags", {}).get("technical"):
+        # 日線資料抓不到＝這支股票在 FinMind 免登入額度或資料源當下不可用，
+        # 引擎雖然會降級成一筆「觀望」，但對即時查詢來說這不是可用結果。
+        raise _UpstreamUnavailable(f"抓不到 {stock_id} 的股價資料，可能是 FinMind 額度用完或代號有誤，請稍後再試")
+
+    profile = load_profile(os.path.join(_ROOT, "data", "investor_profile.json"))
+    meta = build_meta(sources=["FinMind REST (lite)"])
+    detail = build_stock_detail(stock_id, res, profile, meta)
+    _write_cache(stock_id, detail)
+    return detail
+
+
+class _UpstreamUnavailable(Exception):
+    pass
+
+
+class handler(BaseHTTPRequestHandler):
+    def _send_json(self, status: int, payload: dict) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        qs = parse_qs(urlparse(self.path).query)
+        stock_id = (qs.get("stock") or [""])[0].strip()
+
+        if not _STOCK_ID_RE.match(stock_id):
+            self._send_json(400, {"error": f"股票代號格式不對：{stock_id!r}（需要 4-6 碼數字）"})
+            return
+
+        try:
+            detail = run_analyze(stock_id)
+            self._send_json(200, detail)
+        except _UpstreamUnavailable as e:
+            self._send_json(503, {"error": str(e)})
+        except Exception as e:  # 任何未預期例外都不能讓前端拿到 500 白屏
+            print(f"[api/analyze] {stock_id} 失敗：{e}\n{traceback.format_exc()}", file=sys.stderr)
+            self._send_json(503, {"error": "查詢時發生問題，請稍後再試"})

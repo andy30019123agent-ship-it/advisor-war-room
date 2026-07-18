@@ -37,21 +37,42 @@ export async function fetchDaily(): Promise<Daily> {
   return parsed.data
 }
 
-// 查股票：依 id 讀 /data/stocks/<id>.json；目前僅涵蓋追蹤清單（fixture 有的檔），
-// 之後接真 API 只要換掉這裡的 path，NotFoundError／SchemaMismatchError 的處理邏輯不用動。
+// 查股票：先試 /data/stocks/<id>.json（追蹤清單預算好的靜態檔，快、不耗查詢額度）；
+// 404（不在追蹤清單）才 fallback 打 /api/analyze 即時算。兩條路徑回同構契約 JSON，
+// 下游（NotFoundError／SchemaMismatchError 處理、UI）完全不用區分來源。
 export async function fetchStockDetail(id: string): Promise<StockDetail> {
   let raw: unknown
   try {
     raw = await fetchJson(`/data/stocks/${id}.json`)
   } catch (e) {
-    if (e instanceof NotFoundError) {
-      throw new NotFoundError(id)
+    if (!(e instanceof NotFoundError)) {
+      throw e
     }
-    throw e
+    raw = await fetchLiveStockDetail(id)
   }
   const parsed = StockDetailSchema.safeParse(raw)
   if (!parsed.success) {
     throw new SchemaMismatchError(`stocks/${id}.json`)
   }
   return parsed.data
+}
+
+async function fetchLiveStockDetail(id: string): Promise<unknown> {
+  const res = await fetch(`/api/analyze?stock=${encodeURIComponent(id)}`)
+  if (res.status === 404) {
+    throw new NotFoundError(id)
+  }
+  if (!res.ok) {
+    // 503（額度用完／抓不到資料）等：API 已回 { error: "人話說明" }，包成一般 Error
+    // 讓現有的錯誤態接手顯示，不用另開一種 UI 狀態。
+    let message = `即時查詢失敗（${res.status}）`
+    try {
+      const body = (await res.json()) as { error?: string }
+      if (body?.error) message = body.error
+    } catch {
+      // 忽略非 JSON 錯誤內容，用預設訊息
+    }
+    throw new Error(message)
+  }
+  return res.json()
 }

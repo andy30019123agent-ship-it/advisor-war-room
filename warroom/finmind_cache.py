@@ -9,17 +9,18 @@ import pickle
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
-from FinMind.data import DataLoader
-
 _TPE = timezone(timedelta(hours=8))
 _LOADER = None  # 單例
 
 
-def get_loader() -> DataLoader:
+def get_loader() -> "DataLoader":
     """回傳單例 DataLoader。若環境有 FINMIND_TOKEN 就登入（額度 300→600/hr）；
-    token 失效或不存在時退回免登入模式，不讓程式中斷。"""
+    token 失效或不存在時退回免登入模式，不讓程式中斷。
+    FinMind SDK 改成函式內 lazy import（serverless lite 路徑靠預先塞入 _LOADER
+    來跳過這支 SDK＋其重量依賴 pyarrow/aiohttp/lxml 等，見 api/_lib/finmind_lite.py）。"""
     global _LOADER
     if _LOADER is None:
+        from FinMind.data import DataLoader
         dl = DataLoader()
         token = os.environ.get("FINMIND_TOKEN")
         if token:
