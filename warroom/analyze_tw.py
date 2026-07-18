@@ -540,14 +540,6 @@ def _decide(stock_id, d, res, flags):
     ex_div_map = build_ex_div_map(d.get("div"))
     latest_date = str(pdf["date"].iloc[-1])
     res["as_of_date"] = latest_date[:10]   # 行情資料日（最後一根日 K 的日期），戰績 log 與 API meta 用
-
-    # 機率扇形圖預估走勢（規格 v1.2）：樣本不足/算不出時 build_forecast 內部已回 None，
-    # 這裡再包一層 try 是防禦性的（例如 pdf 欄位格式異常），失敗一律 None，不讓整檔 build 失敗。
-    try:
-        from warroom.forecast import build_forecast
-        res["forecast"] = build_forecast(pdf, valuation, res["as_of_date"], stock_id)
-    except Exception:
-        res["forecast"] = None
     ex_today = latest_date in ex_div_map
     ex_amt = float(ex_div_map.get(latest_date, 0.0))
     atr = atr14(pdf, ex_div_map=ex_div_map)
@@ -582,9 +574,21 @@ def _decide(stock_id, d, res, flags):
     except Exception:
         pass
 
-    # 主結論引擎（§3.1~3.5）：產 primary_decision + context，並把 legacy 欄位改為派生
+    # 主結論引擎（§3.1~3.5）：產 primary_decision + context + evidence，並把 legacy 欄位改為派生
     _attach_primary(res, dec, valuation, price, market_light, rev_sig, chip_sig,
                     dec["stop"]["price"], high20)
+
+    # 機率扇形圖預估走勢（規格 v1.2/v1.3）：樣本不足/算不出時 build_forecast 內部已回
+    # None，這裡再包一層 try 是防禦性的（例如 pdf 欄位格式異常），失敗一律 None，不讓
+    # 整檔 build 失敗。放在 _attach_primary 之後，才能把 res["evidence"]["events"]
+    # 一併餵給 event_markers（見 warroom/forecast.py build_forecast 的 events 參數）。
+    try:
+        from warroom.forecast import build_forecast
+        evidence_events = (res.get("evidence") or {}).get("events")
+        res["forecast"] = build_forecast(pdf, valuation, res["as_of_date"], stock_id,
+                                         events=evidence_events)
+    except Exception:
+        res["forecast"] = None
     return dec
 
 

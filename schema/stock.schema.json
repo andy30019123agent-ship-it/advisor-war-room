@@ -213,16 +213,87 @@
     "forecast": {
       "type": ["object", "null"],
       "required": [
-        "method", "horizon_days", "n_paths", "vol_annualized", "as_of",
-        "bands", "scenarios", "prob_range_70", "disclaimer"
+        "method", "n_paths", "vol_annualized", "as_of", "history", "horizons",
+        "week_range_70", "scenarios", "event_markers", "accuracy", "disclaimer"
       ],
       "additionalProperties": false,
       "properties": {
         "method": { "type": "string" },
-        "horizon_days": { "type": "integer" },
         "n_paths": { "type": "integer" },
         "vol_annualized": { "type": "number" },
         "as_of": { "type": "string" },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["d", "close"],
+            "additionalProperties": false,
+            "properties": {
+              "d": { "type": "integer" },
+              "close": { "type": "number" }
+            }
+          }
+        },
+        "horizons": {
+          "type": "object",
+          "required": ["m1", "m3", "m6"],
+          "additionalProperties": false,
+          "properties": {
+            "m1": { "$ref": "#/definitions/horizon_block" },
+            "m3": { "$ref": "#/definitions/horizon_block" },
+            "m6": { "$ref": "#/definitions/horizon_block" }
+          }
+        },
+        "week_range_70": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "scenarios": {
+          "type": "object",
+          "required": ["bear", "base", "bull"],
+          "additionalProperties": false,
+          "properties": {
+            "bear": { "type": ["number", "null"] },
+            "base": { "type": ["number", "null"] },
+            "bull": { "type": ["number", "null"] }
+          }
+        },
+        "event_markers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["d", "date", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "d": { "type": "integer" },
+              "date": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "accuracy": {
+          "type": "object",
+          "required": ["n_evaluated", "hit_rate_70", "note"],
+          "additionalProperties": false,
+          "properties": {
+            "n_evaluated": { "type": "integer" },
+            "hit_rate_70": { "type": ["number", "null"] },
+            "note": { "type": "string" }
+          }
+        },
+        "disclaimer": { "type": "string" }
+      }
+    }
+  },
+  "definitions": {
+    "horizon_block": {
+      "type": "object",
+      "required": ["days", "bands", "prob_range_70"],
+      "additionalProperties": false,
+      "properties": {
+        "days": { "type": "integer" },
         "bands": {
           "type": "array",
           "items": {
@@ -239,27 +310,14 @@
             }
           }
         },
-        "scenarios": {
-          "type": "object",
-          "required": ["bear", "base", "bull"],
-          "additionalProperties": false,
-          "properties": {
-            "bear": { "type": ["number", "null"] },
-            "base": { "type": ["number", "null"] },
-            "bull": { "type": ["number", "null"] }
-          }
-        },
         "prob_range_70": {
           "type": "array",
           "items": { "type": "number" },
           "minItems": 2,
           "maxItems": 2
-        },
-        "disclaimer": { "type": "string" }
+        }
       }
-    }
-  },
-  "definitions": {
+    },
     "advice_side": {
       "type": "object",
       "required": ["action_text", "plan"],

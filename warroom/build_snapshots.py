@@ -31,6 +31,12 @@ DATA_DIR = "data"
 OUT_DIR = "public/data"
 STOCK_ID_RE = re.compile(r"^\d{4,6}$")
 RECOMMENDATION_LOG = "data/recommendation_log.json"
+# v1.3 forecast_log 準確度管線（引擎內部檔，非前端契約，見契約文末「v1.3 增補」）。
+FORECAST_LOG = "data/forecast_log.json"
+# 各 horizon 到期所需交易日數（week=forecast.week_range_70／m1／m3，對齊 forecast.horizons）。
+FORECAST_HORIZON_TRADING_DAYS = {"week": 5, "m1": 21, "m3": 63}
+FORECAST_ACCURACY_MIN_SAMPLES = 10
+FORECAST_ACCURACY_NOTE_INSUFFICIENT = "樣本累積中：每天記錄預估區間，5 日後開始回填驗證"
 # 未來事件來源①：法說會行事曆（姊妹專案；不存在則跳過，不編）。
 EARNINGS_CALENDAR = "../tw-earnings-calendar/data/latest.json"
 EVENTS_WINDOW_DAYS = 14
@@ -617,6 +623,116 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
     }
 
 
+# ---------- v1.3 forecast_log 準確度管線 ----------
+# 每次 build 對每檔有 forecast 的股票 append/覆蓋當日一筆預估紀錄（week/m1/m3 的
+# prob_range_70），並檢查既有紀錄是否到期（date+5/21/63 交易日）可用實際收盤回填
+# hit（true＝實際收盤落在 [p15,p85] 內）。抓不到收盤價（未到期或資料源失敗）就跳過該
+# 欄位、留待下次 build 重試，不炸整批（契約 v1.3：forecast_log 段落）。
+# entry 形狀：{date, stock_id, week/m1/m3:[p15,p85], week_hit/m1_hit/m3_hit: bool|null}
+# （後三個 _hit 欄位是本管線的內部擴充，不在契約範例裡，因為 forecast_log.json 本來就
+# 是「引擎內部檔，非前端契約」，可自由擴充只要不違反契約列出的必要欄位）。
+
+def _load_forecast_log(path: str = FORECAST_LOG) -> List[Dict]:
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f) or []
+    except Exception:
+        return []
+
+
+def update_forecast_log(log: List[Dict], stock_id: str, forecast: Optional[Dict],
+                        date: str) -> List[Dict]:
+    """append 一筆（同 (date, stock_id) 覆蓋）；forecast 缺 week/m1/m3 區間（None 或形狀不
+    對）就跳過不記，不編數字。回新 list（不就地改傳入的 log，呼叫端自行接手）。"""
+    if not forecast or not date or not stock_id:
+        return log
+    week = forecast.get("week_range_70")
+    horizons = forecast.get("horizons") or {}
+    m1 = (horizons.get("m1") or {}).get("prob_range_70")
+    m3 = (horizons.get("m3") or {}).get("prob_range_70")
+
+    def _valid_range(r):
+        return isinstance(r, (list, tuple)) and len(r) == 2
+
+    if not (_valid_range(week) and _valid_range(m1) and _valid_range(m3)):
+        return log
+    out = [e for e in log if not (e.get("date") == date and e.get("stock_id") == stock_id)]
+    out.append({
+        "date": date, "stock_id": stock_id,
+        "week": [_num(week[0]), _num(week[1])],
+        "m1": [_num(m1[0]), _num(m1[1])],
+        "m3": [_num(m3[0]), _num(m3[1])],
+        "week_hit": None, "m1_hit": None, "m3_hit": None,
+    })
+    return out
+
+
+def _finmind_close_after(stock_id: str, entry_date: str, n_trading_days: int) -> Optional[float]:
+    """entry_date 之後第 n_trading_days 個交易日的實際收盤價；抓不到／還沒到那天 → None
+    （graceful：呼叫端把 None 當『暫時不能回填，下次再試』，不當錯誤處理）。"""
+    try:
+        d0 = datetime.strptime(entry_date[:10], "%Y-%m-%d")
+        # 交易日→曆日的緩衝窗（含週末／國定假日空檔），寧可多抓不要抓不夠。
+        end = (d0 + timedelta(days=int(n_trading_days * 1.6) + 14)).strftime("%Y-%m-%d")
+        df = cached_fetch("taiwan_stock_daily", stock_id=stock_id, start_date=entry_date, end_date=end)
+        df = df[df["date"].astype(str) > entry_date].sort_values("date")
+        if len(df) < n_trading_days:
+            return None
+        return float(df.iloc[n_trading_days - 1]["close"])
+    except Exception:
+        return None
+
+
+def backfill_forecast_log(log: List[Dict], price_lookup=_finmind_close_after,
+                          today: Optional[str] = None) -> List[Dict]:
+    """就地回填每筆 entry 的 week_hit/m1_hit/m3_hit（已回填過的欄位跳過不重算）。
+    price_lookup(stock_id, entry_date, n_trading_days) -> 收盤價|None，預設走 FinMind；
+    測試可注入假 lookup 離線跑（沿用 warroom.track_record.backfill_outcomes 的同款寫法）。"""
+    for e in log:
+        sid, date = e.get("stock_id"), e.get("date")
+        if not sid or not date:
+            continue
+        for key, n_days in FORECAST_HORIZON_TRADING_DAYS.items():
+            hit_key = f"{key}_hit"
+            if e.get(hit_key) is not None:
+                continue
+            rng = e.get(key)
+            if not (isinstance(rng, (list, tuple)) and len(rng) == 2
+                    and rng[0] is not None and rng[1] is not None):
+                continue
+            try:
+                close = price_lookup(sid, date, n_days)
+            except Exception:
+                close = None
+            if close is None:
+                continue
+            lo, hi = rng
+            e[hit_key] = bool(lo <= close <= hi)
+    return log
+
+
+def build_forecast_accuracy(stock_id: str, log: List[Dict],
+                            min_samples: int = FORECAST_ACCURACY_MIN_SAMPLES) -> Dict:
+    """該股所有已回填（非 None）hit 樣本的命中率；樣本 <10 給 rate=null＋note（契約
+    v1.3：「樣本 <10 給 null」）。"""
+    hits = []
+    for e in log:
+        if e.get("stock_id") != stock_id:
+            continue
+        for key in ("week_hit", "m1_hit", "m3_hit"):
+            v = e.get(key)
+            if v is not None:
+                hits.append(bool(v))
+    n = len(hits)
+    if n < min_samples:
+        return {"n_evaluated": n, "hit_rate_70": None, "note": FORECAST_ACCURACY_NOTE_INSUFFICIENT}
+    rate = round(sum(1 for h in hits if h) / n, 3)
+    return {"n_evaluated": n, "hit_rate_70": rate,
+           "note": f"已回填 {n} 筆樣本，命中率＝實際收盤落在 70% 機率區間內的比例。"}
+
+
 # ---------- 組裝入口 ----------
 def build_all(data_dir: str = DATA_DIR,
              market_inputs: Optional[Dict] = None) -> Tuple[Dict, Dict[str, Dict], List[Tuple[str, str]]]:
@@ -641,6 +757,21 @@ def build_all(data_dir: str = DATA_DIR,
 
 def main() -> None:
     daily, stock_details, skipped = build_all()
+    today = daily["meta"]["data_date"]
+
+    # v1.3 forecast_log 準確度管線：build_all() 保持純函式（不打網路、不寫檔，見模組頂
+    # 端「設計原則」），實際的 log 落檔＋FinMind 回填只在 main()（真正跑批次）這裡做，
+    # 才不會讓 tests/test_build_snapshots.py 的 build_all() 呼叫意外打網路。
+    log = _load_forecast_log()
+    for sid, detail in stock_details.items():
+        log = update_forecast_log(log, sid, detail.get("forecast"), today)
+    log = backfill_forecast_log(log, today=today)
+    for sid, detail in stock_details.items():
+        forecast = detail.get("forecast")
+        if forecast:
+            forecast["accuracy"] = build_forecast_accuracy(sid, log)
+    write_json(FORECAST_LOG, log)
+
     write_json(os.path.join(OUT_DIR, "daily.json"), daily)
     for sid, detail in stock_details.items():
         write_json(os.path.join(OUT_DIR, "stocks", f"{sid}.json"), detail)

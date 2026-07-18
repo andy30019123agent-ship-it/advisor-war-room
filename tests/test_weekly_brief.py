@@ -119,6 +119,32 @@ def test_build_brief_holdings_falls_back_to_readable_reason_when_advice_missing(
     assert "台積電（2330）：續抱，防守價 2,106.8。因為基本面沒惡化，所以續抱不動" in msg
 
 
+def test_build_brief_holdings_includes_week_range_70_line_when_forecast_present(tmp_path):
+    stock_path = tmp_path / "2330.json"
+    stock_path.write_text(json.dumps({
+        "forecast": {"week_range_70": [2158.28, 2426.65]},
+    }, ensure_ascii=False), encoding="utf-8")
+
+    daily = _daily()
+    msg = weekly_brief.build_brief(daily, stocks_dir=str(tmp_path))
+    assert "下週 70% 區間：2,158.3 ～ 2,426.7" in msg
+
+
+def test_build_brief_holdings_skips_week_range_70_line_when_forecast_missing(tmp_path):
+    # stocks/2330.json 不存在（forecast 樣本不足或另一支管線還沒補齊）→ 不 crash，不印該行
+    daily = _daily()
+    msg = weekly_brief.build_brief(daily, stocks_dir=str(tmp_path))
+    assert "下週 70% 區間" not in msg
+
+
+def test_build_brief_holdings_skips_week_range_70_line_when_forecast_null(tmp_path):
+    stock_path = tmp_path / "2330.json"
+    stock_path.write_text(json.dumps({"forecast": None}, ensure_ascii=False), encoding="utf-8")
+    daily = _daily()
+    msg = weekly_brief.build_brief(daily, stocks_dir=str(tmp_path))
+    assert "下週 70% 區間" not in msg
+
+
 def test_build_brief_holdings_skipped_when_tracked_empty(tmp_path):
     daily = _daily(tracked=[])
     msg = weekly_brief.build_brief(daily, stocks_dir=str(tmp_path))

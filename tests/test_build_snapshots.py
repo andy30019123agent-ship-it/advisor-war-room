@@ -9,9 +9,10 @@ import jsonschema
 
 from warroom.build_snapshots import (
     build_all, build_alerts_for_stock, build_context, build_core_holdings,
-    build_daily, build_evidence, build_market_block, build_stock_detail,
-    build_track, build_tracked_entry, compute_conclusion, compute_market_status,
-    compute_risk_temp, discover_stock_files, is_new_format, load_stock_results,
+    build_daily, build_evidence, build_forecast_accuracy, build_market_block,
+    build_stock_detail, build_track, build_tracked_entry, backfill_forecast_log,
+    compute_conclusion, compute_market_status, compute_risk_temp,
+    discover_stock_files, is_new_format, load_stock_results, update_forecast_log,
 )
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -324,6 +325,156 @@ class TestSchemasAreValidDraft7(unittest.TestCase):
     def test_schemas_check_out(self):
         jsonschema.Draft7Validator.check_schema(DAILY_SCHEMA)
         jsonschema.Draft7Validator.check_schema(STOCK_SCHEMA)
+
+
+# ---------- v1.3 forecast_log 準確度管線 ----------
+FAKE_FORECAST = {
+    "week_range_70": [95.0, 105.0],
+    "horizons": {
+        "m1": {"days": 21, "prob_range_70": [90.0, 110.0]},
+        "m3": {"days": 63, "prob_range_70": [80.0, 120.0]},
+        "m6": {"days": 126, "prob_range_70": [70.0, 130.0]},
+    },
+}
+
+
+class TestUpdateForecastLog(unittest.TestCase):
+    def test_append_new_entry(self):
+        log = update_forecast_log([], "9999", FAKE_FORECAST, "2026-07-18")
+        self.assertEqual(len(log), 1)
+        e = log[0]
+        self.assertEqual(e["date"], "2026-07-18")
+        self.assertEqual(e["stock_id"], "9999")
+        self.assertEqual(e["week"], [95.0, 105.0])
+        self.assertEqual(e["m1"], [90.0, 110.0])
+        self.assertEqual(e["m3"], [80.0, 120.0])
+        self.assertIsNone(e["week_hit"])
+        self.assertIsNone(e["m1_hit"])
+        self.assertIsNone(e["m3_hit"])
+
+    def test_same_date_and_stock_overwrites_not_duplicates(self):
+        log = update_forecast_log([], "9999", FAKE_FORECAST, "2026-07-18")
+        newer = {**FAKE_FORECAST, "week_range_70": [96.0, 106.0]}
+        log = update_forecast_log(log, "9999", newer, "2026-07-18")
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[0]["week"], [96.0, 106.0])
+
+    def test_different_date_appends_new_entry(self):
+        log = update_forecast_log([], "9999", FAKE_FORECAST, "2026-07-18")
+        log = update_forecast_log(log, "9999", FAKE_FORECAST, "2026-07-19")
+        self.assertEqual(len(log), 2)
+
+    def test_none_forecast_skipped(self):
+        log = update_forecast_log([], "9999", None, "2026-07-18")
+        self.assertEqual(log, [])
+
+    def test_forecast_missing_horizon_range_skipped(self):
+        broken = {"week_range_70": [95.0, 105.0], "horizons": {}}
+        log = update_forecast_log([], "9999", broken, "2026-07-18")
+        self.assertEqual(log, [])
+
+
+class TestBackfillForecastLog(unittest.TestCase):
+    def test_close_within_range_marks_hit_true(self):
+        log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": None, "m1_hit": None, "m3_hit": None}]
+        lookup = lambda sid, date, n_days: 100.0  # 落在三個區間內
+        out = backfill_forecast_log(log, price_lookup=lookup)
+        self.assertTrue(out[0]["week_hit"])
+        self.assertTrue(out[0]["m1_hit"])
+        self.assertTrue(out[0]["m3_hit"])
+
+    def test_close_outside_range_marks_hit_false(self):
+        log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": None, "m1_hit": None, "m3_hit": None}]
+        lookup = lambda sid, date, n_days: 200.0  # 三個區間都落外
+        out = backfill_forecast_log(log, price_lookup=lookup)
+        self.assertFalse(out[0]["week_hit"])
+        self.assertFalse(out[0]["m1_hit"])
+        self.assertFalse(out[0]["m3_hit"])
+
+    def test_range_boundary_inclusive_counts_as_hit(self):
+        log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": None, "m1_hit": None, "m3_hit": None}]
+        lookup = lambda sid, date, n_days: 105.0  # week 上界，含端點
+        out = backfill_forecast_log(log, price_lookup=lookup)
+        self.assertTrue(out[0]["week_hit"])
+
+    def test_lookup_returns_none_leaves_pending_for_next_run(self):
+        log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": None, "m1_hit": None, "m3_hit": None}]
+        lookup = lambda sid, date, n_days: None  # 還沒到期／抓不到
+        out = backfill_forecast_log(log, price_lookup=lookup)
+        self.assertIsNone(out[0]["week_hit"])
+        self.assertIsNone(out[0]["m1_hit"])
+        self.assertIsNone(out[0]["m3_hit"])
+
+    def test_already_filled_hit_not_recomputed(self):
+        log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": True, "m1_hit": None, "m3_hit": None}]
+        calls = []
+
+        def lookup(sid, date, n_days):
+            calls.append(n_days)
+            return 100.0
+
+        backfill_forecast_log(log, price_lookup=lookup)
+        self.assertNotIn(5, calls)  # week（5 交易日）已回填過，不該再呼叫
+
+    def test_lookup_exception_does_not_crash_whole_batch(self):
+        log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": None, "m1_hit": None, "m3_hit": None}]
+
+        def boom(sid, date, n_days):
+            raise RuntimeError("網路掛了")
+
+        out = backfill_forecast_log(log, price_lookup=boom)  # 不炸
+        self.assertIsNone(out[0]["week_hit"])
+
+
+class TestBuildForecastAccuracy(unittest.TestCase):
+    def _log_with_hits(self, stock_id, hits):
+        """hits: bool 或 None 的 list，每個攤成一筆只含一個 _hit 欄位的 entry
+        （方便控制樣本數，不受同一筆三個 horizon 綁在一起影響）。"""
+        log = []
+        for i, h in enumerate(hits):
+            log.append({"date": f"2026-07-{i+1:02d}", "stock_id": stock_id,
+                        "week": [1, 2], "m1": None, "m3": None,
+                        "week_hit": h, "m1_hit": None, "m3_hit": None})
+        return log
+
+    def test_below_min_samples_gives_null_rate(self):
+        log = self._log_with_hits("9999", [True, False, True])  # 3 筆 < 10
+        out = build_forecast_accuracy("9999", log)
+        self.assertEqual(out["n_evaluated"], 3)
+        self.assertIsNone(out["hit_rate_70"])
+        self.assertTrue(out["note"])
+
+    def test_at_least_min_samples_computes_rate(self):
+        hits = [True] * 7 + [False] * 3  # 10 筆，7 命中
+        log = self._log_with_hits("9999", hits)
+        out = build_forecast_accuracy("9999", log)
+        self.assertEqual(out["n_evaluated"], 10)
+        self.assertEqual(out["hit_rate_70"], 0.7)
+
+    def test_pending_none_entries_not_counted(self):
+        hits = [True] * 9 + [None] * 5  # 只有 9 筆已回填，None 不算樣本
+        log = self._log_with_hits("9999", hits)
+        out = build_forecast_accuracy("9999", log)
+        self.assertEqual(out["n_evaluated"], 9)
+        self.assertIsNone(out["hit_rate_70"])
+
+    def test_other_stock_entries_excluded(self):
+        log = self._log_with_hits("9999", [True] * 10) + self._log_with_hits("8888", [False] * 10)
+        out = build_forecast_accuracy("9999", log)
+        self.assertEqual(out["n_evaluated"], 10)
+        self.assertEqual(out["hit_rate_70"], 1.0)
 
 
 if __name__ == "__main__":

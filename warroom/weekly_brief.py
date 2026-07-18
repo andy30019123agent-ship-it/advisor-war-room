@@ -122,6 +122,21 @@ def _stock_plan_line(stock_id, stocks_dir):
     return None
 
 
+def _stock_week_range_line(stock_id, stocks_dir):
+    """v1.3：讀 stocks/<id>.json 的 forecast.week_range_70 組「下週 70% 區間」一行；
+    forecast 整組或欄位缺席（樣本不足／另一支管線還沒補齊）都回 None，讓呼叫方跳過。"""
+    if not stock_id:
+        return None
+    data = load_json(f"{stocks_dir}/{stock_id}.json")
+    if not data:
+        return None
+    rng = (data.get("forecast") or {}).get("week_range_70")
+    if not (isinstance(rng, (list, tuple)) and len(rng) == 2):
+        return None
+    lo, hi = rng
+    return f"下週 70% 區間：{_fmt_price(lo)} ～ {_fmt_price(hi)}"
+
+
 def build_holdings_section(daily, stocks_dir=DEFAULT_STOCKS_DIR):
     tracked = daily.get("tracked")
     if not tracked:
@@ -139,6 +154,9 @@ def build_holdings_section(daily, stocks_dir=DEFAULT_STOCKS_DIR):
             plan_line = reason.split("；")[0].split("。")[0].strip() if reason else ""
         head = f"{name}（{sid}）：{action}，防守價 {defense_s}"
         lines.append(f"{head}。{plan_line}" if plan_line else head)
+        week_range_line = _stock_week_range_line(sid, stocks_dir)
+        if week_range_line:
+            lines.append(week_range_line)
     if len(lines) == 1:
         return None
     return "\n".join(lines)

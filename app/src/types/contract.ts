@@ -226,8 +226,13 @@ export const TrackEntrySchema = z.object({
   status: z.enum(['pending', 'done']),
 })
 
-// ---------- v1.2 增補（docs/contracts/data-contract-v1.md「v1.2 增補」節）----------
-// forecast：3 個月機率模擬走勢。整組可為 null（樣本 <120 根日 K，樣本不足時前端顯示 degrade 卡）。
+// ---------- v1.3 增補（docs/contracts/data-contract-v1.md「v1.3 增補」節）----------
+// forecast：多 horizon（1/3/6 月）機率模擬走勢 + 歷史 + 事件標記 + 準確度回測。
+// 整組可為 null（樣本 <120 根日 K，樣本不足時前端顯示 degrade 卡）。
+//
+// 相容防呆：舊 v1.2 結構（有 bands、無 horizons）不符合這裡的必要欄位，
+// StockDetailSchema 用 .catch(null) 接住解析失敗，整組退化成 null，
+// 不會讓整份 stocks/<id>.json 判定「請更新 App」（見 StockDetailSchema 的 forecast 欄位）。
 
 export const ForecastBandSchema = z.object({
   d: z.number(),
@@ -244,20 +249,54 @@ export const ForecastScenariosSchema = z.object({
   bull: z.number().nullable(),
 })
 
+export const ForecastHistoryPointSchema = z.object({
+  d: z.number(),
+  close: z.number(),
+})
+
+export const ForecastHorizonSchema = z.object({
+  days: z.number(),
+  bands: z.array(ForecastBandSchema),
+  prob_range_70: z.tuple([z.number(), z.number()]),
+})
+
+export const ForecastEventMarkerSchema = z.object({
+  d: z.number(),
+  date: z.string(),
+  label: z.string(),
+})
+
+export const ForecastAccuracySchema = z.object({
+  n_evaluated: z.number(),
+  hit_rate_70: z.number().nullable(),
+  note: z.string(),
+})
+
 export const ForecastSchema = z.object({
   method: z.string(),
-  horizon_days: z.number(),
   n_paths: z.number(),
   vol_annualized: z.number(),
   as_of: z.string(),
-  bands: z.array(ForecastBandSchema),
+  history: z.array(ForecastHistoryPointSchema),
+  horizons: z.object({
+    m1: ForecastHorizonSchema,
+    m3: ForecastHorizonSchema,
+    m6: ForecastHorizonSchema,
+  }),
+  week_range_70: z.tuple([z.number(), z.number()]),
   scenarios: ForecastScenariosSchema,
-  prob_range_70: z.tuple([z.number(), z.number()]),
+  event_markers: z.array(ForecastEventMarkerSchema),
+  accuracy: ForecastAccuracySchema,
   disclaimer: z.string(),
 })
 
 export type ForecastBand = z.infer<typeof ForecastBandSchema>
+export type ForecastHistoryPoint = z.infer<typeof ForecastHistoryPointSchema>
+export type ForecastHorizon = z.infer<typeof ForecastHorizonSchema>
+export type ForecastEventMarker = z.infer<typeof ForecastEventMarkerSchema>
+export type ForecastAccuracy = z.infer<typeof ForecastAccuracySchema>
 export type Forecast = z.infer<typeof ForecastSchema>
+export type ForecastHorizonKey = 'm1' | 'm3' | 'm6'
 
 export const StockDetailSchema = z.object({
   meta: MetaSchema,
@@ -277,7 +316,9 @@ export const StockDetailSchema = z.object({
   context: ContextSchema,
   evidence: EvidenceSchema,
   track: z.array(TrackEntrySchema),
-  forecast: ForecastSchema.optional().nullable(),
+  // .catch(null)：舊 v1.2 fixture（有 bands、無 horizons）解析失敗時退化成 null，
+  // 不拖垮整份 StockDetailSchema（見上方相容防呆註解）。
+  forecast: ForecastSchema.nullable().optional().catch(null),
 })
 
 export type StockDetail = z.infer<typeof StockDetailSchema>

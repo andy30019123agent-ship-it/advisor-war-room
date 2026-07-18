@@ -1080,6 +1080,10 @@ header.page-header {
   padding: 16px;
 }
 
+.forecast-segment {
+  margin: 0 0 14px;
+}
+
 .forecast-headline {
   font-size: 17px;
   font-weight: 700;
@@ -1151,9 +1155,38 @@ header.page-header {
   flex-shrink: 0;
 }
 
-.forecast-disclaimer {
+.forecast-accuracy {
   margin-top: 12px;
   font-size: 13px;
   color: var(--text-soft);
   line-height: 1.5;
+}
+
+.forecast-disclaimer {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.forecast-event {
+  cursor: pointer;
+}
+
+/* 扇形切換過場：150-300ms opacity/transform，prefers-reduced-motion 由全域 media query 關閉。 */
+@keyframes forecastFanFade {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.forecast-fan-anim {
+  animation: forecastFanFade 220ms ease-out;
+  transform-box: fill-box;
+  transform-origin: center;
 }
