@@ -4,7 +4,7 @@
   "title": "stocks/<id>.json（單股完整分析）",
   "description": "對應 docs/contracts/data-contract-v1.md 的 stocks/<id>.json 區塊。",
   "type": "object",
-  "required": ["meta", "profile", "price", "primary_decision", "context", "evidence", "track"],
+  "required": ["meta", "profile", "price", "primary_decision", "context", "evidence", "track", "forecast"],
   "additionalProperties": false,
   "properties": {
     "meta": {
@@ -208,6 +208,54 @@
           },
           "status": { "type": "string", "enum": ["pending", "done"] }
         }
+      }
+    },
+    "forecast": {
+      "type": ["object", "null"],
+      "required": [
+        "method", "horizon_days", "n_paths", "vol_annualized", "as_of",
+        "bands", "scenarios", "prob_range_70", "disclaimer"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "method": { "type": "string" },
+        "horizon_days": { "type": "integer" },
+        "n_paths": { "type": "integer" },
+        "vol_annualized": { "type": "number" },
+        "as_of": { "type": "string" },
+        "bands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["d", "p10", "p25", "p50", "p75", "p90"],
+            "additionalProperties": false,
+            "properties": {
+              "d": { "type": "integer" },
+              "p10": { "type": "number" },
+              "p25": { "type": "number" },
+              "p50": { "type": "number" },
+              "p75": { "type": "number" },
+              "p90": { "type": "number" }
+            }
+          }
+        },
+        "scenarios": {
+          "type": "object",
+          "required": ["bear", "base", "bull"],
+          "additionalProperties": false,
+          "properties": {
+            "bear": { "type": ["number", "null"] },
+            "base": { "type": ["number", "null"] },
+            "bull": { "type": ["number", "null"] }
+          }
+        },
+        "prob_range_70": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "disclaimer": { "type": "string" }
       }
     }
   },

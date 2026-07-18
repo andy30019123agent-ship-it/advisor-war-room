@@ -226,6 +226,39 @@ export const TrackEntrySchema = z.object({
   status: z.enum(['pending', 'done']),
 })
 
+// ---------- v1.2 增補（docs/contracts/data-contract-v1.md「v1.2 增補」節）----------
+// forecast：3 個月機率模擬走勢。整組可為 null（樣本 <120 根日 K，樣本不足時前端顯示 degrade 卡）。
+
+export const ForecastBandSchema = z.object({
+  d: z.number(),
+  p10: z.number(),
+  p25: z.number(),
+  p50: z.number(),
+  p75: z.number(),
+  p90: z.number(),
+})
+
+export const ForecastScenariosSchema = z.object({
+  bear: z.number().nullable(),
+  base: z.number().nullable(),
+  bull: z.number().nullable(),
+})
+
+export const ForecastSchema = z.object({
+  method: z.string(),
+  horizon_days: z.number(),
+  n_paths: z.number(),
+  vol_annualized: z.number(),
+  as_of: z.string(),
+  bands: z.array(ForecastBandSchema),
+  scenarios: ForecastScenariosSchema,
+  prob_range_70: z.tuple([z.number(), z.number()]),
+  disclaimer: z.string(),
+})
+
+export type ForecastBand = z.infer<typeof ForecastBandSchema>
+export type Forecast = z.infer<typeof ForecastSchema>
+
 export const StockDetailSchema = z.object({
   meta: MetaSchema,
   profile: z.object({
@@ -244,6 +277,7 @@ export const StockDetailSchema = z.object({
   context: ContextSchema,
   evidence: EvidenceSchema,
   track: z.array(TrackEntrySchema),
+  forecast: ForecastSchema.optional().nullable(),
 })
 
 export type StockDetail = z.infer<typeof StockDetailSchema>

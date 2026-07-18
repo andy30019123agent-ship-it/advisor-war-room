@@ -613,6 +613,7 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
         "context": build_context(res["context"]),
         "evidence": evidence,
         "track": build_track(stock_id),
+        "forecast": res.get("forecast"),  # v1.2：整組可為 null（樣本不足/引擎產物缺該欄位）
     }
 
 

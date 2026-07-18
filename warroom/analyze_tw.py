@@ -540,6 +540,14 @@ def _decide(stock_id, d, res, flags):
     ex_div_map = build_ex_div_map(d.get("div"))
     latest_date = str(pdf["date"].iloc[-1])
     res["as_of_date"] = latest_date[:10]   # 行情資料日（最後一根日 K 的日期），戰績 log 與 API meta 用
+
+    # 機率扇形圖預估走勢（規格 v1.2）：樣本不足/算不出時 build_forecast 內部已回 None，
+    # 這裡再包一層 try 是防禦性的（例如 pdf 欄位格式異常），失敗一律 None，不讓整檔 build 失敗。
+    try:
+        from warroom.forecast import build_forecast
+        res["forecast"] = build_forecast(pdf, valuation, res["as_of_date"], stock_id)
+    except Exception:
+        res["forecast"] = None
     ex_today = latest_date in ex_div_map
     ex_amt = float(ex_div_map.get(latest_date, 0.0))
     atr = atr14(pdf, ex_div_map=ex_div_map)

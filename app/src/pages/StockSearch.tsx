@@ -5,6 +5,7 @@ import { loadHoldings } from '../lib/holdings'
 import { loadWatchlist, addToWatchlist } from '../lib/watchlist'
 import { formatShares, SHARES_PER_LOT } from '../lib/shares'
 import { IconSearch } from '../components/icons'
+import { ForecastFan } from '../components/ForecastFan'
 import type { Daily, StockDetail } from '../types/contract'
 
 export function StockSearch() {
@@ -286,6 +287,8 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
           )}
         </div>
       </div>
+
+      <ForecastFan forecast={detail.forecast} />
 
       <div className="group-title">證據拆解</div>
       <div className="group">

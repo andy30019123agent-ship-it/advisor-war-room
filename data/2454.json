@@ -84,15 +84,15 @@
       "src": "Google News"
     },
     {
-      "title": "聯發科Q2營收1521億元寫5季以來新高 飛越財測高標 - news.cnyes.com",
-      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5wWjFVUDNndEI2SEFzSDUtNVpPTEhwNHlfSS1yVzdxZEFxM19QQy1Zc0NsNUc4S1ZYSENjajZKQncyUjdxQk9OSk5NaENGVEU?oc=5",
-      "date": "Fri, 10 Jul 2026 10:27:35 GMT",
-      "src": "Google News"
-    },
-    {
       "title": "創意、聯發科、世芯...ASIC三劍客成「晶片淘金熱」中最閃耀的明星！ - Smart自學網",
       "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5Wc3g1Tk9oQTFRMjBJYjZLS1hmQ2R5el9XWU8yRU9RRlp3U2gyY0tzdlZXLVZEaTJFdGNsakpTYzdXeXI2bWJtSGZWaVJKYWpiR0F6c1o3eVVldi1ORXNtMUQ0QTN1dGlVSy1yUVBQWlFBWkswTWQwOC1waHY?oc=5",
       "date": "Thu, 09 Jul 2026 07:00:00 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "聯發科Q2營收1521億元寫5季以來新高 飛越財測高標 - news.cnyes.com",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5wWjFVUDNndEI2SEFzSDUtNVpPTEhwNHlfSS1yVzdxZEFxM19QQy1Zc0NsNUc4S1ZYSENjajZKQncyUjdxQk9OSk5NaENGVEU?oc=5",
+      "date": "Fri, 10 Jul 2026 10:27:35 GMT",
       "src": "Google News"
     },
     {
@@ -162,6 +162,201 @@
     "note": "7 因子各 0-2 分；缺科目標不適用不扣分；連續改善另加減分"
   },
   "as_of_date": "2026-07-17",
+  "forecast": {
+    "method": "monte_carlo_gbm",
+    "horizon_days": 63,
+    "n_paths": 2000,
+    "vol_annualized": 0.7363,
+    "as_of": "2026-07-17",
+    "bands": [
+      {
+        "d": 0,
+        "p10": 3370.0,
+        "p25": 3370.0,
+        "p50": 3370.0,
+        "p75": 3370.0,
+        "p90": 3370.0
+      },
+      {
+        "d": 3,
+        "p10": 3003.79,
+        "p25": 3163.2,
+        "p50": 3360.85,
+        "p75": 3529.81,
+        "p90": 3708.47
+      },
+      {
+        "d": 6,
+        "p10": 2892.22,
+        "p25": 3098.07,
+        "p50": 3344.92,
+        "p75": 3610.2,
+        "p90": 3877.7
+      },
+      {
+        "d": 9,
+        "p10": 2796.62,
+        "p25": 3046.78,
+        "p50": 3349.27,
+        "p75": 3685.89,
+        "p90": 4012.53
+      },
+      {
+        "d": 12,
+        "p10": 2709.73,
+        "p25": 2972.14,
+        "p50": 3329.06,
+        "p75": 3721.43,
+        "p90": 4122.97
+      },
+      {
+        "d": 15,
+        "p10": 2600.09,
+        "p25": 2925.18,
+        "p50": 3295.11,
+        "p75": 3741.3,
+        "p90": 4179.36
+      },
+      {
+        "d": 18,
+        "p10": 2542.55,
+        "p25": 2882.37,
+        "p50": 3292.66,
+        "p75": 3814.58,
+        "p90": 4274.71
+      },
+      {
+        "d": 21,
+        "p10": 2477.17,
+        "p25": 2835.15,
+        "p50": 3276.27,
+        "p75": 3813.46,
+        "p90": 4348.74
+      },
+      {
+        "d": 24,
+        "p10": 2438.41,
+        "p25": 2799.32,
+        "p50": 3281.59,
+        "p75": 3826.64,
+        "p90": 4411.05
+      },
+      {
+        "d": 27,
+        "p10": 2395.48,
+        "p25": 2771.34,
+        "p50": 3277.45,
+        "p75": 3840.6,
+        "p90": 4463.7
+      },
+      {
+        "d": 30,
+        "p10": 2355.59,
+        "p25": 2755.87,
+        "p50": 3265.78,
+        "p75": 3867.84,
+        "p90": 4543.59
+      },
+      {
+        "d": 33,
+        "p10": 2307.29,
+        "p25": 2693.07,
+        "p50": 3253.34,
+        "p75": 3912.8,
+        "p90": 4589.04
+      },
+      {
+        "d": 36,
+        "p10": 2266.37,
+        "p25": 2678.56,
+        "p50": 3226.94,
+        "p75": 3919.19,
+        "p90": 4726.63
+      },
+      {
+        "d": 39,
+        "p10": 2226.29,
+        "p25": 2657.89,
+        "p50": 3191.45,
+        "p75": 3937.56,
+        "p90": 4758.63
+      },
+      {
+        "d": 42,
+        "p10": 2181.55,
+        "p25": 2633.71,
+        "p50": 3205.31,
+        "p75": 3954.47,
+        "p90": 4782.63
+      },
+      {
+        "d": 45,
+        "p10": 2131.51,
+        "p25": 2593.28,
+        "p50": 3204.09,
+        "p75": 4006.6,
+        "p90": 4837.15
+      },
+      {
+        "d": 48,
+        "p10": 2092.36,
+        "p25": 2575.84,
+        "p50": 3202.53,
+        "p75": 4013.73,
+        "p90": 4861.67
+      },
+      {
+        "d": 51,
+        "p10": 2062.29,
+        "p25": 2559.62,
+        "p50": 3206.03,
+        "p75": 4026.63,
+        "p90": 4955.11
+      },
+      {
+        "d": 54,
+        "p10": 2033.36,
+        "p25": 2529.68,
+        "p50": 3216.07,
+        "p75": 4060.17,
+        "p90": 4934.94
+      },
+      {
+        "d": 57,
+        "p10": 1983.55,
+        "p25": 2509.52,
+        "p50": 3218.08,
+        "p75": 4034.74,
+        "p90": 5053.41
+      },
+      {
+        "d": 60,
+        "p10": 1985.51,
+        "p25": 2488.3,
+        "p50": 3192.05,
+        "p75": 4065.23,
+        "p90": 5075.67
+      },
+      {
+        "d": 63,
+        "p10": 1930.84,
+        "p25": 2447.88,
+        "p50": 3174.45,
+        "p75": 4072.03,
+        "p90": 5014.43
+      }
+    ],
+    "scenarios": {
+      "bear": 930.1,
+      "base": 1297.9,
+      "bull": 1331.6
+    },
+    "prob_range_70": [
+      2145.5,
+      4630.23
+    ],
+    "disclaimer": "統計推算（歷史波動隨機模擬），非方向預測；突發事件不在模型內。"
+  },
   "primary_decision": {
     "action": "觀望",
     "stance": "中性",
@@ -251,45 +446,73 @@
     "roles": [
       {
         "role": "技術面分析師",
-        "support": [],
-        "oppose": [],
+        "support": [
+          "均線糾結、僅守長天期均線（MA20 4063.2、MA60 3809.4、MA120 2754.1），尚未跌破結構，先給中性不偏空。"
+        ],
+        "oppose": [
+          "MA20 已走平下彎、上方均線壓力沉重，站不回去前反彈都可能是逃命波。"
+        ],
         "verify": [
-          "觀察是否守住均線與防守位"
+          "連 3 日站穩 MA20 並帶量突破前高 → 翻多；跌破 MA60 收盤 → 翻空。"
         ]
       },
       {
         "role": "基本面分析師",
         "support": [
-          "最新營收月 2026/6",
-          "營收YoY +2.8%",
-          "近3月平均YoY +1.2%",
-          "PER 53.7"
+          "基本面沒惡化、成長仍在（營收YoY +2.8%），是續抱與逢低的底氣。"
         ],
-        "oppose": [],
+        "oppose": [
+          "PER 53.7 已不便宜，好公司不等於好價格，追高要留意估值。"
+        ],
         "verify": [
-          "追蹤下月營收 YoY 是否維持"
+          "追蹤下月營收 YoY 是否維持、法說會展望有無下修。"
         ]
       },
       {
-        "role": "籌碼分析師",
+        "role": "籌碼面分析師",
         "support": [],
         "oppose": [
-          "近5日法人淨額(張) -2,894",
-          "連續方向天數 賣 8 天",
-          "最新日 2026-07-17"
+          "法人偏空、買盤縮手（近5日法人淨額(張) -2,894），沒有大戶點火前漲勢難延續。"
         ],
         "verify": [
-          "確認外資／投信是否轉買"
+          "確認外資／投信是否由賣轉買、連續買超天數能否翻正。"
         ]
       },
       {
-        "role": "風控／估值",
-        "support": [],
+        "role": "風控長",
+        "support": [
+          "防守價明確、下檔可量化，先觀望不進場都在停損紀律內執行。"
+        ],
         "oppose": [
-          "估值很貴"
+          "估值模型有 warning、Base 不可信，R/R 不宜當加碼依據，只看價格結構與停損。",
+          "估值很貴，一旦情緒反轉，殺估值的速度會很快。"
         ],
         "verify": [
-          "估值模型有 warning 時以區間語言為準"
+          "盯 R/R 是否站上 2 倍、防守價是否被收盤跌破。"
+        ]
+      },
+      {
+        "role": "魔鬼代言人",
+        "support": [
+          "反過來想：營收YoY +2.8%、股價已修正一段，此時先觀望不進場可能砍在阿呆谷、錯過基本面反彈。"
+        ],
+        "oppose": [
+          "若營收維持成長、法人回補並站回均線，過度保守會兩頭空。"
+        ],
+        "verify": [
+          "刻意找反例：續破底證明我錯、營收與籌碼同步轉強證明過度保守。"
+        ]
+      },
+      {
+        "role": "投資長",
+        "support": [
+          "綜合三面與風控，本週定調：先觀望不進場。多方是基本面沒壞，空方是籌碼偏空、估值很貴、趨勢轉弱。"
+        ],
+        "oppose": [
+          "在防守價與站回訊號明朗前不擴大部位，避免用單一利多改變整體判斷。"
+        ],
+        "verify": [
+          "下一決策點：防守價是否守住、法人是否回補、下月營收是否達標。"
         ]
       }
     ],
@@ -313,16 +536,16 @@
         "published_at": "2026-07-10T09:54:37+00:00"
       },
       {
-        "title": "聯發科Q2營收1521億元寫5季以來新高 飛越財測高標 - news.cnyes.com",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5wWjFVUDNndEI2SEFzSDUtNVpPTEhwNHlfSS1yVzdxZEFxM19QQy1Zc0NsNUc4S1ZYSENjajZKQncyUjdxQk9OSk5NaENGVEU?oc=5",
-        "published_at": "2026-07-10T10:27:35+00:00"
-      },
-      {
         "title": "創意、聯發科、世芯...ASIC三劍客成「晶片淘金熱」中最閃耀的明星！ - Smart自學網",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5Wc3g1Tk9oQTFRMjBJYjZLS1hmQ2R5el9XWU8yRU9RRlp3U2gyY0tzdlZXLVZEaTJFdGNsakpTYzdXeXI2bWJtSGZWaVJKYWpiR0F6c1o3eVVldi1ORXNtMUQ0QTN1dGlVSy1yUVBQWlFBWkswTWQwOC1waHY?oc=5",
         "published_at": "2026-07-09T07:00:00+00:00"
+      },
+      {
+        "title": "聯發科Q2營收1521億元寫5季以來新高 飛越財測高標 - news.cnyes.com",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5wWjFVUDNndEI2SEFzSDUtNVpPTEhwNHlfSS1yVzdxZEFxM19QQy1Zc0NsNUc4S1ZYSENjajZKQncyUjdxQk9OSk5NaENGVEU?oc=5",
+        "published_at": "2026-07-10T10:27:35+00:00"
       },
       {
         "title": "聯發科打退高通、三星闖進Pixel 11 再拚美系客戶下一站 - DIGITIMES",

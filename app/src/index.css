@@ -1066,3 +1066,94 @@ header.page-header {
   font-weight: 600;
   text-align: center;
 }
+
+/* ---------- 預估走勢．機率扇形圖（forecast） ---------- */
+
+.forecast-empty {
+  padding: 18px 16px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.forecast-body {
+  padding: 16px;
+}
+
+.forecast-headline {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.forecast-chart-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.forecast-svg {
+  display: block;
+  width: 100%;
+  height: 200px;
+  touch-action: none;
+}
+
+.forecast-tooltip {
+  position: absolute;
+  top: 8px;
+  min-width: 128px;
+  max-width: calc(100% - 16px);
+  background: var(--text);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.forecast-tooltip-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.forecast-tooltip-range {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.forecast-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.forecast-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forecast-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.forecast-swatch-line {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.forecast-disclaimer {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
