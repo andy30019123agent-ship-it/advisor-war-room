@@ -1,68 +1,217 @@
 {
   "meta": {
     "schema_version": 1,
-    "data_date": "2026-07-18",
-    "generated_at": "2026-07-18T08:30:00+08:00",
-    "sources": ["FinMind", "yfinance"]
+    "data_date": "2026-07-17",
+    "generated_at": "2026-07-18T16:40:36+08:00",
+    "sources": [
+      "FinMind",
+      "yfinance"
+    ]
   },
-  "profile": { "id": "2454", "name": "聯發科", "market": "TWSE", "is_core_holding": false },
-  "price": { "close": 3740, "change_pct": null, "ma20": 4160.8, "ma60": 3758.1 },
-
+  "profile": {
+    "id": "2454",
+    "name": "聯發科",
+    "market": "TWSE",
+    "is_core_holding": false
+  },
+  "price": {
+    "close": 3370.0,
+    "change_pct": null,
+    "ma20": 4063.2,
+    "ma60": 3809.4
+  },
   "primary_decision": {
     "action": "觀望",
-    "stance": "中性偏空",
+    "stance": "中性",
     "position_delta": "wait",
-    "confidence": 45,
+    "confidence": 48,
     "decided_by_layer": 5,
-    "reason_codes": ["chips_weak", "valuation_unknown"],
-    "readable_reason": "均線糾結且外資賣壓未歇，估值資料暫缺，先等訊號明朗再進場。",
-    "risk_note": "站回 MA20（4,161）前不追高。",
-    "position": { "tier_amount": 0, "lots": 0, "odd_shares": 0 },
-    "defense_price": null,
-    "entry_condition": { "price": 4161, "condition": "站回 MA20 且法人轉買超" },
+    "reason_codes": [
+      "trend_mixed",
+      "fundamental_ok",
+      "chips_weak",
+      "valuation_very_expensive",
+      "valuation_warning",
+      "market_bear"
+    ],
+    "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
+    "risk_note": "若已持有，跌破 2875.8 先降波段部位；空手則等進場條件",
+    "position": {
+      "tier_amount": 0,
+      "lots": 0,
+      "odd_shares": 0
+    },
+    "defense_price": 2875.8,
+    "entry_condition": {
+      "price": 3809.4,
+      "condition": "站回 MA60 且法人連 2 日買超"
+    },
     "reeval_date": "2026-07-25"
   },
-
   "context": {
     "timeframes": {
-      "short": { "label": "短線 1-4 週", "stance": "中性偏空", "basis": "均線糾結，量能萎縮" },
-      "swing": { "label": "波段 1-3 月（主）", "stance": "中性偏空", "basis": "外資賣壓未歇，等站回月線" },
-      "mid":   { "label": "中期 3-12 月", "stance": "中性", "basis": "ASIC／TPU 新機會題材尚未反映" }
+      "short": {
+        "label": "短線 1-4 週",
+        "stance": "中性",
+        "basis": "技術中性＋籌碼偏空"
+      },
+      "swing": {
+        "label": "波段 1-3 月（主）",
+        "stance": "中性",
+        "basis": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。"
+      },
+      "mid": {
+        "label": "中期 3-12 月",
+        "stance": "中性",
+        "basis": "基本面中性＋估值很貴"
+      }
     },
     "lights": {
-      "fundamental": { "color": "yellow", "facts": ["營收 YoY +2.8%", "PER 58.3 落在近3年 97% 分位"] },
-      "technical":   { "color": null, "facts": [] },
-      "chips":       { "color": "red", "facts": ["外資近5日賣超 2,749 張"] }
+      "fundamental": {
+        "color": "yellow",
+        "facts": [
+          "最新營收月 2026/6",
+          "營收YoY +2.8%",
+          "近3月平均YoY +1.2%",
+          "PER 53.7"
+        ]
+      },
+      "technical": {
+        "color": "yellow",
+        "facts": [
+          "收盤 3370.0",
+          "MA20 4063.2",
+          "MA60 3809.4",
+          "MA120 2754.1"
+        ]
+      },
+      "chips": {
+        "color": "red",
+        "facts": [
+          "近5日法人淨額(張) -2,894",
+          "連續方向天數 賣 8 天",
+          "最新日 2026-07-17"
+        ]
+      }
     },
-    "valuation": { "band": null, "base": null, "bull": null, "bear": null, "regime": null, "warning": null },
-    "rr": null
+    "valuation": {
+      "band": "很貴",
+      "base": 1297.9,
+      "bull": 1331.6,
+      "bear": 930.1,
+      "regime": "3y",
+      "warning": "模型 Base 1297.9 與現價 3370.0 偏離 61%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+    },
+    "rr": -4.19
   },
-
   "evidence": {
     "roles": [
       {
         "role": "技術面分析師",
         "support": [],
-        "oppose": ["均線糾結，方向不明"],
-        "verify": ["站回 MA20 才轉偏多"]
+        "oppose": [],
+        "verify": [
+          "觀察是否守住均線與防守位"
+        ]
       },
       {
-        "role": "籌碼面分析師",
-        "support": ["投信近期轉買"],
-        "oppose": ["外資近5日賣超 2,749 張"],
-        "verify": ["外資賣壓是否止穩"]
+        "role": "基本面分析師",
+        "support": [
+          "最新營收月 2026/6",
+          "營收YoY +2.8%",
+          "近3月平均YoY +1.2%",
+          "PER 53.7"
+        ],
+        "oppose": [],
+        "verify": [
+          "追蹤下月營收 YoY 是否維持"
+        ]
+      },
+      {
+        "role": "籌碼分析師",
+        "support": [],
+        "oppose": [
+          "近5日法人淨額(張) -2,894",
+          "連續方向天數 賣 8 天",
+          "最新日 2026-07-17"
+        ],
+        "verify": [
+          "確認外資／投信是否轉買"
+        ]
+      },
+      {
+        "role": "風控／估值",
+        "support": [],
+        "oppose": [
+          "估值很貴"
+        ],
+        "verify": [
+          "估值模型有 warning 時以區間語言為準"
+        ]
       }
     ],
     "news": [
-      { "title": "聯發科秒填息！史上第4次當日達陣", "source": "Yahoo股市", "url": "https://example.com/news/2454-fill", "published_at": "2026-07-06T07:00:00+08:00" }
+      {
+        "title": "聯發科遇壓翻黑！買盤全湧「這2檔小金雞」 它6月營收狂增247%開盤秒鎖漲停 - Yahoo股市",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMitwNBVV95cUxNZUp4bDNKMHFTTWpiem85SUtYclUzVUFWWDZWM1RteUN4dFpXRVl0eGFOMWtxeTBxaktOd2ppYXMydGJTNThNZ0NGWG54Z2o3dVI1U1NNSW5zTnFrbjljQmVRLWVPbVZJaFZMYlNiUlJiRWZWQXo4RzNGTk9PZmVZY0hDbm1WOEl0YzhyWVpPNGl3MnQxYXB1Tk5lLXhyM2w2RWREQThCTDdwVnhPT1lDTm10NUMyQ1JJSl9lalA5UmN5aGlmM21MQWREZkhISXVRMUlXTkp1cTc2dTN5ejREX28wVGFBLWg2bUVTdWMzc3BlZ0dJSEpWREFLdnlBaDB3d1l4ZW81ZFdxd1pjTG1NSFFGcWFFTUFkcXhzMVRSZWlGUU0zYkk4UE91VnB5cnlwZlpMYmhLaU9iTDlaSDdoanVTcWRHTGh4ZkVuMWt0UVhUVVlTUXZEMmk0Vlp6WnF2WHRaWnU4Mm96Vll4ZDAwczM5RWNwaXFqOWJxTUwxN1Y5aHlLX3Frem5XSFVVYmZEZWQxWHR5N3p3aENJMkRSQ1BxdEZLQkZsYjJQSFdqcWdIMF8zUVdr?oc=5",
+        "published_at": "2026-07-13T03:19:01+00:00"
+      },
+      {
+        "title": "聯發科悄悄切入AI 資料中心的底牌是什麼？從 448G SerDes 到 UMA 架構的野心拆解｜股市話題｜豐雲學堂2026 年 07 月 - sinotrade.com.tw",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMihARBVV95cUxONnVWdlAtSUZ5RFJtNDRzRjNPNE9WcGlKcVQ0NDI1X3YyRDJyaF9aS0gtRUgxcjlqMGk4N1BMT3hlZ2lMRXpYa19zUmtSMVlLWm05QzNOUXBqUG0tWTZ1a1d4S19YQ0FfeFJnaW5reFhiZ251UVloTk9YLThva1BFUEVTczhaR1lIbUtRZU5ld3d5bmNuQkV3cTllWk9PeFlyZ0ZPS19RcHZ4TFl3TkR4U0J2UWZqUUpWb09CeURPV0ZUQkhlY0YtemNrQ2lkVy02VVo5aWpKMWNVNkI1a2hvMzdsQndtUEdCUVVrMDhTUkZJNDBnSW5HaHRGRE85T0lVSGs2NGI3WXFIVU1WOUpURTdoaXpTa09iS1JtUTkyN2hmZjR1el8yalFFSEx5MnBnM3VFSVhmNTdTekFMQVNXdjRuT1JnMnhFUTFYQUVTRzFwbXhWQ1JhbUNrZUl0RjJfS3pGVHpJRHlWMDFjSTM1Vmd6b1J6TUVtem9xdHI1eGNCOV9MWUE4VEYtRXpfdVlSelRxSDJpZEtlLWZESFc5M1JiNzlwa1lOVHZFcEZMeWpIdEs0UUlMNEJtXzVjcE9VcWhCVmRVcnRYRVAtVzBUYzl4b3JQYjU3TEdfZVlMcGRZcVVfVENpZDFyQks2WE5HS3JOSUstR0pZVVZ5cWtGRDIxTkE?oc=5",
+        "published_at": "2026-07-09T02:38:19+00:00"
+      },
+      {
+        "title": "聯發科營收／6月580.12億元 月增22.3%、年增2.8% 改寫今年單月新高 - 經濟日報",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE4tWElzb2k1VnZHdldsVEN4RE0ta2ZCcmI1VGZFZS1zaEs4MGttbkh0eWJ3RFFHcnFFcGEtWnQwLTdnUDNTWnZoMVhHTDRkR2tLN2JRRU9GVzVMQdIBX0FVX3lxTE5LejltVkcwSG83WjY2aWp6cHVoYlBuWWd5Q0x1dFlhZ1BNUjhBM2lZR0wtcmN2UzB4MGRXLUlkN0ozX1dYa0I0TzNTSDFhUXQtazcxTEFfcGNLNjU0RC00?oc=5",
+        "published_at": "2026-07-10T09:54:37+00:00"
+      },
+      {
+        "title": "聯發科Q2營收1521億元寫5季以來新高 飛越財測高標 - news.cnyes.com",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5wWjFVUDNndEI2SEFzSDUtNVpPTEhwNHlfSS1yVzdxZEFxM19QQy1Zc0NsNUc4S1ZYSENjajZKQncyUjdxQk9OSk5NaENGVEU?oc=5",
+        "published_at": "2026-07-10T10:27:35+00:00"
+      },
+      {
+        "title": "創意、聯發科、世芯...ASIC三劍客成「晶片淘金熱」中最閃耀的明星！ - Smart自學網",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5Wc3g1Tk9oQTFRMjBJYjZLS1hmQ2R5el9XWU8yRU9RRlp3U2gyY0tzdlZXLVZEaTJFdGNsakpTYzdXeXI2bWJtSGZWaVJKYWpiR0F6c1o3eVVldi1ORXNtMUQ0QTN1dGlVSy1yUVBQWlFBWkswTWQwOC1waHY?oc=5",
+        "published_at": "2026-07-09T07:00:00+00:00"
+      },
+      {
+        "title": "聯發科打退高通、三星闖進Pixel 11 再拚美系客戶下一站 - DIGITIMES",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOYXVndzFvbFlQZkxSNk83QVJjSjlJQmthdUFFbDBHZXl1YlJsb0s1Z0RRcjlOVGJWb3J0TUlJQnIxLTVxbmh2LXVKN292cVJucXpFTlhNWHBYaHNWdzVBdzAxczI0VzdVeVo2QVdPVG9YOWFraDl3MW1QS2hxZVl2MWNkSmtERkJTT0xtSVJB?oc=5",
+        "published_at": "2026-07-14T19:54:22+00:00"
+      }
     ],
     "events": []
   },
-
   "track": [
-    { "date": "2026-07-14", "action": "觀望", "price_at_rec": 3760,
-      "outcome": { "r5": null, "r20": null, "r60": null }, "status": "pending" },
-    { "date": "2026-07-01", "action": "試單", "price_at_rec": 3600,
-      "outcome": { "r5": 2.1, "r20": null, "r60": null }, "status": "pending" }
+    {
+      "date": "2026-07-17",
+      "action": "觀望",
+      "price_at_rec": 3370.0,
+      "outcome": {
+        "r5": null,
+        "r20": null,
+        "r60": null
+      },
+      "status": "pending"
+    },
+    {
+      "date": "2026-07-15",
+      "action": "減碼",
+      "price_at_rec": 3740.0,
+      "outcome": {
+        "r5": null,
+        "r20": null,
+        "r60": null
+      },
+      "status": "pending"
+    }
   ]
 }

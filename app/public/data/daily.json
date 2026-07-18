@@ -1,54 +1,104 @@
 {
   "meta": {
     "schema_version": 1,
-    "data_date": "2026-07-18",
-    "generated_at": "2026-07-18T08:30:00+08:00",
-    "sources": ["FinMind", "yfinance"]
+    "data_date": "2026-07-17",
+    "generated_at": "2026-07-18T16:40:36+08:00",
+    "sources": [
+      "FinMind",
+      "yfinance"
+    ]
   },
   "market": {
     "status": "偏空防禦",
-    "risk_temp": 8,
+    "risk_temp": 9,
     "conclusion": "今天不加碼，守好停損位。",
-    "taiex": { "close": 22513, "change_pct": -1.2 },
+    "taiex": {
+      "close": 42671.3,
+      "change_pct": -6.47
+    },
     "us": [
-      { "id": "SPX", "name": "S&P 500", "change_pct": -0.8 },
-      { "id": "NDX", "name": "Nasdaq 100", "change_pct": -1.1 },
-      { "id": "SOX", "name": "費城半導體", "change_pct": -2.3 },
-      { "id": "VIX", "name": "VIX", "change_pct": 12.4 }
+      {
+        "id": "SPX",
+        "name": "S&P 500",
+        "change_pct": -1.01
+      },
+      {
+        "id": "NDX",
+        "name": "Nasdaq 100",
+        "change_pct": -1.49
+      },
+      {
+        "id": "SOX",
+        "name": "費城半導體",
+        "change_pct": -1.63
+      },
+      {
+        "id": "VIX",
+        "name": "VIX",
+        "change_pct": 12.19
+      }
     ]
   },
   "core_holdings": [
-    { "id": "2330", "name": "台積電", "action": "核心續扣", "note": "波段不加碼" },
-    { "id": "0050", "name": "元大台灣50", "action": "定期定額照常", "note": "不受本週訊號影響" }
+    {
+      "id": "2330",
+      "name": "台積電",
+      "action": "核心續扣",
+      "note": "波段不加碼"
+    },
+    {
+      "id": "0050",
+      "name": "元大台灣50",
+      "action": "定期定額照常",
+      "note": "不受本週訊號影響"
+    }
   ],
   "tracked": [
     {
       "id": "2330",
       "name": "台積電",
-      "close": 2440,
+      "close": 2290.0,
       "change_pct": null,
       "decision": {
         "action": "續抱",
-        "readable_reason": "趨勢仍在且基本面未壞；但估值偏貴，未突破前不加碼。",
-        "defense_price": 2245
+        "readable_reason": "因為基本面沒惡化，所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
+        "defense_price": 2106.8
       }
     },
     {
       "id": "2454",
       "name": "聯發科",
-      "close": 3740,
+      "close": 3370.0,
       "change_pct": null,
       "decision": {
         "action": "觀望",
-        "readable_reason": "均線糾結，外資賣壓未歇，等站回 MA20 再進場。",
-        "defense_price": null
+        "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
+        "defense_price": 2875.8
       }
     }
   ],
-  "watch": [
-    { "id": "2412", "name": "中華電", "wait_condition": "等法人回補" }
-  ],
+  "watch": [],
   "alerts_snapshot": [
-    { "id": "2330", "name": "台積電", "type": "defense", "price": 2245, "direction": "below" }
+    {
+      "id": "2330",
+      "name": "台積電",
+      "type": "defense",
+      "price": 2106.8,
+      "direction": "below"
+    },
+    {
+      "id": "2454",
+      "name": "聯發科",
+      "type": "defense",
+      "price": 2875.8,
+      "direction": "below"
+    },
+    {
+      "id": "2454",
+      "name": "聯發科",
+      "type": "entry",
+      "price": 3809.4,
+      "direction": "above"
+    }
   ]
 }

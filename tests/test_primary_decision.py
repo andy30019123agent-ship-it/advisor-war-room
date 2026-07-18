@@ -289,5 +289,110 @@ class TestStanceNeverLeaksNA(unittest.TestCase):
         self.assertIn("ETF", primary["readable_reason"])
 
 
+class TestTechnicalAmberNotTrendOk(unittest.TestCase):
+    """投顧視角回歸 #1：技術燈 amber（均線糾結／部分跌破）不得映成 trend_ok，
+    readable_reason 不可誤寫「趨勢仍在（站上均線）」。用真實 2330 情境（收盤跌破
+    MA20/MA60、僅守 MA120）驗證。"""
+
+    def test_amber_technical_maps_to_trend_mixed_not_trend_ok(self):
+        act, _, codes, _ = _decide(lights=["amber", "amber", "green"])
+        self.assertIn("trend_mixed", codes)
+        self.assertNotIn("trend_ok", codes)
+
+    def test_green_technical_still_maps_to_trend_ok(self):
+        # 純技術綠燈才准講「站上均線」（不誤傷既有行為）。
+        _, _, codes, _ = _decide(lights=["amber", "green", "amber"])
+        self.assertIn("trend_ok", codes)
+
+    def test_2330_like_case_readable_reason_no_longer_claims_trend_ok(self):
+        # 2330 實況：收盤 2290 跌破 MA20 2428.2／MA60 2323.8，僅守 MA120 2094.3
+        # → technical light=amber（均線糾結），reason_codes 不可含 trend_ok，
+        # readable_reason 不可出現「趨勢仍在」。
+        primary, context, roles = build_primary_and_context(
+            price=2290.0, lights=["amber", "amber", "red"],
+            lights_facts={"technical": ["收盤 2290.0", "MA20 2428.2", "MA60 2323.8",
+                                        "MA120 2094.3"]},
+            valuation={"band": "很貴", "warning": None, "current_percentile": 0.91,
+                      "fair_value": {"bear": 1498.0, "base": 2298.0, "bull": 2458.1},
+                      "regime": "3y"},
+            rr=0.04, defense_price=2106.8, defense_broken=False,
+            fundamental_broken=False, chips_broken=True, market_light="red",
+            confidence=48, profile=PROFILE, is_core_holding=True, holding=True)
+        self.assertNotIn("trend_ok", primary["reason_codes"])
+        self.assertNotIn("趨勢仍在", primary["readable_reason"])
+
+
+class TestRiskNoteNoCommandWhenFlat(unittest.TestCase):
+    """投顧視角回歸 #2：position.tier_amount==0（空手／觀望）時，risk_note 不得對
+    沒有部位的人下達『先降波段部位』指令，措辭改條件句。"""
+
+    def test_flat_gets_conditional_wording_not_a_command(self):
+        primary, _, _ = build_primary_and_context(
+            price=100.0, lights=["amber", "amber", "red"], lights_facts={},
+            valuation=VAL_OK, rr=1.0, defense_price=90.0, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="amber",
+            confidence=40, profile=PROFILE, is_core_holding=False, holding=False)
+        self.assertEqual(primary["action"], "觀望")
+        self.assertEqual(primary["position"]["tier_amount"], 0)
+        self.assertIn("若已持有", primary["risk_note"])
+        self.assertIn("空手則等進場條件", primary["risk_note"])
+        self.assertNotIn("跌破 90.0 防守位就先降波段部位", primary["risk_note"])
+
+    def test_holder_keeps_direct_command_wording(self):
+        primary, _, _ = build_primary_and_context(
+            price=100.0, lights=["amber", "amber", "amber"], lights_facts={},
+            valuation=VAL_OK, rr=2.5, defense_price=90.0, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="amber",
+            confidence=70, profile=PROFILE, is_core_holding=False, holding=True)
+        self.assertGreater(primary["position"]["tier_amount"], 0)
+        self.assertIn("跌破 90.0 防守位就先降波段部位", primary["risk_note"])
+
+
+class TestEntryConditionExecutableDistance(unittest.TestCase):
+    """投顧視角回歸 #3：entry_condition 突破價距現價 >15% 不可執行（2454 現價 3370
+    卻給「突破近20日高 4785」＝+42%）。改用較近可執行錨點（MA20→MA60→現價+5%），
+    且距現價本就 ≤15% 時維持原邏輯不變。"""
+
+    TECH_FACTS_2454 = ["收盤 3370.0", "MA20 4063.2", "MA60 3809.4", "MA120 2754.1"]
+
+    def _entry(self, price, entry_condition, tech_facts, rr=2.0):
+        primary, _, _ = build_primary_and_context(
+            price=price, lights=["amber", "amber", "red"],
+            lights_facts={"technical": tech_facts},
+            valuation={"band": "很貴", "warning": "偏離過大", "current_percentile": 0.94,
+                      "fair_value": {"bear": 930.1, "base": 1297.9, "bull": 1331.6},
+                      "regime": "3y"},
+            rr=rr, defense_price=2875.8, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="red",
+            confidence=48, profile=PROFILE, is_core_holding=False, holding=False,
+            entry_condition=entry_condition)
+        return primary
+
+    def test_2454_far_breakout_replaced_with_ma60_within_15pct(self):
+        # 原始突破價 4785（+42%）不可執行 → MA20 4063.2（+20.6%）仍太遠 → 退 MA60
+        # 3809.4（+13.0%），距現價 ≤15%。
+        primary = self._entry(3370.0, {"price": 4785.0, "condition": "帶量突破近20日高、法人回補"},
+                              self.TECH_FACTS_2454)
+        self.assertEqual(primary["action"], "觀望")
+        ec = primary["entry_condition"]
+        self.assertIsNotNone(ec)
+        self.assertLessEqual(abs(ec["price"] / 3370.0 - 1), 0.15)
+        self.assertEqual(ec["price"], 3809.4)
+        self.assertIn("MA60", ec["condition"])
+
+    def test_both_ma_too_far_falls_back_to_near_price_band(self):
+        primary = self._entry(1000.0, {"price": 1500.0, "condition": "帶量突破近20日高、法人回補"},
+                              ["收盤 1000.0", "MA20 1400.0", "MA60 1350.0", "MA120 900.0"])
+        ec = primary["entry_condition"]
+        self.assertLessEqual(abs(ec["price"] / 1000.0 - 1), 0.15)
+        self.assertEqual(ec["price"], 1050.0)
+
+    def test_near_breakout_kept_unchanged(self):
+        # 突破價距現價僅 5%，在 15% 門檻內 → 維持原邏輯不變。
+        near = {"price": 1050.0, "condition": "帶量突破近20日高、法人回補"}
+        primary = self._entry(1000.0, near, ["收盤 1000.0", "MA20 1200.0", "MA60 1100.0"])
+        self.assertEqual(primary["entry_condition"], near)
+
+
 if __name__ == "__main__":
     unittest.main()
