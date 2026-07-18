@@ -204,3 +204,37 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 ```
 
 規則：模擬 seed 由 stock_id＋data_date 決定（同日重跑結果一致、可測試）；價格樣本 <120 根日 K → 整組 null；scenarios 直接引用 valuation 三情境不得另算。前端 zod optional/nullable。
+
+---
+
+## v1.3 增補（2026-07-18 夜二，Andy 拍板：預估走勢 2.0 五項全做）
+
+### `forecast` 結構升級（取代 v1.2 單一 horizon；前端同步改，zod 仍 optional/nullable）
+
+```jsonc
+"forecast": {
+  "method": "monte_carlo_gbm", "n_paths": 2000, "vol_annualized": 0.40, "as_of": "2026-07-17",
+  "history": [ { "d": -63, "close": 2453 }, ... , { "d": 0, "close": 2290 } ],  // 過去 63 交易日，每 3 日取樣＋必含 d=0
+  "horizons": {                       // 同一次模擬跑到 126 日，切三段
+    "m1": { "days": 21,  "bands": [ {"d":0,...}, ... ], "prob_range_70": [x, y] },
+    "m3": { "days": 63,  "bands": [...], "prob_range_70": [x, y] },
+    "m6": { "days": 126, "bands": [...], "prob_range_70": [x, y] }
+  },
+  "week_range_70": [x, y],            // d=5 的 p15~p85（週報連動用）
+  "scenarios": { "bear": ..., "base": ..., "bull": ... },   // 錨在 m3（維持 v1.2 語意）
+  "event_markers": [ { "d": 12, "date": "2026-08-05", "label": "法說會" } ],  // horizon 內已知事件（法說/除息；來源同 daily.events＋evidence.events），無=空陣列
+  "accuracy": {                       // 預估準確度回測（forecast_log 統計；樣本 <10 給 null rate）
+    "n_evaluated": 0, "hit_rate_70": null,
+    "note": "樣本累積中：每天記錄預估區間，5 日後開始回填驗證"
+  },
+  "disclaimer": "…"
+}
+```
+
+### 新增 `data/forecast_log.json`（引擎內部，非前端契約）
+
+每日 build_snapshots 時對每檔追蹤股 append：{date, stock_id, week:[p15,p85], m1:[...], m3:[...]}；同 (date,stock_id) 覆蓋。到期驗證：date+5 交易日（week）／+21（m1）／+63（m3）後用實際收盤回填 hit true/false；accuracy.hit_rate_70 = 所有已回填 horizon 樣本的命中率。
+
+### weekly_brief 連動
+
+持股劇本每檔加一行「下週 70% 區間：X ～ Y」（讀 stocks/<id>.json 的 forecast.week_range_70；缺欄位跳過）。
