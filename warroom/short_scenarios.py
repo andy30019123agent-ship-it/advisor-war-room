@@ -160,6 +160,34 @@ def _finalize_probs(base, risk, bull) -> Tuple[int, int, int]:
     return tuple(ints)  # type: ignore[return-value]
 
 
+def _resolve_invalidation_refs(scenarios: List[Dict]) -> None:
+    """就地把每個 scenario['invalidation'] 裡的佔位符（{REF:base}／{REF:risk}／
+    {REF:top_non_bull}）換成排序定稿後的最終「劇本X」編號。scenarios 須已完成機率
+    排序＋title 賦值（ordinal 直接從 title 的『劇本X』反推，不另外重算一次排序邏輯，
+    避免跟主排序分岔）。
+
+    修根因用：舊版在生成當下就寫死「切換劇本一/二」，但陣列最後會依機率重新排序、
+    「劇本X」編號因此可能落到別的 id 上，導致 base/risk 互相失效條件指到自己
+    （prod 實測：risk 排到劇本一時，它自己的失效文字卻寫「切換劇本一」）。
+    - base 失效 → 一律指向 risk 的最終編號；risk 失效 → 一律指向 base 的最終編號
+      （兩者 id 不同，天然不會自我指涉）。
+    - bull 失效 → 指向排序後機率最高的那個非 bull 劇本（base 或 risk，看誰排前面）；
+      bull 不可能是自己的 non_bull，天然不會自我指涉。
+    """
+    ordinal = {sc["id"]: sc["title"].split("・")[0] for sc in scenarios}  # 例："劇本一"
+    top_non_bull = next((sc for sc in scenarios if sc["id"] != "bull"), None)
+    refs = {
+        "{REF:base}": ordinal.get("base", ""),
+        "{REF:risk}": ordinal.get("risk", ""),
+        "{REF:top_non_bull}": (top_non_bull["title"].split("・")[0] if top_non_bull else ""),
+    }
+    for sc in scenarios:
+        text = sc["invalidation"]
+        for token, replacement in refs.items():
+            text = text.replace(token, replacement)
+        sc["invalidation"] = text
+
+
 def _base_scenario(price, support, resistance, is_bearish_arrangement,
                    position_delta) -> Dict:
     s_label, s_val = support
@@ -178,7 +206,9 @@ def _base_scenario(price, support, resistance, is_bearish_arrangement,
         "price_path_text": (f"{_fmt(price)} → 回測 {_fmt(s_val)}（{s_label}）→ "
                             f"反彈 {_fmt(r_val)}（{r_label}）震盪"),
         "narrative": narrative,
-        "invalidation": f"收盤跌破 {_fmt(s_val)} 本劇本失效，切換劇本二。",
+        # 佔位符，排序定稿、每個 id 的最終「劇本X」編號都確定後才由 _resolve_invalidation_refs
+        # 統一替換（見該函式說明；不能在這裡寫死編號，scenarios 最後會依機率重排序）。
+        "invalidation": f"收盤跌破 {_fmt(s_val)} 本劇本失效，切換{{REF:risk}}。",
         "action": {"stance": position_delta,
                   "text": _STANCE_TEXT.get(position_delta, "維持既有部位")},
     }
@@ -210,7 +240,7 @@ def _risk_scenario(price, defense_price, next_support, position_delta) -> Dict:
         "price_path": price_path,
         "price_path_text": price_path_text,
         "narrative": narrative,
-        "invalidation": f"站回 {_fmt(defense_price)}（防守價）本劇本失效，切換劇本一。",
+        "invalidation": f"站回 {_fmt(defense_price)}（防守價）本劇本失效，切換{{REF:base}}。",
         "action": {"stance": r_stance, "text": r_text},
     }
 
@@ -252,7 +282,9 @@ def _bull_scenario(price, res1, res2, primary_action, primary_position_delta,
         "price_path": price_path,
         "price_path_text": price_path_text,
         "narrative": narrative,
-        "invalidation": f"站上 {_fmt(r1_val)} 後量縮不過，本劇本失效，切換劇本一。",
+        # bull 失效時切去哪個劇本要看「排序後機率最高的非 bull 劇本」，排序前無法確定，
+        # 用專屬佔位符（見 _resolve_invalidation_refs）。
+        "invalidation": f"站上 {_fmt(r1_val)} 後量縮不過，本劇本失效，切換{{REF:top_non_bull}}。",
         "action": {"stance": stance, "text": text},
     }
 
@@ -341,6 +373,9 @@ def build_short_scenarios(
     scenarios.sort(key=lambda s: s["probability_pct"], reverse=True)
     for i, sc in enumerate(scenarios):
         sc["title"] = f"劇本{_ORDINAL[i]}・{sc.pop('title_suffix')}"
+
+    # 編號定稿後才解析 invalidation 的跨劇本引用（見該函式說明：修「引用指到自己」根因）。
+    _resolve_invalidation_refs(scenarios)
 
     if event_within_14d:
         for sc in scenarios:

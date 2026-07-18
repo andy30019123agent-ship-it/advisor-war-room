@@ -3,6 +3,7 @@
 一致性閘門／紅線／schema 全覆蓋。"""
 import json
 import os
+import re
 import unittest
 
 import jsonschema
@@ -128,6 +129,73 @@ class TestOrderingAndTitles(unittest.TestCase):
         self.assertTrue(scs[0]["title"].startswith("劇本一"))
         self.assertTrue(scs[1]["title"].startswith("劇本二"))
         self.assertTrue(scs[2]["title"].startswith("劇本三"))
+
+
+# ---------- invalidation 跨劇本引用：排序重編號後不得指向自己 ----------
+class TestInvalidationCrossReference(unittest.TestCase):
+    """根因：舊版在生成當下就寫死「切換劇本一/二」，但 scenarios 最後依機率重新排序、
+    id 對應的「劇本X」編號會變，導致 base/risk 互相失效條件指到自己（prod 實測：risk
+    排到劇本一時，它自己的失效文字卻寫「切換劇本一」）。"""
+
+    @staticmethod
+    def _ordinal_of(sc):
+        return sc["title"].split("・")[0]
+
+    def _target_ordinal(self, sc):
+        m = re.search(r"切換(劇本[一二三])", sc["invalidation"])
+        self.assertIsNotNone(m, sc["invalidation"])
+        return m.group(1)
+
+    def test_risk_ranked_first_invalidation_points_to_base_not_itself(self):
+        # rr 查表：risk(50) > base(30) > bull(20) → risk 排到劇本一（複現 prod 回報的排序）。
+        out = build_short_scenarios(**_kw(technical_color="red", chips_color="red"))
+        by_id = {sc["id"]: sc for sc in out["scenarios"]}
+        risk, base = by_id["risk"], by_id["base"]
+        self.assertEqual(self._ordinal_of(risk), "劇本一")
+        self.assertEqual(self._ordinal_of(base), "劇本二")
+        self.assertNotEqual(self._target_ordinal(risk), self._ordinal_of(risk))
+        self.assertEqual(self._target_ordinal(risk), self._ordinal_of(base))
+        self.assertNotEqual(self._target_ordinal(base), self._ordinal_of(base))
+        self.assertEqual(self._target_ordinal(base), self._ordinal_of(risk))
+
+    def test_bull_invalidation_points_to_top_non_bull_when_base_leads(self):
+        out = build_short_scenarios(**_kw(technical_color="green", chips_color="green",
+                                          market_bias="bull", chips_streak=3))
+        by_id = {sc["id"]: sc for sc in out["scenarios"]}
+        bull = by_id["bull"]
+        self.assertNotEqual(self._target_ordinal(bull), self._ordinal_of(bull))
+        self.assertEqual(self._target_ordinal(bull), self._ordinal_of(by_id["base"]))
+
+    def test_bull_invalidation_points_to_top_non_bull_when_risk_leads(self):
+        out = build_short_scenarios(**_kw(technical_color="red", chips_color="red"))
+        by_id = {sc["id"]: sc for sc in out["scenarios"]}
+        bull = by_id["bull"]
+        self.assertNotEqual(self._target_ordinal(bull), self._ordinal_of(bull))
+        self.assertEqual(self._target_ordinal(bull), self._ordinal_of(by_id["risk"]))
+
+    def test_never_self_references_across_all_probability_orderings(self):
+        # 任意機率排序組合（9 格查表 × 3 種大盤傾向）：每個劇本的 invalidation 引用一律
+        # 不指向自己，且引用到的編號正確對應該指向的劇本 id。
+        for t in ("green", "yellow", "red"):
+            for c in ("green", "yellow", "red"):
+                for bias in ("neutral", "bull", "bear"):
+                    out = build_short_scenarios(**_kw(technical_color=t, chips_color=c,
+                                                       market_bias=bias))
+                    by_id = {sc["id"]: sc for sc in out["scenarios"]}
+                    for sc in out["scenarios"]:
+                        target = self._target_ordinal(sc)
+                        own = self._ordinal_of(sc)
+                        self.assertNotEqual(target, own,
+                                            f"{t}x{c}x{bias}: {sc['id']} 指向自己：{sc['invalidation']}")
+                    self.assertEqual(self._target_ordinal(by_id["base"]),
+                                     self._ordinal_of(by_id["risk"]))
+                    self.assertEqual(self._target_ordinal(by_id["risk"]),
+                                     self._ordinal_of(by_id["base"]))
+                    _RANK = {"劇本一": 0, "劇本二": 1, "劇本三": 2}
+                    top_non_bull = min((by_id["base"], by_id["risk"]),
+                                       key=lambda s: _RANK[self._ordinal_of(s)])
+                    self.assertEqual(self._target_ordinal(by_id["bull"]),
+                                     self._ordinal_of(top_non_bull))
 
 
 # ---------- 關鍵位間距規則（2%）：候選太近就跳到下一個／不足時 2 段 path／中性化標籤 ----------
