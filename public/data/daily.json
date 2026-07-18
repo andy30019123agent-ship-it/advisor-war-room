@@ -1,8 +1,8 @@
 {
   "meta": {
     "schema_version": 1,
-    "data_date": "2026-07-18",
-    "generated_at": "2026-07-18T12:00:59+08:00",
+    "data_date": "2026-07-17",
+    "generated_at": "2026-07-18T12:57:11+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -64,6 +64,17 @@
         "readable_reason": "因為趨勢仍在（站上均線），所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
         "defense_price": 2106.8
       }
+    },
+    {
+      "id": "2454",
+      "name": "聯發科",
+      "close": 3370.0,
+      "change_pct": null,
+      "decision": {
+        "action": "觀望",
+        "readable_reason": "因為趨勢仍在（站上均線），所以先觀望不進場；但估值很貴是風險。",
+        "defense_price": 2875.8
+      }
     }
   ],
   "watch": [],
@@ -74,6 +85,20 @@
       "type": "defense",
       "price": 2106.8,
       "direction": "below"
+    },
+    {
+      "id": "2454",
+      "name": "聯發科",
+      "type": "defense",
+      "price": 2875.8,
+      "direction": "below"
+    },
+    {
+      "id": "2454",
+      "name": "聯發科",
+      "type": "entry",
+      "price": 4785.0,
+      "direction": "above"
     }
   ]
 }

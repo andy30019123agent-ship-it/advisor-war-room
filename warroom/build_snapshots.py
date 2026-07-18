@@ -76,10 +76,11 @@ def _num(x) -> Optional[float]:
         return None
 
 
-def build_meta(sources: List[str]) -> Dict:
+def build_meta(sources: List[str], data_date: Optional[str] = None) -> Dict:
+    # data_date＝行情資料日（契約定義），不是產生日；抓不到行情日才 fallback 今天。
     return {
         "schema_version": 1,
-        "data_date": _today(),
+        "data_date": data_date or _today(),
         "generated_at": _now_iso(),
         "sources": sources,
     }
@@ -128,20 +129,21 @@ def load_stock_results(stock_files: Dict[str, str]) -> Tuple[Dict[str, Dict], Li
 
 
 # ---------- 大盤區塊 ----------
-def _daily_change_finmind(stock_id: str = "TAIEX") -> Tuple[Optional[float], Optional[float]]:
-    """回 (今日收盤, 日漲跌%)。抓失敗或資料不足 2 天 → (None, None)。"""
+def _daily_change_finmind(stock_id: str = "TAIEX") -> Tuple[Optional[float], Optional[float], Optional[str]]:
+    """回 (今日收盤, 日漲跌%, 行情日 YYYY-MM-DD)。抓失敗或資料不足 2 天 → (None, None, None)。"""
     try:
         start = (datetime.now(_TPE) - timedelta(days=14)).strftime("%Y-%m-%d")
         df = cached_fetch("taiwan_stock_daily", stock_id=stock_id, start_date=start)
         df = df.sort_values("date")
         if len(df) < 2:
-            return None, None
+            return None, None, None
         last = float(df.iloc[-1]["close"])
         prev = float(df.iloc[-2]["close"])
         chg = round((last / prev - 1) * 100, 2) if prev else None
-        return round(last, 1), chg
+        trade_date = str(df.iloc[-1]["date"])[:10]
+        return round(last, 1), chg, trade_date
     except Exception:
-        return None, None
+        return None, None, None
 
 
 def _daily_change_yf(ticker: str) -> Optional[float]:
@@ -161,7 +163,7 @@ def fetch_market_inputs() -> Dict:
     """打網路：TAIEX 當日漲跌%（FinMind）＋ US 四指數當日漲跌%（yfinance）＋外資買賣超
     （沿用 warroom.market.fetch_market() 的合計，避免重算）。任何一段失敗都給 None，
     不讓整批 build 失敗（契約硬規則 3）。"""
-    taiex_close, taiex_chg = _daily_change_finmind("TAIEX")
+    taiex_close, taiex_chg, trade_date = _daily_change_finmind("TAIEX")
     us = [{"id": id_, "name": name, "change_pct": _daily_change_yf(ticker)}
           for id_, name, ticker in _US_INDEXES]
     foreign_net_yi = None
@@ -171,7 +173,8 @@ def fetch_market_inputs() -> Dict:
     except Exception:
         pass
     return {"taiex": {"close": taiex_close, "change_pct": taiex_chg},
-            "us": us, "foreign_net_yi": foreign_net_yi}
+            "us": us, "foreign_net_yi": foreign_net_yi,
+            "trade_date": trade_date}
 
 
 def compute_market_status(taiex_chg, sox_chg, vix_chg, foreign_net_yi) -> str:
@@ -439,9 +442,10 @@ def build_all(data_dir: str = DATA_DIR,
     profile = load_profile()
     stock_files = discover_stock_files(data_dir)
     results, skipped = load_stock_results(stock_files)
-    meta = build_meta(sources=["FinMind", "yfinance"])
     if market_inputs is None:
         market_inputs = fetch_market_inputs()
+    meta = build_meta(sources=["FinMind", "yfinance"],
+                      data_date=market_inputs.get("trade_date"))
     market_block = build_market_block(market_inputs)
     daily = build_daily(profile, results, meta, market_block)
     stock_details = {sid: build_stock_detail(sid, res, profile, meta)
