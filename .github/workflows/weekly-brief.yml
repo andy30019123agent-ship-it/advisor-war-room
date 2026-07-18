@@ -1,0 +1,28 @@
+name: 下週劇本（TG）
+
+on:
+  schedule:
+    # 台北週日 20:00 = UTC 12:00 Sunday。
+    - cron: "0 12 * * 0"
+  workflow_dispatch: {}
+
+concurrency:
+  group: weekly-brief
+  cancel-in-progress: false
+
+jobs:
+  weekly-brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 產生並發送下週劇本
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: python3 -m warroom.weekly_brief

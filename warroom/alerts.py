@@ -21,8 +21,11 @@ DEFAULT_DATA_PATH = "public/data/daily.json"
 DEFAULT_STATE_PATH = "data/alerts_state.json"
 
 _TWSE_URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={prefix}_{id}.tw"
+_TAIEX_URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_t00.tw"
 _FINMIND_URL = "https://api.finmindtrade.com/api/v4/data"
 _TG_URL = "https://api.telegram.org/bot{token}/sendMessage"
+
+MARKET_MOVE_THRESHOLD_PCT = 2.0
 
 
 def _today_str(now=None):
@@ -201,6 +204,82 @@ def get_price(stock_id):
     return None
 
 
+def fetch_taiex(timeout=6):
+    """加權指數即時值：TWSE MIS tse_t00.tw；z=現值，y=昨收。
+    任何失敗（連線／格式）一律 graceful 回 (None, None)，不炸主流程——
+    大盤警報是「順帶」功能，不該讓既有到價提醒因此掛掉。"""
+    req = urllib.request.Request(_TAIEX_URL, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"  [warn] 大盤即時值抓取失敗: {type(e).__name__} {str(e)[:60]}")
+        return None, None
+    arr = payload.get("msgArray") or []
+    if not arr:
+        return None, None
+    info = arr[0]
+
+    def _num(field):
+        v = info.get(field)
+        if not v or v == "-":
+            return None
+        try:
+            return float(v)
+        except ValueError:
+            return None
+
+    return _num("z"), _num("y")
+
+
+def compute_change_pct(current, prev_close):
+    """回傳漲跌百分比；current／prev_close 任一缺失或昨收為 0 回 None。"""
+    if current is None or prev_close is None or prev_close == 0:
+        return None
+    return (current - prev_close) / prev_close * 100
+
+
+def evaluate_market_move(change_pct, threshold=MARKET_MOVE_THRESHOLD_PCT):
+    """|change_pct| ≥ threshold 才算「劇烈波動」，回傳 'up'/'down'；否則回 None。"""
+    if change_pct is None:
+        return None
+    if change_pct >= threshold:
+        return "up"
+    if change_pct <= -threshold:
+        return "down"
+    return None
+
+
+def build_market_move_message(direction, price, change_pct):
+    price_s = fmt_price(price)
+    pct_s = f"{change_pct:+.1f}%"
+    if direction == "up":
+        return (
+            f"📈 大盤劇烈波動：加權指數 {price_s}（{pct_s}）。"
+            "留意追高風險，紀律優先，記得回 App 看持股計畫。"
+        )
+    return (
+        f"📉 大盤劇烈波動：加權指數 {price_s}（{pct_s}）。"
+        "風險溫度已高，記得回 App 看持股防守價。"
+    )
+
+
+def check_market_move(state, today_str):
+    """抓 TAIEX、判斷是否劇烈波動、依 state 去重後發送。回傳已發送則數（0 或 1）。"""
+    current, prev_close = fetch_taiex()
+    change_pct = compute_change_pct(current, prev_close)
+    direction = evaluate_market_move(change_pct)
+    if direction is None:
+        return 0
+    key = f"market_move_{direction}"
+    if already_sent(state, today_str, key):
+        return 0
+    msg = build_market_move_message(direction, current, change_pct)
+    send_telegram(msg)
+    mark_sent(state, today_str, key)
+    return 1
+
+
 def send_telegram(message, token=None, chat_id=None, timeout=8):
     """回 True 表示訊息已處理完畢（含 dry-run）；實際發送失敗回 False。"""
     token = token if token is not None else os.environ.get("TG_BOT_TOKEN")
@@ -228,27 +307,31 @@ def run(data_path=DEFAULT_DATA_PATH, state_path=DEFAULT_STATE_PATH, force=False,
         print("非盤中時段，略過本輪（用 --force 可強制執行）。")
         return 0
 
-    alerts = load_snapshot(data_path)
-    if not alerts:
-        print(f"{data_path} 無 alerts_snapshot 資料，略過本輪。")
-        return 0
-
     today = _today_str(now)
     state = load_state(state_path)
     sent = 0
-    for alert in alerts:
-        key = alert_key(alert)
-        if already_sent(state, today, key):
-            continue
-        price = get_price(alert.get("id"))
-        if price is None:
-            print(f"  [warn] {alert.get('name')} {alert.get('id')} 抓不到即時價，跳過本輪。")
-            continue
-        if evaluate(alert, price):
-            msg = build_message(alert, price)
-            send_telegram(msg)
-            mark_sent(state, today, key)
-            sent += 1
+
+    # 大盤劇烈波動檢查：獨立於 alerts_snapshot 是否有資料，每輪都順帶抓一次。
+    sent += check_market_move(state, today)
+
+    alerts = load_snapshot(data_path)
+    if not alerts:
+        print(f"{data_path} 無 alerts_snapshot 資料，略過個股到價提醒。")
+    else:
+        for alert in alerts:
+            key = alert_key(alert)
+            if already_sent(state, today, key):
+                continue
+            price = get_price(alert.get("id"))
+            if price is None:
+                print(f"  [warn] {alert.get('name')} {alert.get('id')} 抓不到即時價，跳過本輪。")
+                continue
+            if evaluate(alert, price):
+                msg = build_message(alert, price)
+                send_telegram(msg)
+                mark_sent(state, today, key)
+                sent += 1
+
     save_state(state, state_path)
     print(f"本輪觸發並發送 {sent} 則提醒。")
     return 0

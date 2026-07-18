@@ -105,6 +105,46 @@
           "direction": { "type": "string", "enum": ["below", "above"] }
         }
       }
+    },
+    "exposure_guidance": {
+      "type": "object",
+      "required": ["risk_temp", "max_equity_pct", "min_cash_pct", "new_position", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "risk_temp": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "max_equity_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "min_cash_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "new_position": { "type": "string", "enum": ["禁止新增部位", "僅限試單", "可正常布局"] },
+        "note": { "type": "string" }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "id", "name", "type", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "date": { "type": "string" },
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["earnings", "ex_dividend", "revenue", "event"] },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    "track_stats": {
+      "type": "object",
+      "required": ["n", "closed", "hit_rate_5d", "hit_rate_20d", "hit_rate_60d", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "n": { "type": "integer", "minimum": 0 },
+        "closed": { "type": "integer", "minimum": 0 },
+        "hit_rate_5d": { "type": ["number", "null"] },
+        "hit_rate_20d": { "type": ["number", "null"] },
+        "hit_rate_60d": { "type": ["number", "null"] },
+        "note": { "type": "string" }
+      }
     }
   },
   "definitions": {

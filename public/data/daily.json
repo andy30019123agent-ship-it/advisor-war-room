@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-07-17",
-    "generated_at": "2026-07-18T16:40:36+08:00",
+    "generated_at": "2026-07-18T17:05:48+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -100,5 +100,21 @@
       "price": 3809.4,
       "direction": "above"
     }
-  ]
+  ],
+  "exposure_guidance": {
+    "risk_temp": 9,
+    "max_equity_pct": 40,
+    "min_cash_pct": 60,
+    "new_position": "禁止新增部位",
+    "note": "風險溫度 9/10：市場劇烈波動，現金至少留六成，今天不開新倉。"
+  },
+  "events": [],
+  "track_stats": {
+    "n": 6,
+    "closed": 0,
+    "hit_rate_5d": null,
+    "hit_rate_20d": null,
+    "hit_rate_60d": null,
+    "note": "樣本累積中，5 日結果最快 2026-07-22 開始回填"
+  }
 }

@@ -7,6 +7,14 @@ import pytest
 from warroom import alerts
 
 _TPE = timezone(timedelta(hours=8))
+_REAL_FETCH_TAIEX = alerts.fetch_taiex  # 給要測 fetch_taiex 本體的測試繞過下面的 autouse stub
+
+
+@pytest.fixture(autouse=True)
+def _stub_taiex(monkeypatch):
+    """預設大盤即時值回中性（漲跌 0%，不觸發劇烈波動警報），避免既有測試意外打真實網路、
+    或被新加的大盤波動檢查干擾。需要測市場波動情境的測試自行 monkeypatch 覆蓋回來。"""
+    monkeypatch.setattr(alerts, "fetch_taiex", lambda **kw: (17000.0, 17000.0))
 
 
 def _daily(snapshot):
@@ -281,3 +289,112 @@ def test_get_price_falls_back_to_finmind_when_both_twse_exchanges_empty(monkeypa
     monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
     monkeypatch.setattr(alerts, "fetch_price_finmind", lambda stock_id, **kw: 79.5)
     assert alerts.get_price("6505") == 79.5
+
+
+# ── 大盤劇烈波動警報 ─────────────────────────────────────────────────
+
+def test_fetch_taiex_parses_current_and_prev_close(monkeypatch):
+    monkeypatch.setattr(alerts, "fetch_taiex", _REAL_FETCH_TAIEX)  # 繞過 autouse stub，測本體
+    responses = {"tse_t00.tw": {"msgArray": [{"z": "17205.30", "y": "17650.10"}]}}
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    cur, prev = alerts.fetch_taiex()
+    assert cur == 17205.30
+    assert prev == 17650.10
+
+
+def test_fetch_taiex_empty_msg_array_returns_none_none(monkeypatch):
+    monkeypatch.setattr(alerts, "fetch_taiex", _REAL_FETCH_TAIEX)
+    responses = {"tse_t00.tw": {"msgArray": []}}
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    assert alerts.fetch_taiex() == (None, None)
+
+
+def test_fetch_taiex_network_error_graceful(monkeypatch):
+    monkeypatch.setattr(alerts, "fetch_taiex", _REAL_FETCH_TAIEX)
+
+    def _boom(req, timeout=None):
+        raise OSError("timed out")
+
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _boom)
+    assert alerts.fetch_taiex() == (None, None)
+
+
+def test_compute_change_pct_basic():
+    assert round(alerts.compute_change_pct(17205.3, 17650.1), 2) == -2.52
+
+
+def test_compute_change_pct_missing_values_returns_none():
+    assert alerts.compute_change_pct(None, 17650.1) is None
+    assert alerts.compute_change_pct(17205.3, None) is None
+    assert alerts.compute_change_pct(17205.3, 0) is None
+
+
+@pytest.mark.parametrize("change_pct, expected", [
+    (2.0, "up"),
+    (5.5, "up"),
+    (-2.0, "down"),
+    (-5.5, "down"),
+    (1.9, None),
+    (-1.9, None),
+    (0.0, None),
+    (None, None),
+])
+def test_evaluate_market_move(change_pct, expected):
+    assert alerts.evaluate_market_move(change_pct) == expected
+
+
+def test_build_market_move_message_down():
+    msg = alerts.build_market_move_message("down", 17205.3, -2.52)
+    assert msg == (
+        "📉 大盤劇烈波動：加權指數 17,205.30（-2.5%）。"
+        "風險溫度已高，記得回 App 看持股防守價。"
+    )
+
+
+def test_build_market_move_message_up():
+    msg = alerts.build_market_move_message("up", 17900.0, 3.14)
+    assert msg.startswith("📈 大盤劇烈波動：加權指數 17,900（+3.1%）")
+
+
+def test_check_market_move_sends_and_dedups(monkeypatch):
+    monkeypatch.setattr(alerts, "fetch_taiex", lambda **kw: (17000.0, 17650.1))  # -3.68%
+    sent_msgs = []
+    monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: sent_msgs.append(msg) or True)
+
+    state = {}
+    sent1 = alerts.check_market_move(state, "2026-07-19")
+    sent2 = alerts.check_market_move(state, "2026-07-19")  # 同一天同方向不再發
+
+    assert sent1 == 1
+    assert sent2 == 0
+    assert len(sent_msgs) == 1
+    assert "📉" in sent_msgs[0]
+    assert "market_move_down" in state["2026-07-19"]
+
+
+def test_check_market_move_no_trigger_within_threshold(monkeypatch):
+    monkeypatch.setattr(alerts, "fetch_taiex", lambda **kw: (17500.0, 17650.1))  # -0.85%
+    sent_msgs = []
+    monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: sent_msgs.append(msg) or True)
+
+    state = {}
+    sent = alerts.check_market_move(state, "2026-07-19")
+    assert sent == 0
+    assert sent_msgs == []
+
+
+def test_run_sends_market_move_alert_even_without_alerts_snapshot(tmp_path, monkeypatch):
+    """既有 alerts_snapshot 為空也要順帶檢查大盤——市場警報不該依賴個股清單非空。"""
+    data_path = _write_daily(tmp_path, [])
+    state_path = str(tmp_path / "alerts_state.json")
+
+    monkeypatch.setattr(alerts, "fetch_taiex", lambda **kw: (17000.0, 17650.1))  # -3.68%
+    sent_msgs = []
+    monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: sent_msgs.append(msg) or True)
+
+    now = datetime(2026, 7, 17, 10, 0, tzinfo=_TPE)
+    rc = alerts.run(data_path=data_path, state_path=state_path, force=True, now=now)
+
+    assert rc == 0
+    assert len(sent_msgs) == 1
+    assert "📉" in sent_msgs[0]

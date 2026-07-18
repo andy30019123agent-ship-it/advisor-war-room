@@ -81,7 +81,17 @@
           }
         },
         "reeval_date": { "type": "string" },
-        "core_note": { "type": "string" }
+        "core_note": { "type": "string" },
+        "advice": {
+          "type": "object",
+          "required": ["holder", "nonholder"],
+          "additionalProperties": false,
+          "properties": {
+            "holder": { "$ref": "#/definitions/advice_side" },
+            "nonholder": { "$ref": "#/definitions/advice_side" }
+          }
+        },
+        "defense_explain": { "type": "string" }
       }
     },
     "context": {
@@ -202,6 +212,26 @@
     }
   },
   "definitions": {
+    "advice_side": {
+      "type": "object",
+      "required": ["action_text", "plan"],
+      "additionalProperties": false,
+      "properties": {
+        "action_text": { "type": "string" },
+        "plan": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["trigger", "act"],
+            "additionalProperties": false,
+            "properties": {
+              "trigger": { "type": "string" },
+              "act": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
     "timeframe": {
       "type": "object",
       "required": ["label", "stance", "basis"],

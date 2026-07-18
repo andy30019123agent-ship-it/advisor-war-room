@@ -7,6 +7,7 @@
 
 全部純規則、可揭露；LLM 不介入產數字（§3.5 narration 去人工化＝依 reason_codes 套模板）。
 """
+import re
 from typing import Dict, List, Optional
 
 from warroom.decision_engine import composite_score
@@ -285,6 +286,22 @@ def _anchor_executable(anchor_price, price, max_pct=_MAX_ENTRY_DISTANCE):
             and abs(anchor_price / price - 1) <= max_pct)
 
 
+def _fmt_price(x):
+    """人話文案用：四捨五入到整數＋千分位（契約文案本身即用 '2,107' 這種寫法）。"""
+    try:
+        return f"{round(float(x)):,}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _find_fact(facts, *keys):
+    """回第一條同時含所有 keys 的 fact 字串，找不到回空字串（不編）。"""
+    for s in facts or []:
+        if all(k in s for k in keys):
+            return s
+    return ""
+
+
 def _safe_entry_condition(entry_condition, price, tech_facts):
     """entry_condition 突破價距現價 >15% 視為不可執行（回歸：2454 現價 3370 給「突破
     4785」＝要求 +42% 才進場），改用較近可執行錨點：優先 MA20，太遠退 MA60，
@@ -312,39 +329,265 @@ def _normalize_light_color(x):
     return _LIGHT_COLOR_OUT.get(x)   # na／缺資料／其他 → None
 
 
+# ---------- v1.1：雙版建議 advice ＋ 防守價說明 defense_explain ----------
+def _executable_anchors(price, tech_facts, defense_price):
+    """回可執行（距現價 ≤15%）的價位錨清單，每項 {label, price, side}。
+    來源：防守價＋MA20/MA60/MA120（沿用 _safe_entry_condition 的錨點與 15% 規則）。"""
+    out = []
+    if _anchor_executable(defense_price, price):
+        out.append({"label": "防守價", "price": defense_price,
+                    "side": "below" if defense_price < price else "above"})
+    for label in ("MA20", "MA60", "MA120"):
+        v = _parse_tech_anchor(tech_facts, label)
+        if v is not None and _anchor_executable(v, price):
+            out.append({"label": label, "price": v,
+                        "side": "below" if v < price else "above"})
+    return out
+
+
+def _nonholder_entry(price, tech_facts, entry_condition, anchors):
+    """空手者的進場錨：優先「站回最近上方均線」，退而求其次回測下方均線，
+    再退回 primary 的 entry_condition（已被 _safe_entry_condition 收斂到 ≤15%）。"""
+    ma_aboves = sorted([a for a in anchors if a["side"] == "above" and a["label"].startswith("MA")],
+                       key=lambda a: a["price"])
+    if ma_aboves:
+        a = ma_aboves[0]
+        return {"price": a["price"],
+                "trigger": f"站回 {a['label']} {_fmt_price(a['price'])} 且法人連 2 日買超"}
+    ma_belows = sorted([a for a in anchors if a["side"] == "below" and a["label"].startswith("MA")],
+                       key=lambda a: a["price"], reverse=True)
+    if ma_belows:
+        a = ma_belows[0]
+        return {"price": a["price"],
+                "trigger": f"回測 {a['label']} {_fmt_price(a['price'])} 附近止穩、法人止賣"}
+    ec = _safe_entry_condition(entry_condition, price, tech_facts)
+    if ec and ec.get("price") is not None:
+        return {"price": ec["price"],
+                "trigger": f"{ec.get('condition', '進場條件')}（約 {_fmt_price(ec['price'])}）"}
+    return None
+
+
+# holder action_text 的固定起手詞（動詞方向由 action 決定，一致性測試把關）
+_HOLDER_TEXT = {
+    "加碼": "維持持股、可分批加碼",
+    "續抱": "續抱不動",
+    "試單": "續抱不動",
+    "觀望": "續抱觀望、暫不加碼",
+    "減碼": "分批減碼",
+    "出場": "波段出場、反彈不追",
+}
+_ACTION_DIR = {"加碼": "up", "續抱": "hold", "試單": "hold",
+               "觀望": "hold", "減碼": "down", "出場": "down"}
+
+
+def _text_direction(action_text):
+    """由 holder action_text 起手段判動詞方向（一致性測試用；與 _ACTION_DIR 對齊）。"""
+    head = re.split(r"[，；：。]", action_text or "")[0]
+    if "減碼" in head or "出場" in head or "出清" in head:
+        return "down"
+    if "加碼" in head and "不加碼" not in head and "暫不" not in head:
+        return "up"
+    return "hold"
+
+
+def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
+                 entry_condition, is_core_holding, valuation=None):
+    """雙版建議：holder（已持有）＋nonholder（空手），各含 action_text＋plan 階梯。
+    plan 每條 trigger 含具體價位/條件、act 含比例或金額；價位錨一律 ≤15%（見 _executable_anchors）。
+    文案由 action + reason_codes + 價位錨生成，與 action 同向（一致性測試把關）。"""
+    codes = reason_codes or []
+    anchors = _executable_anchors(price, tech_facts, defense_price)
+    defense_exec = _anchor_executable(defense_price, price)
+    core_txt = "（核心不動）" if is_core_holding else ""
+    core_act = "，核心不動" if is_core_holding else ""
+
+    # ---- holder ----
+    hplan = []
+    if defense_exec:
+        if action == "出場":
+            hplan.append({"trigger": f"反彈至均線或跌破 {_fmt_price(defense_price)}（防守價）",
+                          "act": f"波段部位分批出清{core_act}"})
+        else:
+            hplan.append({"trigger": f"收盤跌破 {_fmt_price(defense_price)}（防守價）",
+                          "act": f"賣出波段部位的 1/2{core_act}"})
+            lowers = sorted([a for a in anchors if a["side"] == "below" and a["price"] < defense_price],
+                            key=lambda a: a["price"], reverse=True)
+            if lowers:
+                a = lowers[0]
+                hplan.append({"trigger": f"收盤再跌破 {_fmt_price(a['price'])}（{a['label']}）",
+                              "act": f"波段部位全部出場{core_act}"})
+    if action in ("加碼", "續抱", "試單", "觀望"):
+        ma_aboves = sorted([a for a in anchors if a["side"] == "above" and a["label"].startswith("MA")],
+                           key=lambda a: a["price"])
+        if ma_aboves:
+            a = ma_aboves[0]
+            add_act = "可加碼 20 萬" if action == "加碼" else "可回補 10 萬"
+            hplan.append({"trigger": f"站回 {a['label']} {_fmt_price(a['price'])} 且法人連 2 日買超",
+                          "act": f"{add_act}{core_act}"})
+
+    if defense_exec:
+        if action == "出場":
+            htail = f"，跌破 {_fmt_price(defense_price)} 前分批出清"
+        elif action == "減碼":
+            htail = f"，跌破 {_fmt_price(defense_price)} 收盤前完成減碼"
+        else:
+            htail = f"，跌破 {_fmt_price(defense_price)} 收盤再降一半波段部位"
+    else:
+        htail = ""
+    holder_text = f"{_HOLDER_TEXT.get(action, action)}{htail}{core_txt}。"
+
+    # ---- nonholder ----
+    entry = _nonholder_entry(price, tech_facts, entry_condition, anchors)
+    nplan = []
+    if entry:
+        if action in ("減碼", "出場"):
+            nplan.append({"trigger": entry["trigger"], "act": "確認止穩後再考慮試單 10 萬"})
+        elif action == "加碼":
+            nplan.append({"trigger": entry["trigger"], "act": "分批布局 20 萬"})
+        else:
+            nplan.append({"trigger": entry["trigger"], "act": "試單 10 萬"})
+
+    if entry is None:
+        nonholder_text = "資料不足，暫不列進場條件，先觀望。"
+    elif action in ("減碼", "出場"):
+        nonholder_text = f"空手續抱觀望，法人止賣、{entry['trigger']}前不接刀。"
+    elif action == "觀望":
+        nonholder_text = f"先不進場，等{entry['trigger']}。"
+    else:
+        amt = "20 萬" if action == "加碼" else "10 萬"
+        nonholder_text = f"空手可等{entry['trigger']}再試單 {amt}，不追高。"
+
+    return {
+        "holder": {"action_text": holder_text, "plan": hplan},
+        "nonholder": {"action_text": nonholder_text, "plan": nplan},
+    }
+
+
+_STOP_BASIS_PHRASE = {
+    "ATR": "近期波動下緣（2×ATR）",
+    "關鍵均線": "關鍵均線支撐",
+    "近20日低": "近 20 日低點",
+    "區間下限": "-8%～-15% 停損區間下限",
+}
+
+
+def build_defense_explain(defense_price, stop_info):
+    """一句話說明防守價怎麼來（如實描述 decision_engine.stop_reference 用的錨，不編）。"""
+    if defense_price is None:
+        return "尚無有效防守價（資料不足），暫以個人停損紀律為準。"
+    basis = (stop_info or {}).get("basis")
+    clamped = (stop_info or {}).get("clamped")
+    phrase = _STOP_BASIS_PHRASE.get(basis, "技術支撐")
+    fmt = _fmt_price(defense_price)
+    if clamped:
+        return (f"防守價 {fmt}＝{phrase}與 -8%～-15% 停損帶取較近者"
+                f"（原始錨落在停損帶外、已收斂至邊界）；跌破代表波段結構破壞。")
+    return (f"防守價 {fmt}＝{phrase}，落在 -8%～-15% 停損帶內；"
+            f"跌破代表波段結構破壞。")
+
+
 def generate_roles(codes, lights_facts, action):
-    """§3.5：角色觀點改引擎決定式生成，格式＝支持/反對/要驗證三欄，不再依賴手寫 narration。"""
-    roles = []
+    """§3.5 升級：六角色（技術/基本/籌碼分析師、風控長、魔鬼代言人、投資長）依 reason_codes
+    ＋facts 產「有立場的完整句子」——支持寫為何站這邊（含數字）、反對寫這角色擔心什麼、
+    驗證寫接下來看什麼指標翻多/翻空。魔鬼代言人對 action 提最強反例。模板依 codes 組合變化。"""
+    codes = codes or []
     tech_f = _facts_of(lights_facts, "technical")
     fund_f = _facts_of(lights_facts, "fundamental")
     chip_f = _facts_of(lights_facts, "chips")
-    roles.append({
-        "role": "技術面分析師",
-        "support": tech_f if "trend_ok" in codes else [],
-        "oppose": tech_f if "trend_weak" in codes else [],
-        "verify": ["觀察是否守住均線與防守位"],
-    })
-    roles.append({
-        "role": "基本面分析師",
-        "support": fund_f if "fundamental_ok" in codes else [],
-        "oppose": fund_f if ("fundamental_weak" in codes or "fundamental_broken" in codes) else [],
-        "verify": ["追蹤下月營收 YoY 是否維持"],
-    })
-    roles.append({
-        "role": "籌碼分析師",
-        "support": chip_f if "chips_ok" in codes else [],
-        "oppose": chip_f if ("chips_weak" in codes or "chips_broken" in codes) else [],
-        "verify": ["確認外資／投信是否轉買"],
-    })
-    val_codes = [c for c in codes if c.startswith("valuation")]
-    roles.append({
-        "role": "風控／估值",
-        "support": ["估值便宜提供安全邊際"] if "valuation_cheap" in codes else [],
-        "oppose": [_REASON_PHRASE[c] for c in val_codes
-                   if c in ("valuation_expensive", "valuation_very_expensive")],
-        "verify": ["估值模型有 warning 時以區間語言為準"] if "valuation_warning" in codes
-                  else ["確認 R/R 是否站上 2 倍再加碼"],
-    })
+
+    def has(*cs):
+        return any(c in codes for c in cs)
+
+    yoy = _find_fact(fund_f, "YoY") or "營收資料有限"
+    per = _find_fact(fund_f, "PER")
+    net = _find_fact(chip_f, "法人淨額") or _find_fact(chip_f, "法人")
+    streak = _find_fact(chip_f, "連續")
+    ma_line = "、".join([s for s in tech_f if s.startswith("MA")]) or "均線資料有限"
+    val_band = next((_REASON_PHRASE[c] for c in codes
+                     if c in ("valuation_expensive", "valuation_very_expensive")), "")
+    act_phrase = _ACTION_PHRASE.get(action, action)
+
+    # 技術面分析師
+    if has("trend_ok"):
+        t_sup = [f"價量結構站上均線（{ma_line}），波段趨勢仍偏多，回檔是找買點而非逃命。"]
+        t_opp = ["若出現爆量長黑或跌破 MA20 收盤，多頭排列會鬆動，追高風險升高。"]
+    elif has("trend_mixed"):
+        t_sup = [f"均線糾結、僅守長天期均線（{ma_line}），尚未跌破結構，先給中性不偏空。"]
+        t_opp = ["MA20 已走平下彎、上方均線壓力沉重，站不回去前反彈都可能是逃命波。"]
+    else:
+        t_sup = []
+        t_opp = [f"已跌破短中期均線（{ma_line}），技術轉空，此時進場等於接下墜的刀。"]
+    roles = [{"role": "技術面分析師", "support": t_sup, "oppose": t_opp,
+              "verify": ["連 3 日站穩 MA20 並帶量突破前高 → 翻多；跌破 MA60 收盤 → 翻空。"]}]
+
+    # 基本面分析師
+    if has("fundamental_broken"):
+        f_sup, f_opp = [], [f"營收基本面已失效（{yoy}），成長故事被打破，估值再低也不宜接。"]
+    elif has("fundamental_weak"):
+        f_sup = [f"基本面尚在但動能轉弱（{yoy}），撐得住但不宜押重。"]
+        f_opp = ["成長率若連兩月下滑，估值下修空間會被放大。"]
+    else:
+        f_sup = [f"基本面沒惡化、成長仍在（{yoy}），是續抱與逢低的底氣。"]
+        f_opp = [f"{per} 已不便宜，好公司不等於好價格，追高要留意估值。" if per
+                 else "股價已反映不少成長，追高要留意估值。"]
+    roles.append({"role": "基本面分析師", "support": f_sup, "oppose": f_opp,
+                  "verify": ["追蹤下月營收 YoY 是否維持、法說會展望有無下修。"]})
+
+    # 籌碼面分析師
+    if has("chips_broken"):
+        c_sup, c_opp = [], [f"法人連日站賣方（{net}；{streak}），主力籌碼鬆動，反彈量縮即是出貨。"]
+    elif has("chips_weak"):
+        c_sup, c_opp = [], [f"法人偏空、買盤縮手（{net}），沒有大戶點火前漲勢難延續。"]
+    else:
+        c_sup = [f"法人站買方（{net}），籌碼歸邊、下檔有承接。"]
+        c_opp = ["一旦外資由買轉賣，短線籌碼面會立刻轉弱，須盯緊當日買賣超。"]
+    roles.append({"role": "籌碼面分析師", "support": c_sup, "oppose": c_opp,
+                  "verify": ["確認外資／投信是否由賣轉買、連續買超天數能否翻正。"]})
+
+    # 風控長
+    r_sup = [f"防守價明確、下檔可量化，{act_phrase}都在停損紀律內執行。"]
+    r_opp = []
+    if has("valuation_warning"):
+        r_opp.append("估值模型有 warning、Base 不可信，R/R 不宜當加碼依據，只看價格結構與停損。")
+    if has("rr_insufficient"):
+        r_opp.append("報酬風險比不足 2 倍，賺賠不對稱，寧可等更好的點。")
+    if val_band:
+        r_opp.append(f"{val_band}，一旦情緒反轉，殺估值的速度會很快。")
+    if not r_opp:
+        r_opp = ["最大風險是紀律沒守住——跌破防守價卻凹單。"]
+    roles.append({"role": "風控長", "support": r_sup, "oppose": r_opp,
+                  "verify": ["盯 R/R 是否站上 2 倍、防守價是否被收盤跌破。"]})
+
+    # 魔鬼代言人（對 action 唱反調）
+    bullish = action in ("加碼", "續抱", "試單")
+    if bullish:
+        d_sup = [f"最強的反方：{val_band or '估值偏高'}、{net or '法人偏空'}，"
+                 f"此時{act_phrase}等於在派對尾聲進場，利多恐是出貨掩護。"]
+        d_opp = ["若法人續賣、股價跌破防守價，回頭看今天的樂觀就是套牢起點。"]
+        d_ver = ["刻意找反例：跌破防守價證明我對、站回均線且法人回補證明我錯。"]
+    else:
+        d_sup = [f"反過來想：{yoy}、股價已修正一段，"
+                 f"此時{act_phrase}可能砍在阿呆谷、錯過基本面反彈。"]
+        d_opp = ["若營收維持成長、法人回補並站回均線，過度保守會兩頭空。"]
+        d_ver = ["刻意找反例：續破底證明我錯、營收與籌碼同步轉強證明過度保守。"]
+    roles.append({"role": "魔鬼代言人", "support": d_sup, "oppose": d_opp, "verify": d_ver})
+
+    # 投資長（綜合拍板）
+    pos_reason = "、".join([p for p in [
+        "趨勢仍在" if has("trend_ok") else "",
+        "基本面沒壞" if has("fundamental_ok") else "",
+        "籌碼歸邊" if has("chips_ok") else "",
+    ] if p]) or "多方理由有限"
+    neg_reason = "、".join([p for p in [
+        "籌碼失效" if has("chips_broken") else ("籌碼偏空" if has("chips_weak") else ""),
+        val_band,
+        "趨勢轉弱" if has("trend_weak", "trend_mixed") else "",
+    ] if p]) or "空方風險有限"
+    roles.append({"role": "投資長",
+                  "support": [f"綜合三面與風控，本週定調：{act_phrase}。"
+                              f"多方是{pos_reason}，空方是{neg_reason}。"],
+                  "oppose": ["在防守價與站回訊號明朗前不擴大部位，避免用單一利多改變整體判斷。"],
+                  "verify": ["下一決策點：防守價是否守住、法人是否回補、下月營收是否達標。"]})
     return roles
 
 

@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Tuple
 
 from warroom.finmind_cache import cached_fetch
 from warroom.market import fetch_market
+from warroom.primary_decision import build_advice, build_defense_explain, generate_roles
 from warroom.profile import load_profile
 
 _TPE = timezone(timedelta(hours=8))
@@ -30,6 +31,12 @@ DATA_DIR = "data"
 OUT_DIR = "public/data"
 STOCK_ID_RE = re.compile(r"^\d{4,6}$")
 RECOMMENDATION_LOG = "data/recommendation_log.json"
+# 未來事件來源①：法說會行事曆（姊妹專案；不存在則跳過，不編）。
+EARNINGS_CALENDAR = "../tw-earnings-calendar/data/latest.json"
+EVENTS_WINDOW_DAYS = 14
+# 法說會行事曆／個股 events 的中文事件別 → 契約 events[].type
+_EVENT_TYPE_MAP = {"法說會": "earnings", "除息": "ex_dividend", "除權息": "ex_dividend",
+                   "除權": "ex_dividend", "月營收": "revenue", "營收": "revenue"}
 
 # 契約 context.lights.color 只收 green/yellow/red/null。warroom/primary_decision.py
 # 端已把 amber→yellow、na→null 正規化過（見該檔 _normalize_light_color），這裡只做
@@ -282,6 +289,121 @@ def build_alerts_for_stock(stock_id: str, name: str, primary: Dict) -> List[Dict
     return out
 
 
+# ---------- v1.1 daily：曝險規則 / 未來事件 / 戰績統計 ----------
+def build_exposure_guidance(risk_temp: int) -> Dict:
+    """風險溫度 → 白話曝險規則（規則表寫死、可揭露）：
+    1-3→80%/可正常布局；4-6→60%/僅限試單；7-8→50%/僅限試單；9-10→40%/禁止新增部位。"""
+    rt = int(risk_temp)
+    if rt <= 3:
+        max_equity, new_pos = 80, "可正常布局"
+        note = f"風險溫度 {rt}/10：市場穩定，股票曝險可到 8 成，維持紀律正常布局。"
+    elif rt <= 6:
+        max_equity, new_pos = 60, "僅限試單"
+        note = f"風險溫度 {rt}/10：波動升高，股票曝險控在 6 成，新倉僅限試單、分批進。"
+    elif rt <= 8:
+        max_equity, new_pos = 50, "僅限試單"
+        note = f"風險溫度 {rt}/10：市場偏弱，現金至少留 5 成，只做小量試單、不追高。"
+    else:
+        max_equity, new_pos = 40, "禁止新增部位"
+        note = f"風險溫度 {rt}/10：市場劇烈波動，現金至少留六成，今天不開新倉。"
+    return {"risk_temp": rt, "max_equity_pct": max_equity,
+            "min_cash_pct": 100 - max_equity, "new_position": new_pos, "note": note}
+
+
+def _within_window(date_str: str, today: str, window_days: int) -> bool:
+    """date_str 是否落在 [today, today+window_days]（含端點）。格式非 ISO 或缺值 → False。"""
+    try:
+        d = datetime.strptime(date_str[:10], "%Y-%m-%d").date()
+        t = datetime.strptime(today[:10], "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return False
+    return t <= d <= t + timedelta(days=window_days)
+
+
+def build_events(results: Dict[str, Dict], today: Optional[str] = None,
+                 calendar_path: str = EARNINGS_CALENDAR,
+                 window_days: int = EVENTS_WINDOW_DAYS) -> List[Dict]:
+    """未來 window_days 天、追蹤清單股票的事件。來源①法說會行事曆 latest.json、
+    ②個股 data/<id>.json 的 evidence.events。抓不到一律空陣列，不編。"""
+    today = today or _today()
+    tracked = set(results.keys())
+    names = {sid: res.get("name", sid) for sid, res in results.items()}
+    seen, out = set(), []
+
+    def _add(date, sid, name, label):
+        etype = _EVENT_TYPE_MAP.get(label, "event")
+        key = (date[:10], sid, label)
+        if key in seen:
+            return
+        seen.add(key)
+        out.append({"date": date[:10], "id": sid, "name": name, "type": etype, "label": label})
+
+    # 來源①：法說會行事曆（只取追蹤清單、且在未來 window 內）
+    if os.path.exists(calendar_path):
+        try:
+            with open(calendar_path, encoding="utf-8") as f:
+                cal = json.load(f)
+            for ev in cal.get("events") or []:
+                sid = str(ev.get("id") or "")
+                date = str(ev.get("date") or "")
+                if sid in tracked and _within_window(date, today, window_days):
+                    _add(date, sid, names.get(sid, sid), ev.get("type") or "法說會")
+        except Exception:
+            pass
+
+    # 來源②：個股既有 events / 除息資料
+    for sid, res in results.items():
+        for ev in (res.get("evidence") or {}).get("events") or []:
+            date = str(ev.get("date") or "")
+            if _within_window(date, today, window_days):
+                _add(date, sid, names.get(sid, sid), ev.get("label") or "事件")
+
+    out.sort(key=lambda e: (e["date"], e["id"]))
+    return out
+
+
+def _add_calendar_days(date_str: str, days: int) -> str:
+    try:
+        d = datetime.strptime(date_str[:10], "%Y-%m-%d").date()
+        return (d + timedelta(days=days)).strftime("%Y-%m-%d")
+    except (ValueError, TypeError):
+        return ""
+
+
+def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
+    """戰績統計：n＝總建議數；closed＝outcome.r5 非 null 的筆數；各期命中率＝該期報酬為正
+    的比例，樣本 <5 給 null。note 動態寫最快回填日（最早 pending 日 +7 曆日 ≈ +5 交易日）。"""
+    entries = []
+    if os.path.exists(log_path):
+        try:
+            with open(log_path, encoding="utf-8") as f:
+                entries = json.load(f) or []
+        except Exception:
+            entries = []
+    n = len(entries)
+
+    def _rate(field: str) -> Optional[float]:
+        vals = [_num((e.get("outcome") or {}).get(field)) for e in entries]
+        vals = [v for v in vals if v is not None]
+        if len(vals) < 5:
+            return None
+        return round(sum(1 for v in vals if v > 0) / len(vals), 3)
+
+    closed = sum(1 for e in entries if _num((e.get("outcome") or {}).get("r5")) is not None)
+    pending_dates = [e.get("date") for e in entries
+                     if _num((e.get("outcome") or {}).get("r5")) is None and e.get("date")]
+    if closed >= 5:
+        note = f"已結算 {closed} 筆，命中率＝各期報酬為正的比例。"
+    elif pending_dates:
+        refill = _add_calendar_days(min(pending_dates), 7)
+        note = f"樣本累積中，5 日結果最快 {refill} 開始回填"
+    else:
+        note = "尚無建議樣本，戰績待累積。"
+    return {"n": n, "closed": closed,
+            "hit_rate_5d": _rate("r5"), "hit_rate_20d": _rate("r20"),
+            "hit_rate_60d": _rate("r60"), "note": note}
+
+
 # ---------- daily.json ----------
 def build_daily(profile: Dict, results: Dict[str, Dict], meta: Dict, market_block: Dict) -> Dict:
     tracked, alerts = [], []
@@ -298,6 +420,9 @@ def build_daily(profile: Dict, results: Dict[str, Dict], meta: Dict, market_bloc
         # 股票清單），保守回空陣列，不得編造清單內容，見模組尾端說明。
         "watch": [],
         "alerts_snapshot": alerts,
+        "exposure_guidance": build_exposure_guidance(market_block["risk_temp"]),
+        "events": build_events(results),
+        "track_stats": build_track_stats(),
     }
 
 
@@ -413,10 +538,43 @@ def _clean_primary(primary: Dict) -> Dict:
     return out
 
 
+def _build_advice_and_defense(res: Dict, is_core: bool) -> Tuple[Dict, str]:
+    """v1.1：由已存的 primary_decision（唯一結論源）＋context facts＋decision.stop 派生
+    雙版建議與防守價說明。全部從權威欄位重算，故與 primary 不會打架（契約硬規則 1）。"""
+    primary = res["primary_decision"]
+    ctx = res.get("context") or {}
+    dec = res.get("decision") or {}
+    tech_facts = ((ctx.get("lights") or {}).get("technical") or {}).get("facts") or []
+    price = _num(dec.get("as_of_price"))
+    defense_price = _num(primary.get("defense_price"))
+    advice = build_advice(
+        action=primary["action"], reason_codes=primary.get("reason_codes") or [],
+        price=price, defense_price=defense_price, tech_facts=tech_facts,
+        entry_condition=primary.get("entry_condition"), is_core_holding=is_core,
+        valuation=ctx.get("valuation"))
+    defense_explain = build_defense_explain(defense_price, dec.get("stop"))
+    return advice, defense_explain
+
+
 def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict) -> Dict:
     t_ev = (res.get("technical") or {}).get("ev") or {}
     dec = res.get("decision") or {}
     is_core = stock_id in profile.get("core_holdings", [])
+    primary = _clean_primary(res["primary_decision"])
+    advice, defense_explain = _build_advice_and_defense(res, is_core)
+    primary["advice"] = advice
+    primary["defense_explain"] = defense_explain
+    # 角色觀點由權威 reason_codes＋facts 重新生成（升級版六角色人話文案），不用舊 narration。
+    # generate_roles 的 lights_facts 形狀＝{key: [facts...]}；context.lights 是 {key: {color, facts}}，
+    # 先攤平成前者（見 primary_decision._facts_of）。
+    ctx = res.get("context") or {}
+    ctx_lights = ctx.get("lights") or {}
+    lights_facts = {k: (ctx_lights.get(k) or {}).get("facts") or []
+                    for k in ("fundamental", "technical", "chips")}
+    roles = generate_roles(res["primary_decision"].get("reason_codes") or [],
+                           lights_facts, res["primary_decision"]["action"])
+    evidence = build_evidence(res.get("evidence") or {})
+    evidence["roles"] = roles
     return {
         "meta": meta,
         "profile": {"id": stock_id, "name": res.get("name", stock_id),
@@ -427,9 +585,9 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict) -> D
             "ma20": _num(t_ev.get("MA20")),
             "ma60": _num(t_ev.get("MA60")),
         },
-        "primary_decision": _clean_primary(res["primary_decision"]),
+        "primary_decision": primary,
         "context": build_context(res["context"]),
-        "evidence": build_evidence(res.get("evidence") or {}),
+        "evidence": evidence,
         "track": build_track(stock_id),
     }
 
