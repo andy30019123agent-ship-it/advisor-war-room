@@ -83,6 +83,10 @@ header.page-header {
   color: var(--amber-text);
 }
 
+.freshness.neutral {
+  color: var(--text-soft);
+}
+
 .freshness .dot {
   width: 6px;
   height: 6px;
@@ -149,7 +153,7 @@ header.page-header {
 .group-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-faint);
+  color: var(--text-soft);
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin: 20px 4px 8px;
@@ -204,7 +208,7 @@ header.page-header {
 
 .risk-meter .label {
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--text-soft);
   font-weight: 500;
   margin-right: 2px;
 }
@@ -217,7 +221,7 @@ header.page-header {
 
 .risk-meter .value small {
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--text-soft);
   font-weight: 500;
 }
 
@@ -271,7 +275,7 @@ header.page-header {
 
 .row-name .code {
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--text-soft);
 }
 
 .row-price {
@@ -342,12 +346,12 @@ header.page-header {
 
 .watch-left .code {
   font-size: 12.5px;
-  color: var(--text-faint);
+  color: var(--text-soft);
 }
 
 .watch-right {
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--text-soft);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -478,7 +482,7 @@ header.page-header {
 }
 
 .empty-state .desc {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text-soft);
   line-height: 1.5;
 }
@@ -513,7 +517,7 @@ header.page-header {
 .field label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-faint);
+  color: var(--text-soft);
 }
 
 .field input {
@@ -571,7 +575,7 @@ header.page-header {
 
 .pnl.up { color: var(--green); }
 .pnl.down { color: var(--red); }
-.pnl.flat { color: var(--text-faint); }
+.pnl.flat { color: var(--text-soft); }
 
 /* ---------- Collapsible evidence sections ---------- */
 
@@ -609,7 +613,7 @@ header.page-header {
 
 .disclosure .disclosure-body {
   padding: 0 16px 16px;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text-soft);
   line-height: 1.6;
 }
@@ -653,7 +657,7 @@ header.page-header {
 
 .track-date {
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--text-soft);
 }
 
 .progress-track {
@@ -707,11 +711,11 @@ header.page-header {
 
 .decision-meta-row .k {
   font-size: 14px;
-  color: var(--text-faint);
+  color: var(--text-soft);
 }
 
 .decision-meta-row .v {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
@@ -726,7 +730,7 @@ header.page-header {
   background: var(--amber-bg);
   color: var(--amber-text);
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   text-align: center;
 }

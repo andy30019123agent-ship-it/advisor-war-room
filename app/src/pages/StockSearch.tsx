@@ -58,14 +58,13 @@ export function StockSearch() {
       {queryId !== null && isError && error instanceof NotFoundError && (
         <div className="empty-state">
           <IconSearch size={40} />
-          <div className="title">查無此股票的分析資料</div>
-          <div className="desc">目前僅涵蓋追蹤清單。</div>
+          <div className="title">查無這檔股票，確認代號再試一次</div>
         </div>
       )}
 
       {queryId !== null && isError && !(error instanceof NotFoundError) && (
         <div className="error-banner">
-          {error instanceof SchemaMismatchError ? '請更新 App' : '分析失敗，請稍後再試'}
+          {error instanceof SchemaMismatchError ? '請更新 App' : '分析失敗，稍後再試'}
         </div>
       )}
 
@@ -101,7 +100,7 @@ function StockDetailView({ detail }: { detail: StockDetail }) {
         <div className="decision-card">
           <div style={{ padding: '18px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span style={{ fontSize: 17, fontWeight: 700 }}>
-              {profile.name} <span className="code mono" style={{ fontSize: 13, color: 'var(--text-faint)' }}>{profile.id}</span>
+              {profile.name} <span className="code mono" style={{ fontSize: 13, color: 'var(--text-soft)' }}>{profile.id}</span>
             </span>
             <span className={`row-price mono ${price.change_pct != null && price.change_pct < 0 ? 'down' : price.change_pct != null && price.change_pct > 0 ? 'up' : ''}`}>
               {formatNumber(price.close)}

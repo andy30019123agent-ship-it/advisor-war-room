@@ -51,7 +51,11 @@ export function Track() {
     <div className="screen">
       <header className="page-header">
         <div className="top-row">
-          {dailyQuery.data ? <FreshnessBadge generatedAt={dailyQuery.data.meta.generated_at} /> : <span />}
+          {dailyQuery.data ? (
+            <FreshnessBadge dataDate={dailyQuery.data.meta.data_date} generatedAt={dailyQuery.data.meta.generated_at} />
+          ) : (
+            <span />
+          )}
         </div>
         <div className="large-title">戰績</div>
       </header>
@@ -91,13 +95,13 @@ export function Track() {
                       <span className="track-date mono">{t.date}</span>
                       <span className="pill">{t.action}</span>
                     </div>
-                    <div style={{ fontSize: 15, color: 'var(--text-soft)' }}>
+                    <div style={{ fontSize: 16, color: 'var(--text-soft)' }}>
                       {t.stockName} <span className="mono">{t.stockId}</span> · 建議當時價{' '}
                       <span className="mono">{t.price_at_rec.toLocaleString()}</span>
                     </div>
                     {t.status === 'pending' ? (
                       <>
-                        <div style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 6 }}>
+                        <div style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 6 }}>
                           追蹤中 第 {elapsed} 天
                         </div>
                         <div className="progress-track">

@@ -1,9 +1,14 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { fetchDaily } from '../lib/api'
+import { useQueries, useQuery } from '@tanstack/react-query'
+import { fetchDaily, fetchStockDetail } from '../lib/api'
 import { loadHoldings, saveHolding, deleteHolding, type Holding } from '../lib/holdings'
 import { FreshnessBadge } from '../components/FreshnessBadge'
 import { IconEmptyBriefcase, IconPlus, IconTrash, IconClose } from '../components/icons'
+
+// 自加持股若不在追蹤清單（daily.tracked）裡，daily.json 沒有它的現價/決策，
+// 改即時打 fetchStockDetail（fallback /api/analyze 現算）補上。staleTime 拉到
+// 「當日」等級，同一天內切分頁/重渲染不重打 API，只有隔天或手動重整才會再抓。
+const STALE_TIME_TODAY = 12 * 60 * 60 * 1000
 
 export function Holdings() {
   const [holdings, setHoldings] = useState<Holding[]>(() => loadHoldings())
@@ -11,6 +16,20 @@ export function Holdings() {
   const [showForm, setShowForm] = useState(false)
 
   const { data: daily } = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
+
+  const trackedIds = new Set((daily?.tracked ?? []).map((t) => t.id))
+  // enabled 只在 daily 已載入且確定「不在追蹤清單」時才打 API，避免每次 render 都打、
+  // 也避免 daily 還沒回來時誤判成「不在清單」而提前打了不必要的請求。
+  const liveDetailQueries = useQueries({
+    queries: holdings.map((h) => ({
+      queryKey: ['stock', h.id],
+      queryFn: () => fetchStockDetail(h.id),
+      enabled: !!daily && !trackedIds.has(h.id),
+      staleTime: STALE_TIME_TODAY,
+      retry: 1,
+    })),
+  })
+  const liveById = new Map(holdings.map((h, i) => [h.id, liveDetailQueries[i]]))
 
   function openNew() {
     setEditing({ id: '', name: '', shares: 0, costPrice: 0 })
@@ -38,7 +57,7 @@ export function Holdings() {
     <div className="screen">
       <header className="page-header">
         <div className="top-row">
-          {daily ? <FreshnessBadge generatedAt={daily.meta.generated_at} /> : <span />}
+          {daily ? <FreshnessBadge dataDate={daily.meta.data_date} generatedAt={daily.meta.generated_at} /> : <span />}
         </div>
         <div className="large-title">持股</div>
       </header>
@@ -68,12 +87,21 @@ export function Holdings() {
             <div className="list-card">
               {holdings.map((h) => {
                 const tracked = daily?.tracked.find((t) => t.id === h.id)
-                const currentPrice = tracked?.close ?? null
+                // 不在追蹤清單 → 用 fetchStockDetail（fallback /api/analyze）現算的結果補現價/決策。
+                const live = !tracked ? liveById.get(h.id) : undefined
+                const liveDetail = live?.data
+
+                const currentPrice = tracked?.close ?? liveDetail?.price.close ?? null
                 const pnlPct =
                   currentPrice != null && h.costPrice > 0
                     ? ((currentPrice - h.costPrice) / h.costPrice) * 100
                     : null
                 const pnlClass = pnlPct == null ? 'flat' : pnlPct > 0 ? 'up' : pnlPct < 0 ? 'down' : 'flat'
+
+                const action = tracked?.decision.action ?? liveDetail?.primary_decision.action
+                const defensePrice = tracked?.decision.defense_price ?? liveDetail?.primary_decision.defense_price ?? null
+                const isLiveLoading = !!live?.isLoading
+                const isLiveError = !!live?.isError
 
                 return (
                   <button type="button" className="list-row" key={h.id} onClick={() => openEdit(h)} style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none' }}>
@@ -82,23 +110,39 @@ export function Holdings() {
                         <span className="name">{h.name || h.id}</span>
                         <span className="code mono">{h.id}</span>
                       </div>
-                      <div className={`row-price mono ${pnlClass === 'up' ? 'up' : pnlClass === 'down' ? 'down' : ''}`}>
-                        {currentPrice != null ? currentPrice.toLocaleString() : '—'}
-                      </div>
+                      {isLiveLoading ? (
+                        <span className="skeleton skeleton-line" style={{ width: 48, height: 19, marginBottom: 0 }} />
+                      ) : (
+                        <div className={`row-price mono ${pnlClass === 'up' ? 'up' : pnlClass === 'down' ? 'down' : ''}`}>
+                          {currentPrice != null ? currentPrice.toLocaleString() : '—'}
+                        </div>
+                      )}
                     </div>
                     <div className="row-tags">
                       <span className="pill neutral">
                         {h.shares.toLocaleString()} 股 ／ 成本 {h.costPrice.toLocaleString()}
                       </span>
-                      <span className={`pnl ${pnlClass}`}>
-                        {pnlPct != null ? `${pnlPct > 0 ? '+' : ''}${pnlPct.toFixed(1)}%` : '—'}
-                      </span>
+                      {!isLiveLoading && (
+                        <span className={`pnl ${pnlClass}`}>
+                          {pnlPct != null ? `${pnlPct > 0 ? '+' : ''}${pnlPct.toFixed(1)}%` : '—'}
+                        </span>
+                      )}
                     </div>
-                    {tracked && (
+                    {isLiveLoading && (
                       <div className="row-tags" style={{ marginTop: 8 }}>
-                        <span className="pill">{tracked.decision.action}</span>
-                        {tracked.decision.defense_price != null && (
-                          <span className="pill stop">防守價 {tracked.decision.defense_price.toLocaleString()}</span>
+                        <span className="skeleton skeleton-line" style={{ width: 96, height: 22, marginBottom: 0 }} />
+                      </div>
+                    )}
+                    {isLiveError && (
+                      <div className="row-tags" style={{ marginTop: 8 }}>
+                        <span className="pill neutral">暫時抓不到分析（稍後自動重試）</span>
+                      </div>
+                    )}
+                    {!isLiveLoading && !isLiveError && action && (
+                      <div className="row-tags" style={{ marginTop: 8 }}>
+                        <span className="pill">{action}</span>
+                        {defensePrice != null && (
+                          <span className="pill stop">防守價 {defensePrice.toLocaleString()}</span>
                         )}
                       </div>
                     )}

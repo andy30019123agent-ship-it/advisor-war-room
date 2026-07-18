@@ -50,6 +50,18 @@ def stock_industry(stock_id):
         return None
 
 
+def stock_exists(stock_id):
+    """代號是否存在於 FinMind 全市場清單。回 True/False；查不了（額度用完／網路問題）
+    回 None——呼叫方不該把「查不了」當成「不存在」，那是兩件事（見 api/analyze.py 用法）。"""
+    global _INFO_CACHE
+    try:
+        if _INFO_CACHE is None:
+            _INFO_CACHE = get_loader().taiwan_stock_info()
+        return bool((_INFO_CACHE["stock_id"] == stock_id).any())
+    except Exception:
+        return None
+
+
 # ---------- 抓資料 ----------
 def fetch(stock_id):
     """抓個股所需各資料源。任一源失敗回 None（該維度後續標「資料缺」）。"""

@@ -105,16 +105,21 @@ def run_analyze(stock_id: str) -> dict:
         return cached
 
     _setup_lite_env()
-    from warroom.analyze_tw import analyze
+    from warroom.analyze_tw import analyze, stock_exists
     from warroom.build_snapshots import build_meta, build_stock_detail
     from warroom.profile import load_profile
+
+    # 先確認代號存在，區分「查無此股票」(404) 和「查得到但這次抓資料失敗」(503)。
+    # stock_exists() 查不了（額度/網路問題）時回 None，此時不誤判成不存在，照舊往下試抓資料。
+    if stock_exists(stock_id) is False:
+        raise _NotFound(stock_id)
 
     res = analyze(stock_id, with_news=False)  # with_news=False：news.py 打 GDELT/Google 序列重試最壞近 1 分鐘，不符合即時查詢的延遲預算
 
     if not res.get("data_flags", {}).get("technical"):
-        # 日線資料抓不到＝這支股票在 FinMind 免登入額度或資料源當下不可用，
+        # 日線資料抓不到：代號存在但這次抓不到股價（FinMind 額度用完／資料源當下不可用），
         # 引擎雖然會降級成一筆「觀望」，但對即時查詢來說這不是可用結果。
-        raise _UpstreamUnavailable(f"抓不到 {stock_id} 的股價資料，可能是 FinMind 額度用完或代號有誤，請稍後再試")
+        raise _UpstreamUnavailable(f"抓不到 {stock_id} 的股價資料，可能是 FinMind 額度用完，請稍後再試")
 
     profile = load_profile(os.path.join(_ROOT, "data", "investor_profile.json"))
     meta = build_meta(sources=["FinMind REST (lite)"])
@@ -124,6 +129,10 @@ def run_analyze(stock_id: str) -> dict:
 
 
 class _UpstreamUnavailable(Exception):
+    pass
+
+
+class _NotFound(Exception):
     pass
 
 
@@ -142,12 +151,15 @@ class handler(BaseHTTPRequestHandler):
         stock_id = (qs.get("stock") or [""])[0].strip()
 
         if not _STOCK_ID_RE.match(stock_id):
-            self._send_json(400, {"error": f"股票代號格式不對：{stock_id!r}（需要 4-6 碼數字）"})
+            # 格式不對＝不可能是台股代號，跟「查得到清單但代號不存在」同一類前端呈現。
+            self._send_json(404, {"error": "not_found"})
             return
 
         try:
             detail = run_analyze(stock_id)
             self._send_json(200, detail)
+        except _NotFound:
+            self._send_json(404, {"error": "not_found"})
         except _UpstreamUnavailable as e:
             self._send_json(503, {"error": str(e)})
         except Exception as e:  # 任何未預期例外都不能讓前端拿到 500 白屏

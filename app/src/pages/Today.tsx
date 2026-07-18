@@ -53,7 +53,7 @@ export function Today({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
     <div className="screen">
       <header className="page-header">
         <div className="top-row">
-          <FreshnessBadge generatedAt={meta.generated_at} />
+          <FreshnessBadge dataDate={meta.data_date} generatedAt={meta.generated_at} />
         </div>
         <div className="large-title">投顧戰情室</div>
       </header>
