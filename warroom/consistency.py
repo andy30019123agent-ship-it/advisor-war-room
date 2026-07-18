@@ -116,6 +116,29 @@ def check_weekly_consistency(engine_by_id: Dict[str, Dict], weekly: Dict) -> Lis
     return diffs
 
 
+def check_primary_consistency(res: Dict) -> List[str]:
+    """§3.1 把關：legacy summary/rating/timeframes 必須全部派生自 primary_decision，
+    任何一項與 primary 矛盾＝diff（CI 當 fail）。杜絕『觀望＋減碼並存』這類打架。"""
+    from warroom.primary_decision import ACTION_TO_RATING, ACTION_TO_DIRECTION
+    diffs = []
+    pd_ = res.get("primary_decision")
+    if not pd_:
+        return diffs
+    action = pd_.get("action")
+    dec = res.get("decision", {}) or {}
+    exp_rating = ACTION_TO_RATING.get(action)
+    if dec.get("rating") != exp_rating:
+        diffs.append(f"[打架] decision.rating {dec.get('rating')} ≠ 由 action「{action}」派生的 {exp_rating}")
+    exp_dir = ACTION_TO_DIRECTION.get(action)
+    got_dir = (res.get("summary", {}) or {}).get("direction")
+    if got_dir != exp_dir:
+        diffs.append(f"[打架] summary.direction {got_dir} ≠ 由 action「{action}」派生的 {exp_dir}")
+    swing = ((res.get("context", {}) or {}).get("timeframes", {}) or {}).get("swing", {})
+    if swing.get("stance") != pd_.get("stance"):
+        diffs.append(f"[打架] 波段框架 stance {swing.get('stance')} ≠ primary stance {pd_.get('stance')}")
+    return diffs
+
+
 def assert_consistent(diffs: List[str], context: str) -> None:
     """有 diff → 印 stderr 並 sys.exit(1)（build 中止）；無 → 印通過。"""
     if diffs:

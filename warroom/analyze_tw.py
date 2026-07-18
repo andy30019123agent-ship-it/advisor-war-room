@@ -10,6 +10,7 @@ from warroom.valuation import compute_valuation
 from warroom.decision_engine import (
     atr14, atr_percent_median, build_decision,
 )
+from warroom.primary_decision import build_primary_and_context, apply_derivations
 from warroom.chips_v2 import chips_breakdown
 from warroom.fundamentals import compute_fundamentals
 from warroom.events import (build_ex_div_map, has_upcoming_event,
@@ -358,6 +359,51 @@ def analyze(stock_id, with_news=True):
     return res
 
 
+def _facts_list(ev):
+    """把某燈的證據 dict 濃縮成幾條事實字串（供 context.lights / 角色觀點）。"""
+    out = []
+    for k, v in (ev or {}).items():
+        if k in ("備註", "排列", "買入參考區", "壓力參考位") or v in (None, "—", ""):
+            continue
+        out.append(f"{k} {v}")
+    return out[:4]
+
+
+def _attach_primary(res, dec, valuation, price, market_light, rev_sig, chip_sig,
+                    defense_price, high20):
+    """建 primary_decision + context + evidence，並把 legacy summary/rating/timeframes
+    改為由 primary 派生（規格 §3.1，杜絕結論打架）。缺資料時安全降級不 crash。"""
+    stock_id = res["stock_id"]
+    profile = load_profile()
+    lights = [res["fundamental"]["light"], res["technical"]["light"], res["chips"]["light"]]
+    lights_facts = {
+        "fundamental": _facts_list(res["fundamental"]["ev"]),
+        "technical": _facts_list(res["technical"]["ev"]),
+        "chips": _facts_list(res["chips"]["ev"]),
+    }
+    fundamental_broken = bool(rev_sig.get("yoy_negative") and rev_sig.get("below_6m_2months"))
+    chips_broken = bool(chip_sig.get("sell_streak_ge3") and chip_sig.get("ratio_gt_15pct"))
+    defense_broken = "已觸發" in (dec.get("invalidation", {}) or {}).get("price", "")
+    is_core = stock_id in profile.get("core_holdings", [])
+    reeval = (datetime.now(timezone(timedelta(hours=8))) + timedelta(days=7)).strftime("%Y-%m-%d")
+    entry_cond = ({"price": round(high20, 1), "condition": "帶量突破近20日高、法人回補"}
+                  if high20 is not None else None)
+
+    primary, context, roles = build_primary_and_context(
+        price=price or 0, lights=lights, lights_facts=lights_facts, valuation=valuation,
+        rr=dec.get("risk_reward"), defense_price=defense_price,
+        defense_broken=defense_broken, fundamental_broken=fundamental_broken,
+        chips_broken=chips_broken, market_light=market_light,
+        confidence=(dec.get("confidence") or {}).get("total", 0), profile=profile,
+        is_core_holding=is_core, reeval_date=reeval, entry_condition=entry_cond)
+
+    res["primary_decision"] = primary
+    res["context"] = context
+    res["evidence"] = {"roles": roles, "news": res.get("news", []), "events": []}
+    res["decision"] = dec
+    apply_derivations(res, primary, context)
+
+
 def _decide(stock_id, d, res, flags):
     """組估值 + 決策區塊。任何一步缺資料都降級，不讓整檔 fail。"""
     try:
@@ -368,13 +414,18 @@ def _decide(stock_id, d, res, flags):
 
     price_df = d.get("price")
     if price_df is None or len(price_df) == 0:
-        return {"rating": "觀望", "fair_value": None, "risk_reward": None,
-                "position": {"tier": "空手", "amount": 0, "odd_lot": False, "shares": 0,
-                             "reason": "日線資料缺，無法計算", "core_note": ""},
-                "confidence": {"total": 0, "completeness": 0, "consistency": 0,
-                               "rr": 0, "regime": 0},
-                "note": "日線資料缺，決策降級", "as_of_price": None,
-                "disclaimer": "資料不足，僅供參考。"}
+        dec = {"rating": "觀望", "fair_value": None, "risk_reward": None,
+               "position": {"tier": "空手", "amount": 0, "odd_lot": False, "shares": 0,
+                            "reason": "日線資料缺，無法計算", "core_note": ""},
+               "confidence": {"total": 0, "completeness": 0, "consistency": 0,
+                              "rr": 0, "regime": 0},
+               "invalidation": {}, "stop": {"price": None},
+               "note": "日線資料缺，決策降級", "as_of_price": None,
+               "disclaimer": "資料不足，僅供參考。"}
+        _attach_primary(res, dec, None, None, market_light,
+                        {"yoy_negative": False, "below_6m_2months": False},
+                        {"sell_streak_ge3": False, "ratio_gt_15pct": False}, None, None)
+        return dec
 
     pdf = price_df.sort_values("date").reset_index(drop=True)
     price = float(pd.to_numeric(pdf["close"], errors="coerce").iloc[-1])
@@ -420,13 +471,13 @@ def _decide(stock_id, d, res, flags):
     atr_pct = (atr / price) if (atr is not None and price) else None
     per_pctile = valuation.get("current_percentile")
 
+    rev_sig = rev_signals_from_df(d.get("rev"))
+    chip_sig = chip_signals_from_df(d.get("chip"), vol20=avg_vol20)
     dec = build_decision(
         price=price, lights=lights, per_percentile=per_pctile, market_light=market_light,
         valuation=valuation, atr=atr, key_ma=ma20, low20=low20, high20=high20,
         ma20=ma20, avg_vol20=avg_vol20, atr_pct=atr_pct, atr_median_pct=atr_med,
-        data_flags=flags,
-        rev_signals=rev_signals_from_df(d.get("rev")),
-        chip_signals=chip_signals_from_df(d.get("chip"), vol20=avg_vol20),
+        data_flags=flags, rev_signals=rev_sig, chip_signals=chip_sig,
         profile=load_profile(), stock_id=stock_id,
         ex_dividend_today=ex_today, ex_div_amt=ex_amt)
 
@@ -446,6 +497,10 @@ def _decide(stock_id, d, res, flags):
             dec["event_downgrade"] = ev_note   # additive：渲染可顯示降級理由
     except Exception:
         pass
+
+    # 主結論引擎（§3.1~3.5）：產 primary_decision + context，並把 legacy 欄位改為派生
+    _attach_primary(res, dec, valuation, price, market_light, rev_sig, chip_sig,
+                    dec["stop"]["price"], high20)
     return dec
 
 

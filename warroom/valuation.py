@@ -24,6 +24,67 @@ def is_pbr_industry(industry_category: Optional[str]) -> bool:
     return industry_category in PBR_INDUSTRIES
 
 
+def valuation_band(percentile: Optional[float]) -> str:
+    """對外估值文案改區間語言（規格 §3.3）：便宜/合理/偏貴/很貴。"""
+    if percentile is None:
+        return "資料不足"
+    if percentile < 0.35:
+        return "便宜"
+    if percentile < 0.65:
+        return "合理"
+    if percentile < 0.85:
+        return "偏貴"
+    return "很貴"
+
+
+def sanity_warning(base: Optional[float], price: Optional[float],
+                   threshold: float = 0.30) -> Optional[str]:
+    """估值 sanity check（規格 §3.3）：Base 偏離現價 > threshold → 回警語字串。
+    警語只標示「模型可能低估近期估值 regime」，呼叫端不得用它直接觸發減碼。"""
+    if base is None or not price:
+        return None
+    dev = abs(base - price) / price
+    if dev > threshold:
+        return (f"模型 Base {base} 與現價 {price} 偏離 {dev * 100:.0f}%，"
+                "可能低估近期估值 regime；僅供參考，不作為減碼依據")
+    return None
+
+
+# 近 3 年 / 近 5 年 / 完整週期的近似交易日數（regime 分組用；日 PER 序列已 date 升冪）
+_REGIME_WINDOWS = (("3y", 756), ("5y", 1260), ("full", None))
+
+
+def regime_percentiles(series: List[float]) -> Dict[str, Dict]:
+    """分 regime（近3年/近5年/完整）各算一組分位；樣本<8 的窗口略過（規格 §3.3）。"""
+    out = {}
+    for label, n in _REGIME_WINDOWS:
+        sub = series[-n:] if n else series
+        pcts = multiple_percentiles(sub)
+        if pcts:
+            out[label] = pcts
+    return out
+
+
+def select_regime(regimes: Dict[str, Dict]):
+    """優先近 3 年（反映當前估值環境，避免早年低基期把分位拖低）；不足退 5y→full。"""
+    for label in ("3y", "5y", "full"):
+        if label in regimes:
+            return label, regimes[label]
+    return None, None
+
+
+def quality_base_bump(roe: Optional[float]) -> float:
+    """品質股（高 ROE）Base multiple 上修半檔到一檔（規格 §3.3），回 p50→p75 間的比例。
+    roe>=20% → 上修約一檔（0.66）；roe>=12% → 半檔（0.33）；其餘不上修。"""
+    if roe is None:
+        return 0.0
+    if roe >= 0.20:
+        return 0.66
+    if roe >= 0.12:
+        return 0.33
+    return 0.0
+
+
 def _quarter_key(date_str: str):
     """'2026-03-31' → (2026, 1)；非季底月份回 None。"""
     try:
@@ -140,14 +201,17 @@ def _trio(pcts: Dict, market_light: str):
     return pcts["p25"], pcts["p50"], pcts["p75"]
 
 
-def fair_value_per_path(fwd_eps: float, per_pcts: Dict, market_light: str) -> Dict:
-    """PER 路徑：Bear/Base/Bull = Forward EPS × 分位倍數。"""
+def fair_value_per_path(fwd_eps: float, per_pcts: Dict, market_light: str,
+                        base_bump: float = 0.0) -> Dict:
+    """PER 路徑：Bear/Base/Bull = Forward EPS × 分位倍數。
+    base_bump（0~0.8）＝品質股把 Base multiple 由 p50 往 p75 上修的比例，預設 0＝不上修。"""
     lo, mid, hi = _trio(per_pcts, market_light)
+    base_mult = mid + max(0.0, min(0.8, base_bump)) * (hi - mid)
     return {
         "bear": round(fwd_eps * lo, 1),
-        "base": round(fwd_eps * mid, 1),
+        "base": round(fwd_eps * base_mult, 1),
         "bull": round(fwd_eps * hi, 1),
-        "multiples": {"bear": round(lo, 2), "base": round(mid, 2), "bull": round(hi, 2)},
+        "multiples": {"bear": round(lo, 2), "base": round(base_mult, 2), "bull": round(hi, 2)},
     }
 
 
@@ -186,6 +250,7 @@ def _insufficient(path: str, penalty: int, note: str) -> Dict:
         "growth_used": None, "fair_value": None, "multiples": None,
         "current_multiple": None, "current_percentile": None, "bvps": None, "roe": None,
         "confidence_penalty": penalty, "disclosure": note,
+        "band": "資料不足", "regime": None, "warning": None,
     }
 
 
@@ -216,6 +281,8 @@ def compute_valuation(inp: Dict) -> Dict:
             "current_percentile": current_percentile(pbr_series, pbr_cur),
             "bvps": fv["bvps"], "roe": inp.get("roe"),
             "confidence_penalty": 0, "disclosure": disclosure,
+            "band": valuation_band(current_percentile(pbr_series, pbr_cur)),
+            "regime": "full", "warning": sanity_warning(fv["base"], price),
         }
 
     # ---- 一般股：PER 路徑 ----
@@ -234,24 +301,31 @@ def compute_valuation(inp: Dict) -> Dict:
         # 虧損/零盈餘股：相對估值（PER）無意義，不得硬套（會算出負且倒序的 Bear/Base/Bull）
         return _insufficient("per", 30, "虧損/零盈餘，不適用相對估值（PER）")
     per_series = inp.get("per_series") or []
-    per_pcts = multiple_percentiles(per_series)
+    # regime 分組（規格 §3.3）：優先近 3 年分位，避開早年低估值週期把 Base 拖太低
+    regimes = regime_percentiles(per_series)
+    regime_label, per_pcts = select_regime(regimes)
     if per_pcts is None:
         return _insufficient("per", 25, "PER 歷史樣本不足，無法給估值區間")
     g = weighted_revenue_yoy(inp.get("rev_df"))
     fwd = forward_eps(eps_ttm, g)
     if fwd <= 0:
         return _insufficient("per", 30, "虧損/零盈餘，不適用相對估值（PER）")
-    fv = fair_value_per_path(fwd, per_pcts, market_light)
+    base_bump = quality_base_bump(inp.get("roe"))
+    fv = fair_value_per_path(fwd, per_pcts, market_light, base_bump=base_bump)
+    band = valuation_band(current_percentile(per_series, per_cur))
+    warning = sanity_warning(fv["base"], price)
     src_zh = "財報 TTM" if eps_source == "financial_statement" else "現價/PER 反推（降信心）"
     g_used = max(-0.20, min(0.40, g)) if g is not None else 0.0
     if g is not None and abs(g_used - g) > 1e-9:
         growth_note = f"成長 g={_pct(g_used)}（原始 {_pct(g)} 已封頂）"
     else:
         growth_note = f"成長 g={_pct(g_used)}（clamp -20%~+40%）"
+    bump_note = ("；品質股 Base 上修" if base_bump > 0 else "")
     disclosure = (
         f"TTM EPS {eps_ttm}（{src_zh}）、{growth_note}、"
         f"Forward EPS {fwd}；PER 25/50/75={per_pcts['p25']}/{per_pcts['p50']}/{per_pcts['p75']}"
-        f"（現值 {per_cur}，分位 {_pct(current_percentile(per_series, per_cur))}）"
+        f"（regime={regime_label}，現值 {per_cur}，分位 {_pct(current_percentile(per_series, per_cur))}）"
+        + bump_note
         + ("；大盤紅燈倍數下修一檔" if market_light == "red" else ""))
     return {
         "path": "per", "eps_ttm": eps_ttm, "eps_source": eps_source, "eps_forward": fwd,
@@ -261,4 +335,5 @@ def compute_valuation(inp: Dict) -> Dict:
         "current_percentile": current_percentile(per_series, per_cur),
         "bvps": None, "roe": None,
         "confidence_penalty": penalty, "disclosure": disclosure,
+        "band": band, "regime": regime_label, "warning": warning,
     }
