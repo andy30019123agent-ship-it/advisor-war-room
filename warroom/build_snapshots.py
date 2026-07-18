@@ -620,6 +620,9 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
         "evidence": evidence,
         "track": build_track(stock_id),
         "forecast": res.get("forecast"),  # v1.2：整組可為 null（樣本不足/引擎產物缺該欄位）
+        # v1.4：短線劇本推演，整組由 warroom/short_scenarios.py 在 analyze 階段算好（含機率
+        # 查表、大盤新倉閘門 proxy），這裡純透傳，不重算（見該檔與 analyze_tw.py 掛載點說明）。
+        "short_scenarios": res.get("short_scenarios"),
     }
 
 

@@ -1173,6 +1173,157 @@ header.page-header {
   cursor: pointer;
 }
 
+/* ---------- 短線推演．三劇本卡（short_scenarios，v1.4） ---------- */
+
+.scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scenario-card {
+  padding: 16px;
+}
+
+.scenario-card.primary {
+  border-left: 3px solid var(--accent);
+}
+
+.scenario-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.scenario-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.scenario-prob {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.scenario-prob-bar-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(74, 85, 199, 0.16);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.scenario-prob-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.scenario-trigger {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.scenario-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 2px;
+  margin-bottom: 10px;
+}
+
+.scenario-path-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.scenario-arrow {
+  color: var(--text-faint);
+  font-weight: 600;
+  margin: 0 4px;
+}
+
+.scenario-verb {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.scenario-verb.up {
+  color: var(--green);
+}
+
+.scenario-verb.down {
+  color: var(--red);
+}
+
+.scenario-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(118, 118, 128, 0.1);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scenario-chip-note {
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+.scenario-narrative {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+
+.scenario-invalidation {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--red);
+  margin-bottom: 8px;
+}
+
+.scenario-action {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.scenario-note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  padding: 10px 4px 0;
+}
+
+.scenario-insufficient {
+  padding: 18px 16px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ---------- 長線機率區間（收合的扇形圖，見 ForecastFan.tsx） ---------- */
+
+.forecast-disclosure-body {
+  padding: 0;
+}
+
 /* 扇形切換過場：150-300ms opacity/transform，prefers-reduced-motion 由全域 media query 關閉。 */
 @keyframes forecastFanFade {
   from {

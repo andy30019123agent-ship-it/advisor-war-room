@@ -4,7 +4,7 @@
   "title": "stocks/<id>.json（單股完整分析）",
   "description": "對應 docs/contracts/data-contract-v1.md 的 stocks/<id>.json 區塊。",
   "type": "object",
-  "required": ["meta", "profile", "price", "primary_decision", "context", "evidence", "track", "forecast"],
+  "required": ["meta", "profile", "price", "primary_decision", "context", "evidence", "track", "forecast", "short_scenarios"],
   "additionalProperties": false,
   "properties": {
     "meta": {
@@ -285,9 +285,84 @@
         },
         "disclaimer": { "type": "string" }
       }
+    },
+    "short_scenarios": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["status", "message"],
+          "additionalProperties": false,
+          "properties": {
+            "status": { "const": "insufficient_data" },
+            "message": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["status", "horizon", "key_levels", "scenarios", "prob_note", "disclaimer"],
+          "additionalProperties": false,
+          "properties": {
+            "status": { "const": "ok" },
+            "horizon": { "type": "string" },
+            "key_levels": {
+              "type": "object",
+              "required": ["supports", "resistances"],
+              "additionalProperties": false,
+              "properties": {
+                "supports": { "type": "array", "items": { "type": "number" }, "maxItems": 3 },
+                "resistances": { "type": "array", "items": { "type": "number" }, "maxItems": 3 }
+              }
+            },
+            "scenarios": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": { "$ref": "#/definitions/scenario" }
+            },
+            "prob_note": { "type": "string" },
+            "disclaimer": { "type": "string" }
+          }
+        }
+      ]
     }
   },
   "definitions": {
+    "scenario": {
+      "type": "object",
+      "required": [
+        "id", "title", "probability_pct", "trigger", "price_path",
+        "price_path_text", "narrative", "invalidation", "action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "enum": ["base", "risk", "bull"] },
+        "title": { "type": "string" },
+        "probability_pct": { "type": "integer" },
+        "trigger": { "type": "string" },
+        "price_path": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 3
+        },
+        "price_path_text": { "type": "string" },
+        "narrative": { "type": "string" },
+        "invalidation": { "type": "string" },
+        "action": {
+          "type": "object",
+          "required": ["stance", "text"],
+          "additionalProperties": false,
+          "properties": {
+            "stance": {
+              "type": "string",
+              "enum": ["increase", "hold", "small_entry", "wait", "reduce", "exit"]
+            },
+            "text": { "type": "string" }
+          }
+        }
+      }
+    },
     "horizon_block": {
       "type": "object",
       "required": ["days", "bands", "prob_range_70"],

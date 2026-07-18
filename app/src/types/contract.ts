@@ -298,6 +298,52 @@ export type ForecastAccuracy = z.infer<typeof ForecastAccuracySchema>
 export type Forecast = z.infer<typeof ForecastSchema>
 export type ForecastHorizonKey = 'm1' | 'm3' | 'm6'
 
+// ---------- v1.4 增補（docs/contracts/data-contract-v1.md「v1.4 增補」節）----------
+// short_scenarios：短線（1-4 週）三劇本推演，取代扇形圖當查股票頁主角。
+// 整組可為 null／status=insufficient_data（後者只給一句話 message）。
+
+export const ShortScenarioActionSchema = z.object({
+  stance: z.string(),
+  text: z.string(),
+})
+
+export const ShortScenarioSchema = z.object({
+  id: z.enum(['base', 'risk', 'bull']),
+  title: z.string(),
+  probability_pct: z.number(),
+  trigger: z.string(),
+  price_path: z.array(z.number()),
+  price_path_text: z.string(),
+  narrative: z.string(),
+  invalidation: z.string(),
+  action: ShortScenarioActionSchema,
+})
+
+export const ShortScenariosOkSchema = z.object({
+  status: z.literal('ok'),
+  horizon: z.string(),
+  key_levels: z.object({
+    supports: z.array(z.number()),
+    resistances: z.array(z.number()),
+  }),
+  scenarios: z.array(ShortScenarioSchema),
+  prob_note: z.string(),
+  disclaimer: z.string(),
+})
+
+export const ShortScenariosInsufficientSchema = z.object({
+  status: z.literal('insufficient_data'),
+  message: z.string(),
+})
+
+export const ShortScenariosSchema = z.discriminatedUnion('status', [
+  ShortScenariosOkSchema,
+  ShortScenariosInsufficientSchema,
+])
+
+export type ShortScenario = z.infer<typeof ShortScenarioSchema>
+export type ShortScenarios = z.infer<typeof ShortScenariosSchema>
+
 export const StockDetailSchema = z.object({
   meta: MetaSchema,
   profile: z.object({
@@ -319,6 +365,8 @@ export const StockDetailSchema = z.object({
   // .catch(null)：舊 v1.2 fixture（有 bands、無 horizons）解析失敗時退化成 null，
   // 不拖垮整份 StockDetailSchema（見上方相容防呆註解）。
   forecast: ForecastSchema.nullable().optional().catch(null),
+  // 同樣 .catch(null)：引擎還沒補上這欄位、或格式對不上時退化成 null，不拖垮整份解析。
+  short_scenarios: ShortScenariosSchema.nullable().optional().catch(null),
 })
 
 export type StockDetail = z.infer<typeof StockDetailSchema>

@@ -6,6 +6,7 @@ import { loadWatchlist, addToWatchlist } from '../lib/watchlist'
 import { formatShares, SHARES_PER_LOT } from '../lib/shares'
 import { IconSearch } from '../components/icons'
 import { ForecastFan } from '../components/ForecastFan'
+import { ShortScenarios } from '../components/ShortScenarios'
 import type { Daily, StockDetail } from '../types/contract'
 
 export function StockSearch() {
@@ -287,6 +288,8 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
           )}
         </div>
       </div>
+
+      <ShortScenarios data={detail.short_scenarios} />
 
       <ForecastFan forecast={detail.forecast} />
 

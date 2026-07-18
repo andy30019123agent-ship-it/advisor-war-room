@@ -557,7 +557,10 @@ def _decide(stock_id, d, res, flags):
         profile=load_profile(), stock_id=stock_id,
         ex_dividend_today=ex_today, ex_div_amt=ex_amt)
 
-    # 事件前高估值＋籌碼弱 → 自動降級（規格 §3.3）
+    # 事件前高估值＋籌碼弱 → 自動降級（規格 §3.3）。has_ev 先預設 False：下方 try 若在
+    # has_upcoming_event 算出來前就例外，短線劇本推演（見尾端 short_scenarios 掛載）仍要
+    # 讀得到這個變數，不能讓它因為這裡的 try/except 吞例外而變成未定義。
+    has_ev = False
     try:
         earnings_json = None
         ep = "../tw-earnings-calendar/data/latest.json"
@@ -589,6 +592,48 @@ def _decide(stock_id, d, res, flags):
                                          events=evidence_events)
     except Exception:
         res["forecast"] = None
+
+    # 短線劇本推演（規格 v1.4）：defense_price/action 一律讀 primary_decision（唯一結論
+    # 源，剛由上面 _attach_primary 寫入，不重算）；MA/近20日高低沿用本函式已算好的
+    # low20/high20/ma20/t_ev；籌碼連買賣天數借用 chips_v2 分組拆解裡「外資」這組已算好
+    # 的 streak/dir（法人籌碼指標一般以外資為主要觀察對象）。市場閘門（大盤偏多/空傾向、
+    # 新倉閘門）在 analyze 階段還沒有 build_snapshots 才算得出的真 exposure_guidance，
+    # 用 market_light 當代理，門檻精神對齊 build_exposure_guidance（綠→可正常布局／
+    # 黃→僅限試單／紅→禁止新增部位），build_snapshots 端只需透傳，不再另算一次
+    # （見該檔 build_stock_detail 的 short_scenarios 透傳）。任何例外都降級成 None，不
+    # 讓整檔 build 失敗。
+    try:
+        from warroom.short_scenarios import build_short_scenarios
+        _SC_COLOR = {"green": "green", "amber": "yellow", "red": "red"}
+        primary = res["primary_decision"]
+        foreign = ((res.get("chips") or {}).get("breakdown") or {}).get("groups", {}).get("外資", {})
+        f_streak = foreign.get("streak", 0) or 0
+        f_dir = foreign.get("dir", "平")
+        chips_streak_signed = f_streak if f_dir == "買" else (-f_streak if f_dir == "賣" else 0)
+        market_bias = ("bull" if market_light == "green"
+                       else "bear" if market_light == "red" else "neutral")
+        market_new_position_proxy = ("可正常布局" if market_light == "green"
+                                     else "禁止新增部位" if market_light == "red"
+                                     else "僅限試單")
+        res["short_scenarios"] = build_short_scenarios(
+            current_price=price,
+            defense_price=primary.get("defense_price"),
+            low20=low20, high20=high20,
+            ma20=ma20, ma60=_num(t_ev.get("MA60")), ma120=_num(t_ev.get("MA120")),
+            entry_anchor=(primary.get("entry_condition") or {}).get("price"),
+            technical_color=_SC_COLOR.get(res["technical"]["light"]),
+            chips_color=_SC_COLOR.get(res["chips"]["light"]),
+            fundamental_color=_SC_COLOR.get(res["fundamental"]["light"]),
+            chips_streak=chips_streak_signed,
+            market_bias=market_bias,
+            market_new_position=market_new_position_proxy,
+            is_bearish_arrangement=(t_ev.get("排列") == "空頭排列"),
+            event_within_14d=bool(has_ev),
+            primary_action=primary.get("action"),
+            primary_position_delta=primary.get("position_delta", "hold"),
+        )
+    except Exception:
+        res["short_scenarios"] = None
     return dec
 
 

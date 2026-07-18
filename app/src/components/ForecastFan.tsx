@@ -31,22 +31,35 @@ function fmt(n: number): string {
   return Math.round(n).toLocaleString()
 }
 
+// 短線三劇本卡（ShortScenarios）取代這裡當查股票頁主角，扇形圖降級成預設收合的
+// 長線輔助區塊——用原生 <details> 免額外狀態管理，跟其他證據拆解區塊一致。
 export function ForecastFan({ forecast }: { forecast: Forecast | null | undefined }) {
-  if (!forecast) {
-    return (
-      <div className="group">
-        <div className="group-title">預估走勢</div>
-        <div className="plain-card forecast-empty">資料更新中，暫無走勢模擬</div>
-      </div>
-    )
-  }
   return (
     <div className="group">
-      <div className="group-title">預估走勢</div>
-      <div className="summary-card forecast-card">
-        <ForecastChart forecast={forecast} />
+      <div className="list-card">
+        <details className="disclosure">
+          <summary>
+            長線機率區間（1/3/6 個月模擬）
+            <ChevronGlyph />
+          </summary>
+          <div className="disclosure-body forecast-disclosure-body">
+            {!forecast ? (
+              <div className="forecast-empty">資料更新中，暫無走勢模擬</div>
+            ) : (
+              <ForecastChart forecast={forecast} />
+            )}
+          </div>
+        </details>
       </div>
     </div>
+  )
+}
+
+function ChevronGlyph() {
+  return (
+    <svg className="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6L15 12L9 18" />
+    </svg>
   )
 }
 
