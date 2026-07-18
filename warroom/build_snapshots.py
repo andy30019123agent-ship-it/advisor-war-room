@@ -24,6 +24,7 @@ from warroom.finmind_cache import cached_fetch
 from warroom.market import fetch_market
 from warroom.primary_decision import build_advice, build_defense_explain, generate_roles
 from warroom.profile import load_profile
+from warroom.scenario_calibration import sync_calibration, sync_scenario_log
 
 _TPE = timezone(timedelta(hours=8))
 
@@ -774,6 +775,14 @@ def main() -> None:
         if forecast:
             forecast["accuracy"] = build_forecast_accuracy(sid, log)
     write_json(FORECAST_LOG, log)
+
+    # 劇本機率自我校正管線（warroom/scenario_calibration.py）：跟 forecast_log 同款
+    # 掛鉤位置——build_all() 保持純函式，實際的 scenario_log 落檔＋FinMind 回填＋
+    # calibration 表更新只在 main() 這裡做。log 壞檔 fail-closed（見該模組說明），
+    # sync_scenario_log 回 None 時 sync_calibration 仍會自己嘗試讀檔（同樣 fail-closed
+    # 跳過），兩段互不依賴對方的回傳值。
+    sync_scenario_log(stock_details, today)
+    sync_calibration()
 
     write_json(os.path.join(OUT_DIR, "daily.json"), daily)
     for sid, detail in stock_details.items():

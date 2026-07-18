@@ -1,0 +1,52 @@
+[
+  {
+    "date": "2026-07-17",
+    "stock_id": "2330",
+    "bucket": "yellow_x_red",
+    "scenarios": [
+      {
+        "id": "risk",
+        "prob_pct": 50
+      },
+      {
+        "id": "base",
+        "prob_pct": 40
+      },
+      {
+        "id": "bull",
+        "prob_pct": 10
+      }
+    ],
+    "levels": {
+      "defense": 2106.8,
+      "r1": 2323.8,
+      "close": 2290.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-07-17",
+    "stock_id": "2454",
+    "bucket": "yellow_x_red",
+    "scenarios": [
+      {
+        "id": "risk",
+        "prob_pct": 50
+      },
+      {
+        "id": "base",
+        "prob_pct": 40
+      },
+      {
+        "id": "bull",
+        "prob_pct": 10
+      }
+    ],
+    "levels": {
+      "defense": 2875.8,
+      "r1": 3515.0,
+      "close": 3370.0
+    },
+    "realized": null
+  }
+]

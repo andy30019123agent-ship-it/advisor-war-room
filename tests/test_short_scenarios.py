@@ -8,7 +8,7 @@ import unittest
 
 import jsonschema
 
-from warroom.short_scenarios import build_short_scenarios, _finalize_probs
+from warroom.short_scenarios import build_short_scenarios, _finalize_probs, PROB_NOTE
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STOCK_SCHEMA = json.load(open(os.path.join(REPO_ROOT, "schema", "stock.schema.json"), encoding="utf-8"))
@@ -382,6 +382,40 @@ class TestSchema(unittest.TestCase):
         for t in ("green", "yellow", "red"):
             for c in ("green", "yellow", "red"):
                 _validate(build_short_scenarios(**_kw(technical_color=t, chips_color=c)))
+
+
+# ---------- 機率校正覆蓋（data/prob_calibration.json，見 warroom/scenario_calibration.py） ----------
+class TestCalibrationOverride(unittest.TestCase):
+    def test_adjusted_values_replace_rule_table_when_present(self):
+        calibration = {"green_x_green": {"adjusted": {"base": 45, "risk": 15, "bull": 40},
+                                         "n": 37, "observed": {}, "updated_at": "2026-07-18"}}
+        out = build_short_scenarios(**_kw(calibration=calibration))
+        # BASE_KW 底下所有修正項皆中性（見模組頂端說明），adjusted 值應直接透傳。
+        self.assertEqual(_probs_by_id(out), {"base": 45, "risk": 15, "bull": 40})
+
+    def test_prob_note_mentions_sample_size_when_calibrated(self):
+        calibration = {"green_x_green": {"adjusted": {"base": 45, "risk": 15, "bull": 40},
+                                         "n": 37, "observed": {}, "updated_at": "2026-07-18"}}
+        out = build_short_scenarios(**_kw(calibration=calibration))
+        self.assertIn("歷史校正", out["prob_note"])
+        self.assertIn("37", out["prob_note"])
+
+    def test_no_matching_bucket_falls_back_to_rule_table(self):
+        calibration = {"red_x_red": {"adjusted": {"base": 20, "risk": 60, "bull": 20},
+                                     "n": 50, "observed": {}, "updated_at": "2026-07-18"}}
+        out = build_short_scenarios(**_kw(calibration=calibration))  # 是 green_x_green，查無
+        self.assertEqual(_probs_by_id(out), {"base": 50, "risk": 20, "bull": 30})
+        self.assertNotIn("歷史校正", out["prob_note"])
+
+    def test_empty_calibration_dict_falls_back_to_rule_table(self):
+        out = build_short_scenarios(**_kw(calibration={}))
+        self.assertEqual(_probs_by_id(out), {"base": 50, "risk": 20, "bull": 30})
+        self.assertEqual(out["prob_note"], PROB_NOTE)
+
+    def test_calibrated_result_still_passes_schema(self):
+        calibration = {"green_x_green": {"adjusted": {"base": 45, "risk": 15, "bull": 40},
+                                         "n": 37, "observed": {}, "updated_at": "2026-07-18"}}
+        _validate(build_short_scenarios(**_kw(calibration=calibration)))
 
 
 if __name__ == "__main__":
