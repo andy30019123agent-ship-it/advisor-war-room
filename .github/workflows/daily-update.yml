@@ -24,7 +24,7 @@ jobs:
           python-version: "3.11"
 
       - name: 安裝依賴
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-ci.txt
 
       - name: 更新引擎資料（data/<id>.json）
         env:
