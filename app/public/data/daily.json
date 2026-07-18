@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "schema_version": 1,
+    "data_date": "2026-07-18",
+    "generated_at": "2026-07-18T08:30:00+08:00",
+    "sources": ["FinMind", "yfinance"]
+  },
+  "market": {
+    "status": "偏空防禦",
+    "risk_temp": 8,
+    "conclusion": "今天不加碼，守好停損位。",
+    "taiex": { "close": 22513, "change_pct": -1.2 },
+    "us": [
+      { "id": "SPX", "name": "S&P 500", "change_pct": -0.8 },
+      { "id": "NDX", "name": "Nasdaq 100", "change_pct": -1.1 },
+      { "id": "SOX", "name": "費城半導體", "change_pct": -2.3 },
+      { "id": "VIX", "name": "VIX", "change_pct": 12.4 }
+    ]
+  },
+  "core_holdings": [
+    { "id": "2330", "name": "台積電", "action": "核心續扣", "note": "波段不加碼" },
+    { "id": "0050", "name": "元大台灣50", "action": "定期定額照常", "note": "不受本週訊號影響" }
+  ],
+  "tracked": [
+    {
+      "id": "2330",
+      "name": "台積電",
+      "close": 2440,
+      "change_pct": -0.4,
+      "decision": {
+        "action": "續抱",
+        "readable_reason": "趨勢仍在且基本面未壞；但估值偏貴，未突破前不加碼。",
+        "defense_price": 2245
+      }
+    }
+  ],
+  "watch": [
+    { "id": "2454", "name": "聯發科", "wait_condition": "等站回 MA20" },
+    { "id": "2412", "name": "中華電", "wait_condition": "等法人回補" }
+  ],
+  "alerts_snapshot": [
+    { "id": "2330", "name": "台積電", "type": "defense", "price": 2245, "direction": "below" }
+  ]
+}
