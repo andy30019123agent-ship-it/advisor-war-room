@@ -238,3 +238,40 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 ### weekly_brief 連動
 
 持股劇本每檔加一行「下週 70% 區間：X ～ Y」（讀 stocks/<id>.json 的 forecast.week_range_70；缺欄位跳過）。
+
+---
+
+## v1.4 增補（2026-07-18 夜三，Andy 給參考圖：短線劇本推演取代扇形當主角）
+
+### stocks/<id>.json 新增 `short_scenarios`（整組可 null）
+
+```jsonc
+"short_scenarios": {
+  "status": "ok",                    // ok｜insufficient_data（後者只給 message 一句話）
+  "horizon": "1-4 週",
+  "key_levels": { "supports": [2106.8, 2094.3], "resistances": [2324.0, 2428.2] },  // 由防守價/MA/近20日高低取、各最多 3 個
+  "scenarios": [                     // 恰 3 個，依 prob 降冪＝劇本一/二/三
+    {
+      "id": "base",                  // base｜risk｜bull
+      "title": "劇本一・守住防守價",
+      "probability_pct": 50,
+      "trigger": "收盤守住 2,107（防守價）",
+      "price_path": [2290, 2107, 2324],
+      "price_path_text": "2,290 → 回測 2,107 → 反彈 2,324（MA60）震盪",
+      "narrative": "股災後在防守價與季線之間震盪打底，等法人止賣。",
+      "invalidation": "收盤跌破 2,107 本劇本失效，切換劇本二。",
+      "action": { "stance": "hold", "text": "維持續抱，不加碼（連動計畫階梯第 1 條）" }
+    }
+  ],
+  "prob_note": "機率為規則估計（依三燈/籌碼/大盤查表），不是統計勝率，更不是保證。",
+  "disclaimer": "劇本＝條件推演；價位到了不代表會停，跟著失效條件走。"
+}
+```
+
+### 生成規則（引擎實作依據；Codex 07-18 設計＋主對話補模板）
+
+- **關鍵位**：supports＝{防守價、MA20/60/120、近20日低}∩(<現價) 取最近 3 個；resistances＝同集合∩(>現價)＋近20日高＋entry 錨 取最近 3 個。
+- **三劇本模板**：base＝守住最近支撐→「現價→回測最近支撐→反彈最近壓力震盪」；risk＝跌破防守→「防守→下探次一支撐→守住才反彈」＋invalidation 連動 advice 減碼條；bull＝站上最近壓力＋法人連 2 日買超→「現價→壓力1→壓力2」，action 受大盤 new_position 閘門（禁新倉時 stance=wait、文字改「不追價，僅觀察」）。狀態變形：空頭排列時 base 敘事用「反彈至壓力後仍震盪」；事件前 14 天內有 event_markers → narrative 前綴「事件前不押注：」。
+- **機率查表**（技術燈×籌碼燈 → base/risk/bull）：gg 50/20/30、gy 50/25/25、gr 45/35/20、yg 45/25/30、yy 50/30/20、yr 40/40/20、rg 40/35/25、ry 35/45/20、rr 30/50/20；修正：大盤偏空 risk+5 bull-5（偏多反向）；跌破防守 risk+10 base-10；突破近20日高 bull+5 base-5；法人連買≥3 bull+5 risk-5（連賣反向）；上下限 10~65%、normalize 100%、整數化差額補末位。
+- **紅線**：現價/近20日高低/防守價缺、停牌、三燈兩個以上 unknown → status=insufficient_data＋一句話；禁用「必漲/保證/高勝率」，價位序列一律接「↑/↓/震盪」中性動詞。
+- 一致性：scenarios 的 action 不得與 primary_decision.action 打架（例如 primary=減碼時 bull 劇本 action 最多「觀察」）。
