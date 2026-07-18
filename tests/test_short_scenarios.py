@@ -8,7 +8,10 @@ import unittest
 
 import jsonschema
 
-from warroom.short_scenarios import build_short_scenarios, _finalize_probs, PROB_NOTE
+from warroom.short_scenarios import (
+    build_short_scenarios, _finalize_probs, PROB_NOTE, _PROB_TABLE,
+    apply_market_new_position_gate,
+)
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STOCK_SCHEMA = json.load(open(os.path.join(REPO_ROOT, "schema", "stock.schema.json"), encoding="utf-8"))
@@ -416,6 +419,65 @@ class TestCalibrationOverride(unittest.TestCase):
         calibration = {"green_x_green": {"adjusted": {"base": 45, "risk": 15, "bull": 40},
                                          "n": 37, "observed": {}, "updated_at": "2026-07-18"}}
         _validate(build_short_scenarios(**_kw(calibration=calibration)))
+
+
+# ---------- 查表單調性（修復 15：鎖住規則表，防未來改壞） ----------
+class TestProbTableMonotonicity(unittest.TestCase):
+    def test_worse_technical_does_not_raise_bull_nor_lower_risk(self):
+        # 固定籌碼燈，技術燈由 green→yellow→red 變差：bull 不得升、risk 不得降（單調）。
+        for chips in ("g", "y", "r"):
+            seq = [_PROB_TABLE[t + chips] for t in ("g", "y", "r")]  # 技術由好到壞
+            bulls = [s[2] for s in seq]
+            risks = [s[1] for s in seq]
+            for a, b in zip(bulls, bulls[1:]):
+                self.assertGreaterEqual(a, b, f"chips={chips}：技術變差 bull 反升 {bulls}")
+            for a, b in zip(risks, risks[1:]):
+                self.assertLessEqual(a, b, f"chips={chips}：技術變差 risk 反降 {risks}")
+
+    def test_worse_chips_does_not_raise_bull_nor_lower_risk(self):
+        # 固定技術燈，籌碼燈由 green→yellow→red 變差：bull 不得升、risk 不得降。
+        for tech in ("g", "y", "r"):
+            seq = [_PROB_TABLE[tech + c] for c in ("g", "y", "r")]
+            bulls = [s[2] for s in seq]
+            risks = [s[1] for s in seq]
+            for a, b in zip(bulls, bulls[1:]):
+                self.assertGreaterEqual(a, b, f"tech={tech}：籌碼變差 bull 反升 {bulls}")
+            for a, b in zip(risks, risks[1:]):
+                self.assertLessEqual(a, b, f"tech={tech}：籌碼變差 risk 反降 {risks}")
+
+
+# ---------- 大盤新倉閘門統一同源（修復 10／Y7：build 階段重跑 bull 閘門） ----------
+class TestApplyMarketNewPositionGate(unittest.TestCase):
+    def _ok_scenarios(self, market_new_position):
+        return build_short_scenarios(**_kw(market_new_position=market_new_position,
+                                           primary_action="加碼", primary_position_delta="increase"))
+
+    def _bull(self, ss):
+        return next(sc for sc in ss["scenarios"] if sc["id"] == "bull")
+
+    def test_gate_switches_bull_action_to_authoritative_new_position(self):
+        # analyze 階段用「可正常布局」proxy 算出 bull=increase；build 階段權威閘門若是
+        # 「禁止新增部位」，重跑後 bull action 應收斂成 wait/不追價（跟 advice 層同源）。
+        ss = self._ok_scenarios("可正常布局")
+        self.assertEqual(self._bull(ss)["action"]["stance"], "increase")
+        gated = apply_market_new_position_gate(ss, market_new_position="禁止新增部位",
+                                               primary_action="加碼",
+                                               primary_position_delta="increase")
+        self.assertEqual(self._bull(gated)["action"]["stance"], "wait")
+
+    def test_gate_trial_only_caps_bull_to_small_entry(self):
+        ss = self._ok_scenarios("可正常布局")
+        gated = apply_market_new_position_gate(ss, market_new_position="僅限試單",
+                                               primary_action="加碼",
+                                               primary_position_delta="increase")
+        self.assertEqual(self._bull(gated)["action"]["stance"], "small_entry")
+
+    def test_gate_noop_on_insufficient_or_none(self):
+        self.assertIsNone(apply_market_new_position_gate(
+            None, market_new_position="禁止新增部位", primary_action="加碼"))
+        insuff = {"status": "insufficient_data", "message": "x"}
+        self.assertEqual(apply_market_new_position_gate(
+            insuff, market_new_position="禁止新增部位", primary_action="加碼"), insuff)
 
 
 if __name__ == "__main__":

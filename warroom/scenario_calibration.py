@@ -40,6 +40,13 @@ REALIZE_WINDOW_TRADING_DAYS = 20
 CALIBRATION_MIN_SAMPLES = 20
 CALIBRATION_MAX_DEVIATION_PCT = 15.0
 SHRINKAGE_K = 20  # λ = n/(n+K)；n=20 時 λ=0.5
+# 規則表版本（short_scenarios._PROB_TABLE）。規則表改版時 bump（如 "v2"），校正只吃同版本
+# 樣本（修復 14）——不同規則表算出的 realized 頻率不能混在一起校正。舊 entry 無此欄視為 v1
+# （現行規則表即 v1，向後相容既有 scenario_log）。
+MODEL_VERSION = "v1"
+# 同一 (stock_id, bucket) 在此天數內只計 1 筆進校正統計（修復 5：連日快照高度自相關，
+# 不是獨立樣本，去重防灌爆 n）。log 照記全部，只在統計時去重。
+CALIBRATION_DEDUP_DAYS = 30
 
 
 def _now_iso() -> str:
@@ -64,8 +71,12 @@ def append_scenario_log(log: List[Dict], stock_id: str, date: str, bucket: str,
     if not date or not stock_id:
         return log
     out = [e for e in log if not (e.get("date") == date and e.get("stock_id") == stock_id)]
+    # raw_probs＝當天查表（含大盤/籌碼修正、finalize 後）的三劇本機率原值，供校正/稽核回溯
+    # （修復 14）；model_version 標規則表版本，校正只吃同版本樣本。
+    raw_probs = {sc.get("id"): sc.get("prob_pct") for sc in (scenarios or []) if sc.get("id")}
     out.append({
         "date": date, "stock_id": stock_id, "bucket": bucket,
+        "model_version": MODEL_VERSION, "raw_probs": raw_probs,
         "scenarios": scenarios, "levels": levels, "realized": None,
     })
     return out
@@ -73,18 +84,28 @@ def append_scenario_log(log: List[Dict], stock_id: str, date: str, bucket: str,
 
 # ---------- 回填 realized ----------
 def determine_realized(closes: List[Optional[float]], defense: float, r1: float) -> str:
-    """時間序第一觸發定生死：依序看每個交易日收盤，第一個 close < defense → risk；
-    第一個 close > r1 → bull；先到者定生死，不是「任一天滿足就算」（例：先跌破防守，
-    後面又站回 R1 之上，realized 仍是 risk——先觸發的當下紀律動作已經對/錯，後面的
-    反彈不能倒果為因洗白）。整段都沒觸發（在 defense~r1 區間內盤整）→ base。
-    缺值（None，資料源缺這天）的交易日跳過不判定，看下一天。"""
+    """時間序第一觸發定生死，但觸發需「連續 2 個收盤」確認（大檢查・邏輯組修復 3：單一
+    收盤碰線容易被盤中假突破/假跌破高估，改要連 2 日收破防守才算 risk、連 2 日收上 R1
+    才算 bull）。依序看每個交易日收盤：連 2 日 close < defense → risk；連 2 日 close > r1
+    → bull；先湊滿 2 連的那一側定生死（維持時間序先觸發者定案，後面的反彈不能洗白）。
+    整段都沒有任一側連 2 日觸發 → base。缺值（None）的交易日跳過不判定、不打斷連續計數
+    （視為「這天沒資料」，不重置），看下一天。"""
+    below_run = above_run = 0
     for c in closes:
         if c is None:
             continue
         if c < defense:
-            return "risk"
-        if c > r1:
-            return "bull"
+            below_run += 1
+            above_run = 0
+            if below_run >= 2:
+                return "risk"
+        elif c > r1:
+            above_run += 1
+            below_run = 0
+            if above_run >= 2:
+                return "bull"
+        else:
+            below_run = above_run = 0
     return "base"
 
 
@@ -100,10 +121,13 @@ def _eligible_for_backfill(entry_date: str, today: str,
 
 def _finmind_closes_after(stock_id: str, entry_date: str,
                           n_trading_days: int = REALIZE_WINDOW_TRADING_DAYS
-                          ) -> Optional[List[float]]:
-    """entry_date 之後前 n_trading_days 個交易日的收盤價 list（依日期排序）；資料還沒
-    到齊或抓取失敗 → None（graceful：呼叫端當『這次先跳過，下次再試』，不當錯誤處理，
-    寫法比照 warroom.build_snapshots._finmind_close_after）。"""
+                          ) -> Optional[Dict]:
+    """entry_date 之後前 n_trading_days 個交易日的收盤價（依日期排序），並用 build_ex_div_map
+    做除權息還原（大檢查・邏輯組修復 4：realized 判定用「調整後收盤」，避免除息機械跳空
+    誤觸防守 → 假 risk）。回 {"closes": [...], "ex_div_adjusted": bool}；資料還沒到齊或
+    抓取失敗 → None（graceful：呼叫端當『這次先跳過，下次再試』）。
+    還原＝該日收盤加回「entry 日起累計」的現金股利（與 warroom.track_record.backfill_one
+    的除息還原同語意）。抓不到股利表 → 不調整、ex_div_adjusted=False。"""
     try:
         from warroom.finmind_cache import cached_fetch
         d0 = datetime.strptime(entry_date[:10], "%Y-%m-%d")
@@ -113,7 +137,22 @@ def _finmind_closes_after(stock_id: str, entry_date: str,
         df = df[df["date"].astype(str) > entry_date].sort_values("date")
         if len(df) < n_trading_days:
             return None
-        return [float(c) for c in df["close"].iloc[:n_trading_days]]
+        df = df.iloc[:n_trading_days]
+        div_map, adjusted = {}, False
+        try:
+            from warroom.events import build_ex_div_map
+            div_df = cached_fetch("taiwan_stock_dividend", stock_id=stock_id,
+                                  start_date="2025-01-01")
+            if div_df is not None:
+                div_map = build_ex_div_map(div_df)
+                adjusted = True
+        except Exception:
+            div_map, adjusted = {}, False
+        closes, cum = [], 0.0
+        for _, row in df.iterrows():
+            cum += float(div_map.get(str(row["date"])[:10], 0.0))
+            closes.append(float(row["close"]) + cum)
+        return {"closes": closes, "ex_div_adjusted": adjusted}
     except Exception:
         return None
 
@@ -135,12 +174,21 @@ def backfill_scenario_log(log: List[Dict], price_lookup=_finmind_closes_after,
         if not _eligible_for_backfill(date, today):
             continue
         try:
-            closes = price_lookup(sid, date)
+            res = price_lookup(sid, date)
         except Exception:
-            closes = None
-        if closes is None:
+            res = None
+        if res is None:
+            continue
+        # 預設 lookup 回 {"closes", "ex_div_adjusted"}（除權息還原後）；測試注入的假 lookup
+        # 可直接回 list（未調整），兩種形狀都吃，向後相容。
+        if isinstance(res, dict):
+            closes, adjusted = res.get("closes"), bool(res.get("ex_div_adjusted"))
+        else:
+            closes, adjusted = list(res), False
+        if not closes:
             continue
         e["realized"] = determine_realized(closes, defense, r1)
+        e["ex_div_adjusted"] = adjusted  # log 記錄是否做過除權息還原（修復 4）
     return log
 
 
@@ -214,6 +262,74 @@ def _shrinkage_lambda(n: int, k: int = SHRINKAGE_K) -> float:
     return n / (n + k)
 
 
+def _dedup_realized(entries: List, dedup_days: int = CALIBRATION_DEDUP_DAYS) -> List[str]:
+    """同一 stock_id 在 dedup_days 天內只計 1 筆（修復 5：連日快照自相關，不是獨立樣本）。
+    entries＝[(stock_id, date_str, realized), ...]；依 (stock_id, date) 排序，逐股保留最早、
+    之後每筆需距上一筆保留的日期 ≥dedup_days 才計。日期無法解析的筆一律照計（無從去重）。"""
+    kept: List[str] = []
+    last_by_stock: Dict[str, datetime] = {}
+    for sid, date_str, realized in sorted(entries, key=lambda x: (str(x[0]), str(x[1]))):
+        try:
+            d = datetime.strptime(str(date_str)[:10], "%Y-%m-%d")
+        except (ValueError, TypeError):
+            d = None
+        prev = last_by_stock.get(sid)
+        if prev is not None and d is not None and (d - prev).days < dedup_days:
+            continue
+        kept.append(realized)
+        if d is not None:
+            last_by_stock[sid] = d
+    return kept
+
+
+def _finalize_within_band(base: float, risk: float, bull: float,
+                          rule, max_dev: float, rounds: int = 3):
+    """clamp 與 normalize 迭代（修復 6）：保證最終整數機率既 sum=100、又落在規則表 ±max_dev
+    內（同時受 short_scenarios 的 10-65% 全域 clamp 節制）。normalize 後會把值推出 ±max_dev
+    邊界，故每輪 normalize→重查界，違反就把該值固定在邊界、再 normalize 其餘，至多 rounds
+    輪。rule＝(rule_base, rule_risk, rule_bull)。"""
+    from warroom.short_scenarios import _PROB_MIN, _PROB_MAX
+    keys = ["base", "risk", "bull"]
+    rule_map = dict(zip(keys, rule))
+    lo = {k: max(_PROB_MIN, rule_map[k] - max_dev) for k in keys}
+    hi = {k: min(_PROB_MAX, rule_map[k] + max_dev) for k in keys}
+    vals = {"base": base, "risk": risk, "bull": bull}
+    pinned: Dict[str, float] = {}
+    for _ in range(rounds):
+        free = [k for k in keys if k not in pinned]
+        fixed_sum = sum(pinned.values())
+        target_free = 100.0 - fixed_sum
+        free_sum = sum(vals[k] for k in free)
+        if free_sum <= 0:
+            for k in free:
+                vals[k] = target_free / len(free)
+        else:
+            for k in free:
+                vals[k] = vals[k] * target_free / free_sum
+        newpin, worst = None, 1e-9
+        for k in free:
+            if vals[k] < lo[k] - 1e-9 and (lo[k] - vals[k]) > worst:
+                worst, newpin = lo[k] - vals[k], (k, lo[k])
+            elif vals[k] > hi[k] + 1e-9 and (vals[k] - hi[k]) > worst:
+                worst, newpin = vals[k] - hi[k], (k, hi[k])
+        if newpin is None:
+            break
+        pinned[newpin[0]] = newpin[1]
+        vals[newpin[0]] = newpin[1]
+    ints = {k: int(round(vals[k])) for k in keys}
+    diff = 100 - sum(ints.values())
+    # 整數化差額補在有餘裕不破界的欄；都不行才補在 bull（末位，與 _finalize_probs 慣例一致）。
+    for k in keys:
+        if diff == 0:
+            break
+        if lo[k] <= ints[k] + diff <= hi[k]:
+            ints[k] += diff
+            diff = 0
+    if diff != 0:
+        ints["bull"] += diff
+    return ints["base"], ints["risk"], ints["bull"]
+
+
 def compute_calibration(log: List[Dict], min_samples: int = CALIBRATION_MIN_SAMPLES,
                         max_deviation_pct: float = CALIBRATION_MAX_DEVIATION_PCT,
                         now_iso: Optional[str] = None) -> Dict[str, Dict]:
@@ -224,18 +340,23 @@ def compute_calibration(log: List[Dict], min_samples: int = CALIBRATION_MIN_SAMP
     收斂邏輯，不另造一套）。回 {bucket: {adjusted, n, observed, updated_at}}，
     n<min_samples 的 bucket 不出現在回傳裡（不是給 adjusted=None，是整條不產生，
     避免呼叫端誤用未達樣本門檻的半成品）。"""
-    from warroom.short_scenarios import _PROB_TABLE, _COLOR_KEY, _finalize_probs
+    from warroom.short_scenarios import _PROB_TABLE, _COLOR_KEY
 
-    by_bucket: Dict[str, List[str]] = {}
+    # 只吃同 model_version 的樣本（修復 14；舊 entry 無此欄視為 MODEL_VERSION，向後相容）。
+    by_bucket: Dict[str, List] = {}
     for e in log:
         realized = e.get("realized")
         bucket = e.get("bucket")
         if realized not in ("base", "risk", "bull") or not bucket:
             continue
-        by_bucket.setdefault(bucket, []).append(realized)
+        if (e.get("model_version") or MODEL_VERSION) != MODEL_VERSION:
+            continue
+        by_bucket.setdefault(bucket, []).append((e.get("stock_id"), e.get("date"), realized))
 
     out: Dict[str, Dict] = {}
-    for bucket, realized_list in by_bucket.items():
+    for bucket, entries in by_bucket.items():
+        # 同一 (stock_id, bucket) 30 天內只計 1 筆（修復 5，防連日快照灌爆 n）。
+        realized_list = _dedup_realized(entries)
         n = len(realized_list)
         if n < min_samples:
             continue
@@ -253,12 +374,13 @@ def compute_calibration(log: List[Dict], min_samples: int = CALIBRATION_MIN_SAMP
             "bull": round(realized_list.count("bull") / n, 4),
         }
         lam = _shrinkage_lambda(n)
+        # 收縮混合原值（未夾界）；±max_dev 與 10-65% 全域 clamp 交給 _finalize_within_band
+        # 迭代處理，保證 normalize 後最終仍在規則表 ±max_dev 內（修復 6）。
         mixed = {}
         for k, rule_val in (("base", rule_base), ("risk", rule_risk), ("bull", rule_bull)):
-            mix_val = rule_val * (1 - lam) + observed[k] * 100.0 * lam
-            lo, hi = rule_val - max_deviation_pct, rule_val + max_deviation_pct
-            mixed[k] = max(lo, min(hi, mix_val))
-        b_p, r_p, u_p = _finalize_probs(mixed["base"], mixed["risk"], mixed["bull"])
+            mixed[k] = rule_val * (1 - lam) + observed[k] * 100.0 * lam
+        b_p, r_p, u_p = _finalize_within_band(
+            mixed["base"], mixed["risk"], mixed["bull"], rule, max_deviation_pct)
         out[bucket] = {
             "adjusted": {"base": b_p, "risk": r_p, "bull": u_p},
             "n": n,

@@ -128,6 +128,8 @@ def test_build_brief_holdings_includes_week_range_70_line_when_forecast_present(
     daily = _daily()
     msg = weekly_brief.build_brief(daily, stocks_dir=str(tmp_path))
     assert "下週 70% 區間：2,158.3 ～ 2,426.7" in msg
+    # 修復 16：GBM 區間標「零漂移波動模擬」短註（與 forecast.disclaimer 同語意）。
+    assert "下週 70% 區間：2,158.3 ～ 2,426.7（零漂移波動模擬）" in msg
 
 
 def test_build_brief_holdings_skips_week_range_70_line_when_forecast_missing(tmp_path):

@@ -80,6 +80,20 @@ class TestBuildForecastBasics(unittest.TestCase):
         out = build_forecast(df, None, "2026-07-18", "2330")
         self.assertEqual(out["scenarios"], {"bear": None, "base": None, "bull": None})
 
+    def test_scenarios_null_when_valuation_has_warning(self):
+        # 修復 8／R1：valuation.warning 非 null（Base 偏離現價過大、可能低估）時，
+        # forecast.scenarios 不得裸奔悲觀估值，一律回 null（bear/base/bull 全 None）。
+        df = make_price()
+        val = {"fair_value": {"bear": 90.0, "base": 110.0, "bull": 130.0},
+               "warning": "Base 1297.9 與現價偏離 61%，可能低估，不作為減碼依據"}
+        out = build_forecast(df, val, "2026-07-18", "2330")
+        self.assertEqual(out["scenarios"], {"bear": None, "base": None, "bull": None})
+
+    def test_disclaimer_mentions_zero_drift(self):
+        # 修復 16：disclaimer 標明「零漂移」波動模擬（與週報「下週 70% 區間」短註同語意）。
+        out = build_forecast(make_price(), VALUATION, "2026-07-18", "2330")
+        self.assertIn("零漂移", out["disclaimer"])
+
 
 # ---------- horizons：m1/m3/m6 三段結構 ----------
 class TestHorizons(unittest.TestCase):

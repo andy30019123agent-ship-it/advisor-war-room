@@ -12,6 +12,13 @@ api/_lib/finmind_lite.py 檔頭說明）：
 2. 大盤燈號改讀已部署的 public/data/daily.json（每日排程算好的真結果），
    不現場打 yfinance；讀不到就降級 amber（跟原本 warroom/market.py 失敗時的
    行為一致，見 warroom/analyze_tw.py _decide() 的 try/except）。
+
+限流（2026-07-18 大檢查 🔴1）：跟 api/track.py 同款 per-instance /tmp 計數，每
+instance 每小時最多 30 次「冷查」（快取命中不計）；超限回 429。侷限跟 track.py
+一樣——不是全域限流，Vercel 流量大時開多個 instance 各自獨立的 /tmp，額度會隨
+instance 數放大，冷啟或換 instance 就歸零。這對單人使用的戰情室工具可接受（治本
+需要 Vercel Edge Config/KV 等跨 instance 共享狀態），先擋掉最省事的「換代號連續
+打」cost-DoS 攻擊面（見 _reports/大檢查_安全_2026-07-18.md 第 2 節）。
 """
 import json
 import os
@@ -30,6 +37,12 @@ if _ROOT not in sys.path:
 _TPE = timezone(timedelta(hours=8))
 _STOCK_ID_RE = re.compile(r"^\d{4,6}$")
 _TMP_CACHE_DIR = "/tmp/analyze_cache"
+
+# 每 instance（warm lambda 共用同一個 /tmp）簡單限流，只擋「冷查」（快取沒命中，真的
+# 要打 FinMind 的請求）——快取命中不消耗額度，不然常查的熱門股會不必要地把額度用光。
+# 跟 api/track.py 的 _RATE_LIMIT_PATH 同款設計，見檔頭說明的侷限。
+_RATE_LIMIT_PATH = "/tmp/analyze_rate_limit.json"
+_RATE_LIMIT_MAX_PER_HOUR = 30
 
 # 整體查詢時間預算：Vercel serverless 硬限 30s，冷查最壞序列要打 8 個 FinMind dataset
 # （每個最久 6s，見 finmind_lite._TIMEOUT），22s 留 8s buffer 給 build_stock_detail 組裝、
@@ -117,12 +130,39 @@ def _write_cache(stock_id: str, payload) -> None:
         pass  # /tmp 快取只是防連點，寫失敗不影響本次回應
 
 
+def _rate_limit_ok(path: str = _RATE_LIMIT_PATH) -> bool:
+    """回 True 並把這次冷查計入額度；額度用完回 False（呼叫方不得往下打 FinMind）。
+    以 UTC 小時分桶存在 /tmp，同一 instance warm 重用會累加，跨小時或冷啟自動歸零。
+    寫檔失敗（/tmp 滿等）採寬鬆放行，不因限流機制本身壞掉擋住正常使用。"""
+    bucket = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H")
+    try:
+        with open(path, encoding="utf-8") as f:
+            state = json.load(f)
+    except Exception:
+        state = {}
+    if state.get("bucket") != bucket:
+        state = {"bucket": bucket, "count": 0}
+    if state.get("count", 0) >= _RATE_LIMIT_MAX_PER_HOUR:
+        return False
+    state["count"] = state.get("count", 0) + 1
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f)
+    except Exception:
+        pass
+    return True
+
+
 def run_analyze(stock_id: str) -> dict:
     """回 (status_code, body_dict)。同一代號同一天命中 /tmp 快取直接回，
-    防連點轟炸 FinMind 免費額度。"""
+    防連點轟炸 FinMind 免費額度。快取沒命中（冷查）才過限流閘門——超限拋
+    _RateLimited，403 前不會碰到 FinMind。"""
     cached = _read_cache(stock_id)
     if cached is not None:
         return cached
+
+    if not _rate_limit_ok():
+        raise _RateLimited()
 
     _setup_lite_env()
     from warroom.analyze_tw import analyze, stock_exists, FinMindUnavailable
@@ -168,6 +208,10 @@ class _NotFound(Exception):
     pass
 
 
+class _RateLimited(Exception):
+    pass
+
+
 class handler(BaseHTTPRequestHandler):
     def _send_json(self, status: int, payload: dict) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -192,6 +236,8 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(200, detail)
         except _NotFound:
             self._send_json(404, {"error": "not_found"})
+        except _RateLimited:
+            self._send_json(429, {"error": "查詢太頻繁，請稍後再試"})
         except _UpstreamUnavailable as e:
             self._send_json(503, {"error": str(e)})
         except Exception as e:  # 任何未預期例外都不能讓前端拿到 500 白屏

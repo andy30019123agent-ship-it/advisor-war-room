@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sys
+import warnings
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import Dict, List, Optional, Tuple
@@ -25,6 +26,8 @@ from warroom.market import fetch_market
 from warroom.primary_decision import build_advice, build_defense_explain, generate_roles
 from warroom.profile import load_profile
 from warroom.scenario_calibration import sync_calibration, sync_scenario_log
+from warroom.short_scenarios import apply_market_new_position_gate
+from warroom.track_record import backfill_outcomes, _load as _load_rec_log
 
 _TPE = timezone(timedelta(hours=8))
 
@@ -378,11 +381,14 @@ def _add_calendar_days(date_str: str, days: int) -> str:
 
 
 # 命中率方向感知（見 build_track_stats._rate）：看多動作（買進/續抱/試單）猜對＝股價漲，
-# r>0 算命中；防禦動作（減碼——含出場，兩者 apply_derivations 都存成「減碼」——與觀望）
-# 猜對＝股價沒漲甚至跌，r<=0 才算命中。不分方向、一律「r>0 算命中」會系統性低估防禦建議
-# 的命中率（正確喊「先撤」結果股價真的跌，照舊規則反而算「沒中」）。未知/缺 rating 一律
-# 照舊視為看多，維持既有預設行為。
-_DEFENSIVE_RATINGS = {"減碼", "觀望"}
+# r>0 算命中；防禦動作（減碼——含出場，兩者 apply_derivations 都存成「減碼」）猜對＝股價
+# 沒漲甚至跌，r<=0 才算命中。不分方向、一律「r>0 算命中」會系統性低估防禦建議的命中率。
+# 未知/缺 rating 一律照舊視為看多，維持既有預設行為。
+_DEFENSIVE_RATINGS = {"減碼"}
+# 觀望＝沒有方向主張（既不看多也不看空），一律「排除」在命中率統計之外（不算 hit 也不算
+# miss，n 只計有方向的建議）——把觀望硬塞進任一方向都會系統性扭曲命中率（大檢查・邏輯組
+# 修復 2：觀望命中定義）。
+_DIRECTIONLESS_RATINGS = {"觀望"}
 
 
 def _is_hit(rating: Optional[str], r: float) -> bool:
@@ -406,7 +412,10 @@ def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
 
     def _rate(field: str) -> Optional[float]:
         pairs = [(_num((e.get("outcome") or {}).get(field)), e.get("rating")) for e in entries]
-        pairs = [(v, rating) for v, rating in pairs if v is not None]
+        # 只計有方向的建議：outcome 已回填（v 非 None）且 rating 非「觀望」（無方向主張，
+        # 排除，不進分母也不進分子）。樣本 <5 給 null。
+        pairs = [(v, rating) for v, rating in pairs
+                 if v is not None and rating not in _DIRECTIONLESS_RATINGS]
         if len(pairs) < 5:
             return None
         return round(sum(1 for v, rating in pairs if _is_hit(rating, v)) / len(pairs), 3)
@@ -415,7 +424,8 @@ def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
     pending_dates = [e.get("date") for e in entries
                      if _num((e.get("outcome") or {}).get("r5")) is None and e.get("date")]
     if closed >= 5:
-        note = f"已結算 {closed} 筆，命中率＝各期報酬為正的比例。"
+        note = (f"已結算 {closed} 筆。命中率口徑：看多建議報酬為正、防禦（減碼）建議報酬"
+                f"不為正即算命中；觀望（無方向主張）不列入統計。")
     elif pending_dates:
         refill = _add_calendar_days(min(pending_dates), 7)
         note = f"樣本累積中，5 日結果最快 {refill} 開始回填"
@@ -606,6 +616,14 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
                            lights_facts, res["primary_decision"]["action"])
     evidence = build_evidence(res.get("evidence") or {})
     evidence["roles"] = roles
+    # 短線劇本：analyze 階段用 market_light proxy 算了一版 bull 閘門；這裡用 daily 已算好的
+    # 權威 exposure_guidance.new_position（同 advice 層那份，由 risk_temp 來）重跑 bull 閘門，
+    # 讓劇本層與 advice 層的大盤閘門統一同源（大檢查・邏輯組 Y7）。
+    short_scenarios = apply_market_new_position_gate(
+        res.get("short_scenarios"),
+        market_new_position=market_new_position,
+        primary_action=primary.get("action"),
+        primary_position_delta=primary.get("position_delta", "hold"))
     return {
         "meta": meta,
         "profile": {"id": stock_id, "name": res.get("name", stock_id),
@@ -622,8 +640,8 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
         "track": build_track(stock_id),
         "forecast": res.get("forecast"),  # v1.2：整組可為 null（樣本不足/引擎產物缺該欄位）
         # v1.4：短線劇本推演，整組由 warroom/short_scenarios.py 在 analyze 階段算好（含機率
-        # 查表、大盤新倉閘門 proxy），這裡純透傳，不重算（見該檔與 analyze_tw.py 掛載點說明）。
-        "short_scenarios": res.get("short_scenarios"),
+        # 查表），這裡只把 bull 的大盤新倉閘門重跑到權威 exposure new_position（見上 Y7 說明）。
+        "short_scenarios": short_scenarios,
     }
 
 
@@ -637,13 +655,14 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
 # 是「引擎內部檔，非前端契約」，可自由擴充只要不違反契約列出的必要欄位）。
 
 def _load_forecast_log(path: str = FORECAST_LOG) -> List[Dict]:
+    """讀 forecast_log。檔案不存在 → []（正常初始狀態）。JSON 壞掉 → 往上拋例外，讓
+    呼叫端 fail-closed（大檢查・邏輯組 Y2：舊版壞檔回 []，接著 main() 無條件覆寫，會把
+    過去所有 prob_range 歷史悄悄清空、準確度永遠停在「累積中」。改成跟 recommendation_log／
+    scenario_log 兩支 log 一致：壞檔不覆寫、警告並跳過本次寫入）。"""
     if not os.path.exists(path):
         return []
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f) or []
-    except Exception:
-        return []
+    with open(path, encoding="utf-8") as f:
+        return json.load(f) or []
 
 
 def update_forecast_log(log: List[Dict], stock_id: str, forecast: Optional[Dict],
@@ -737,6 +756,67 @@ def build_forecast_accuracy(stock_id: str, log: List[Dict],
            "note": f"已回填 {n} 筆樣本，命中率＝實際收盤落在 70% 機率區間內的比例。"}
 
 
+# ---------- 交易資料日解析 ＋ 戰績回填（recommendation_log） ----------
+def _max_as_of_date(results: Dict[str, Dict]) -> Optional[str]:
+    """所有個股 as_of_date（最後一根日 K 日期）的最大值；全缺 → None。"""
+    dates = [r.get("as_of_date") for r in results.values() if r.get("as_of_date")]
+    return max(dates) if dates else None
+
+
+def confirmed_trade_date(market_inputs: Dict, data_dir: str = DATA_DIR) -> Optional[str]:
+    """可信的交易資料日：行情日優先，缺則退所有個股 as_of_date 最大值；兩者皆無 → None
+    （代表拿不到可信交易日，main() 據此跳過 forecast/scenario/戰績 log 寫入，不記非交易日
+    樣本）。與 build_all 用同一套 fallback，只是這裡供 main() 判斷「要不要落 log」。"""
+    td = market_inputs.get("trade_date")
+    if td:
+        return td
+    results, _ = load_stock_results(discover_stock_files(data_dir))
+    return _max_as_of_date(results)
+
+
+def _finmind_daily_full(stock_id: str):
+    """該股完整日線（供 track_record.backfill_outcomes 用），走 FinMind 快取。抓失敗回
+    None（graceful：呼叫端當『這次先跳過，下次再試』）。抓近一年，涵蓋 60 交易日回填窗。"""
+    try:
+        start = (datetime.now(_TPE) - timedelta(days=400)).strftime("%Y-%m-%d")
+        return cached_fetch("taiwan_stock_daily", stock_id=stock_id, start_date=start)
+    except Exception:
+        return None
+
+
+def _finmind_dividend(stock_id: str):
+    """該股股利表（供 events.build_ex_div_map 還原除權息用）。抓失敗回 None → 不調整。"""
+    try:
+        return cached_fetch("taiwan_stock_dividend", stock_id=stock_id, start_date="2025-01-01")
+    except Exception:
+        return None
+
+
+def backfill_recommendation_log(log_path: str = RECOMMENDATION_LOG,
+                                price_lookup=_finmind_daily_full,
+                                div_lookup=_finmind_dividend) -> Optional[List[Dict]]:
+    """把 track_record.backfill_outcomes 接進管線（大檢查・邏輯組修復 1：該函式存在卻從沒
+    被呼叫，closed 永遠 0）。比照 forecast/scenario log 的回填模式：讀既有 log（壞檔
+    fail-closed，跳過不覆寫）→ 用 FinMind 日線＋股利回填每筆 outcome（抓不到收盤跳過、
+    留待下次再試）→ 原子寫回。回填後 build_track_stats 才能算出真正的 closed／命中率。
+    回寫入後的 log；壞檔或無檔回 None／[]（呼叫端不需接手）。"""
+    try:
+        log = _load_rec_log(log_path)
+    except Exception as ex:
+        warnings.warn(
+            f"recommendation_log 讀取失敗（{log_path}）：{type(ex).__name__} {ex}；"
+            "本次跳過戰績回填，避免覆寫毀損既有紀錄（fail-closed）")
+        return None
+    if not log:
+        return log
+    backfill_outcomes(log, price_lookup, div_lookup=div_lookup)
+    try:
+        write_json(log_path, log)
+    except Exception:
+        pass  # 寫檔失敗不讓整批 build 中斷（契約硬規則 3）
+    return log
+
+
 # ---------- 組裝入口 ----------
 def build_all(data_dir: str = DATA_DIR,
              market_inputs: Optional[Dict] = None) -> Tuple[Dict, Dict[str, Dict], List[Tuple[str, str]]]:
@@ -747,8 +827,11 @@ def build_all(data_dir: str = DATA_DIR,
     results, skipped = load_stock_results(stock_files)
     if market_inputs is None:
         market_inputs = fetch_market_inputs()
-    meta = build_meta(sources=["FinMind", "yfinance"],
-                      data_date=market_inputs.get("trade_date"))
+    # data_date：行情資料日優先；抓不到（如假日跑批、市場 API 失敗）時 fallback 用所有個股
+    # as_of_date 的最大值（最後一根日 K 日期），而不是無腦用「今天」（大檢查・邏輯組
+    # data_date fallback）。兩者皆無 → build_meta 內部才退今天，但 main() 會據此跳過 log 寫入。
+    resolved_date = market_inputs.get("trade_date") or _max_as_of_date(results)
+    meta = build_meta(sources=["FinMind", "yfinance"], data_date=resolved_date)
     market_block = build_market_block(market_inputs)
     daily = build_daily(profile, results, meta, market_block)
     # 個股 advice 要跟大盤 exposure_guidance 一致（見 _build_advice_and_defense docstring）：
@@ -760,29 +843,49 @@ def build_all(data_dir: str = DATA_DIR,
 
 
 def main() -> None:
-    daily, stock_details, skipped = build_all()
-    today = daily["meta"]["data_date"]
+    market_inputs = fetch_market_inputs()
 
-    # v1.3 forecast_log 準確度管線：build_all() 保持純函式（不打網路、不寫檔，見模組頂
-    # 端「設計原則」），實際的 log 落檔＋FinMind 回填只在 main()（真正跑批次）這裡做，
-    # 才不會讓 tests/test_build_snapshots.py 的 build_all() 呼叫意外打網路。
-    log = _load_forecast_log()
-    for sid, detail in stock_details.items():
-        log = update_forecast_log(log, sid, detail.get("forecast"), today)
-    log = backfill_forecast_log(log, today=today)
-    for sid, detail in stock_details.items():
-        forecast = detail.get("forecast")
-        if forecast:
-            forecast["accuracy"] = build_forecast_accuracy(sid, log)
-    write_json(FORECAST_LOG, log)
+    # 戰績回填（修復 1）：先用 FinMind 回填 recommendation_log 的 outcome，再組 daily——
+    # build_track_stats（在 build_all→build_daily 裡）讀的是回填後的 log，closed／命中率才
+    # 會真正更新（比照 forecast/scenario 的「先回填再統計」模式；抓不到收盤的筆自動留待
+    # 下次）。壞檔 fail-closed（見 backfill_recommendation_log）。
+    backfill_recommendation_log()
 
-    # 劇本機率自我校正管線（warroom/scenario_calibration.py）：跟 forecast_log 同款
-    # 掛鉤位置——build_all() 保持純函式，實際的 scenario_log 落檔＋FinMind 回填＋
-    # calibration 表更新只在 main() 這裡做。log 壞檔 fail-closed（見該模組說明），
-    # sync_scenario_log 回 None 時 sync_calibration 仍會自己嘗試讀檔（同樣 fail-closed
-    # 跳過），兩段互不依賴對方的回傳值。
-    sync_scenario_log(stock_details, today)
-    sync_calibration()
+    daily, stock_details, skipped = build_all(market_inputs=market_inputs)
+
+    # forecast/scenario/戰績 log 只在拿到「可信交易資料日」時落檔（修復 13）：行情日缺又無
+    # 任何個股 as_of_date（非交易日/資料全缺）→ 跳過寫入，不記非交易日樣本污染回填統計。
+    trade_date = confirmed_trade_date(market_inputs)
+    if trade_date:
+        # v1.3 forecast_log 準確度管線：build_all() 保持純函式（不打網路、不寫檔，見模組頂
+        # 端「設計原則」），實際的 log 落檔＋FinMind 回填只在 main()（真正跑批次）這裡做。
+        # 讀檔改 fail-closed（修復 7／Y2）：壞檔警告並跳過本次寫入，不覆寫毀損既有歷史。
+        try:
+            log = _load_forecast_log()
+            forecast_ok = True
+        except Exception as ex:
+            warnings.warn(
+                f"forecast_log 讀取失敗（{FORECAST_LOG}）：{type(ex).__name__} {ex}；"
+                "本次跳過 forecast_log 寫入，避免覆寫毀損既有歷史（fail-closed）")
+            log, forecast_ok = None, False
+        if forecast_ok:
+            for sid, detail in stock_details.items():
+                log = update_forecast_log(log, sid, detail.get("forecast"), trade_date)
+            log = backfill_forecast_log(log, today=trade_date)
+            for sid, detail in stock_details.items():
+                forecast = detail.get("forecast")
+                if forecast:
+                    forecast["accuracy"] = build_forecast_accuracy(sid, log)
+            write_json(FORECAST_LOG, log)
+
+        # 劇本機率自我校正管線（warroom/scenario_calibration.py）：跟 forecast_log 同款
+        # 掛鉤位置。log 壞檔 fail-closed（見該模組說明），sync_scenario_log 回 None 時
+        # sync_calibration 仍會自己嘗試讀檔（同樣 fail-closed 跳過），兩段互不依賴。
+        sync_scenario_log(stock_details, trade_date)
+        sync_calibration()
+    else:
+        print("[build_snapshots] 無可信交易資料日（行情日與個股 as_of 皆缺），"
+              "跳過 forecast/scenario log 寫入。", file=sys.stderr)
 
     write_json(os.path.join(OUT_DIR, "daily.json"), daily)
     for sid, detail in stock_details.items():

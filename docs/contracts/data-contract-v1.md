@@ -205,6 +205,10 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 
 規則：模擬 seed 由 stock_id＋data_date 決定（同日重跑結果一致、可測試）；價格樣本 <120 根日 K → 整組 null；scenarios 直接引用 valuation 三情境不得另算。前端 zod optional/nullable。
 
+補充說明（大檢查・邏輯組修復 8／R1）：`valuation.warning` 非 null（Base 偏離現價過大、可能低估，不作為減碼依據）時，`forecast.scenarios` 一律回 `{bear:null, base:null, bull:null}`——不得把同一個被判定不可信的悲觀估值裸奔到前端（primary_decision 已用同一護欄壓抑減碼）。前端據此不畫該三條線。物件形狀維持不變（三鍵仍在，只是值為 null）。
+
+補充說明（修復 16）：`forecast.disclaimer` 標明此為「零漂移」歷史波動隨機模擬（drift=0 的 GBM），與週報「下週 70% 區間（零漂移波動模擬）」短註同語意。
+
 ---
 
 ## v1.3 增補（2026-07-18 夜二，Andy 拍板：預估走勢 2.0 五項全做）
@@ -275,3 +279,13 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 - **機率查表**（技術燈×籌碼燈 → base/risk/bull）：gg 50/20/30、gy 50/25/25、gr 45/35/20、yg 45/25/30、yy 50/30/20、yr 40/40/20、rg 40/35/25、ry 35/45/20、rr 30/50/20；修正：大盤偏空 risk+5 bull-5（偏多反向）；跌破防守 risk+10 base-10；突破近20日高 bull+5 base-5；法人連買≥3 bull+5 risk-5（連賣反向）；上下限 10~65%、normalize 100%、整數化差額補末位。
 - **紅線**：現價/近20日高低/防守價缺、停牌、三燈兩個以上 unknown → status=insufficient_data＋一句話；禁用「必漲/保證/高勝率」，價位序列一律接「↑/↓/震盪」中性動詞。
 - 一致性：scenarios 的 action 不得與 primary_decision.action 打架（例如 primary=減碼時 bull 劇本 action 最多「觀察」）。
+- **大盤新倉閘門統一同源**（大檢查・邏輯組修復 10／Y7）：bull 劇本的新倉閘門 build 階段以 `daily.exposure_guidance.new_position`（由 risk_temp 來，與 advice 層同源）為準——analyze 階段先用 market_light proxy 算一版，build_snapshots 透傳時重跑 bull 閘門對齊權威值，不再兩層各用不同訊號。
+
+---
+
+## 內部檔補充說明（非前端契約，引擎內部 log；大檢查・邏輯組修復）
+
+- **`data/scenario_log.json`** 每筆新增 `model_version`（規則表版本，現行＝`"v1"`；規則表 `_PROB_TABLE` 改版時 bump）與 `raw_probs`（當天查表＋修正後的三劇本機率原值，供稽核回溯）。校正（`prob_calibration.json`）**只吃同 `model_version` 的樣本**（不同規則表算出的 realized 頻率不得混算；舊 entry 無此欄視為 v1）。realized 判定需「連續 2 個收盤」確認（連 2 日收破防守=risk、連 2 日收上 r1=bull，時間序先觸發者定案），並用除權息還原後收盤（`ex_div_adjusted` 記錄是否調整）。校正統計時同一 `(stock_id, bucket)` 30 天內只計 1 筆（去重防連日快照自相關灌爆 n）；混合值 clamp 與 normalize 迭代收斂，保證最終仍在規則表 ±15pp 內。
+- **`data/forecast_log.json`** 讀壞檔改 fail-closed（警告＋跳過本次寫入、不覆寫歷史），與 recommendation_log／scenario_log 三支 log 行為一致。
+- **`data/recommendation_log.json`** 的 `backfill_outcomes` 已接進 `build_snapshots.main()`（先回填再組 track_stats）；命中率口徑：看多建議報酬為正、防禦（減碼）建議報酬不為正即算命中，**觀望（無方向主張）一律排除**在統計之外。
+- **交易資料日**：行情日缺時退所有個股 `as_of_date` 最大值；兩者皆無 → 跳過 forecast/scenario log 寫入（不記非交易日樣本）。複評日 `reeval_date`＝+7 曆日後「下一交易日對齊」（週六→+2、週日→+1；近似，不接國定假日行事曆）。

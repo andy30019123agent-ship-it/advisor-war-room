@@ -36,7 +36,7 @@ export function StockSearch() {
   }
 
   return (
-    <div className="screen">
+    <main className="screen">
       <header className="page-header">
         <div className="large-title">查股票</div>
       </header>
@@ -85,7 +85,7 @@ export function StockSearch() {
       )}
 
       {data && <StockDetailView detail={data} daily={daily} />}
-    </div>
+    </main>
   )
 }
 
@@ -289,7 +289,7 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
         </div>
       </div>
 
-      <ShortScenarios data={detail.short_scenarios} />
+      <ShortScenarios data={detail.short_scenarios} close={price.close} />
 
       <ForecastFan forecast={detail.forecast} />
 
@@ -378,14 +378,26 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
               <ChevronGlyph />
             </summary>
             <div className="disclosure-body">
-              {evidence.news.map((n) => (
-                <p key={n.url}>
-                  <a href={n.url} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>
-                    {n.title}
-                  </a>{' '}
-                  — {n.source}
-                </p>
-              ))}
+              {evidence.news.map((n) => {
+                const isSafeUrl = /^https?:\/\//i.test(n.url)
+                return (
+                  <p key={n.url}>
+                    {isSafeUrl ? (
+                      <a
+                        href={n.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: 'var(--text)', textDecoration: 'underline' }}
+                      >
+                        {n.title}
+                      </a>
+                    ) : (
+                      <span>{n.title}</span>
+                    )}{' '}
+                    — {n.source}
+                  </p>
+                )
+              })}
             </div>
           </details>
         </div>

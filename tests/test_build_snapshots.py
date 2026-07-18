@@ -7,12 +7,16 @@ import unittest
 
 import jsonschema
 
+import pandas as pd
+
 from warroom.build_snapshots import (
     build_all, build_alerts_for_stock, build_context, build_core_holdings,
     build_daily, build_evidence, build_forecast_accuracy, build_market_block,
-    build_stock_detail, build_track, build_tracked_entry, backfill_forecast_log,
-    compute_conclusion, compute_market_status, compute_risk_temp,
-    discover_stock_files, is_new_format, load_stock_results, update_forecast_log,
+    build_stock_detail, build_track, build_track_stats, build_tracked_entry,
+    backfill_forecast_log, backfill_recommendation_log, confirmed_trade_date,
+    _max_as_of_date, _load_forecast_log, compute_conclusion, compute_market_status,
+    compute_risk_temp, discover_stock_files, is_new_format, load_stock_results,
+    update_forecast_log,
 )
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -318,6 +322,86 @@ class TestBuildAllRealData(unittest.TestCase):
     def test_market_conclusion_nonempty(self):
         self.assertTrue(self.daily["market"]["conclusion"])
         self.assertLessEqual(len(self.daily["market"]["conclusion"]), 20)
+
+
+# ---------- 修復 1：戰績回填接進管線 ----------
+class TestBackfillRecommendationLog(unittest.TestCase):
+    def _pending_entry(self, date="2026-06-01"):
+        return {"date": date, "stock_id": "2330", "name": "台積電", "price": 100.0,
+                "rating": "買進", "fair_base": 120.0, "stop": 90.0, "rr": 2.0,
+                "outcome": {"r5": None, "r20": None, "r60": None, "hit": None,
+                            "hit_days": None, "max_drawdown": None}}
+
+    def test_backfill_fills_outcome_and_closed_reflects(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "recommendation_log.json")
+            json.dump([self._pending_entry()], open(p, "w", encoding="utf-8"))
+
+            def price_lookup(sid):
+                rows = [{"date": f"2026-06-{2+i:02d}", "close": 100.0 + i,
+                         "max": 101.0 + i, "min": 99.0 + i} for i in range(10)]
+                return pd.DataFrame(rows)
+
+            out = backfill_recommendation_log(p, price_lookup=price_lookup, div_lookup=None)
+            self.assertIsNotNone(out[0]["outcome"]["r5"])   # r5 已回填
+            # build_track_stats 的 closed 隨回填後的 log 更新（原本永遠 0）
+            stats = build_track_stats(log_path=p)
+            self.assertEqual(stats["closed"], 1)
+
+    def test_backfill_corrupt_log_fail_closed_no_overwrite(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "recommendation_log.json")
+            broken = "{壞掉的 json,,,"
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(broken)
+            import warnings
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                out = backfill_recommendation_log(p, price_lookup=lambda sid: None)
+            self.assertIsNone(out)
+            self.assertTrue(any("recommendation_log" in str(w.message) for w in caught))
+            self.assertEqual(open(p, encoding="utf-8").read(), broken)  # 原檔沒被覆寫
+
+
+# ---------- 修復 7：forecast_log fail-closed ----------
+class TestForecastLogFailClosed(unittest.TestCase):
+    def test_missing_file_returns_empty(self):
+        self.assertEqual(_load_forecast_log("/no/such/forecast_log.json"), [])
+
+    def test_corrupt_file_raises_not_silently_empty(self):
+        # 修復 7／Y2：壞檔不得回 []（否則 main() 會無條件覆寫、清空歷史），改往上拋讓
+        # main() fail-closed（警告＋跳過寫入）。
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "forecast_log.json")
+            with open(p, "w", encoding="utf-8") as f:
+                f.write("{壞掉的 json,,,")
+            with self.assertRaises(Exception):
+                _load_forecast_log(p)
+
+
+# ---------- 修復 13：data_date fallback ----------
+class TestDataDateFallback(unittest.TestCase):
+    def test_max_as_of_date(self):
+        results = {"a": {"as_of_date": "2026-07-16"}, "b": {"as_of_date": "2026-07-17"},
+                   "c": {}}  # 缺 as_of_date 的忽略
+        self.assertEqual(_max_as_of_date(results), "2026-07-17")
+        self.assertIsNone(_max_as_of_date({}))
+
+    def test_confirmed_trade_date_prefers_market(self):
+        self.assertEqual(confirmed_trade_date({"trade_date": "2026-07-18"}), "2026-07-18")
+
+    def test_confirmed_trade_date_none_when_no_market_and_no_data(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertIsNone(confirmed_trade_date({}, data_dir=d))
+
+    def test_build_all_meta_falls_back_to_as_of_when_no_trade_date(self):
+        # market_inputs 無 trade_date → meta.data_date 退所有個股 as_of 最大值，非「今天」。
+        market_inputs = dict(TestBuildAllRealData.OFFLINE_MARKET_INPUTS)
+        market_inputs.pop("trade_date", None)
+        daily, _, _ = build_all(data_dir=os.path.join(REPO_ROOT, "data"),
+                                market_inputs=market_inputs)
+        results, _ = load_stock_results(discover_stock_files(os.path.join(REPO_ROOT, "data")))
+        self.assertEqual(daily["meta"]["data_date"], _max_as_of_date(results))
 
 
 # ---------- schema 檔本身要是合法 draft-07 ----------

@@ -1,0 +1,10 @@
+# Pin 版本以求可重現的建置（2026-07-18 大檢查 🟡5）。版本取自本機實際安裝版本：
+#   python3 -c "import pandas,yfinance; print(pandas.__version__, yfinance.__version__)"
+#   pip show FinMind jsonschema
+# 用途：.github/workflows/daily-update.yml（pandas/FinMind/yfinance，warroom.update／
+# warroom.build_snapshots 排程用）＋ tests/（jsonschema，契約 JSON schema 驗證）。
+# Vercel serverless（api/）走 pyproject.toml 的 pandas pin，不用這份檔案。
+pandas==2.3.3
+FinMind==2.0.4
+yfinance==1.2.0
+jsonschema==4.25.1

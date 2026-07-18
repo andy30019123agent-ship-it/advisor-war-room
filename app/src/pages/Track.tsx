@@ -115,7 +115,7 @@ export function Track() {
   entries.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
 
   return (
-    <div className="screen">
+    <main className="screen">
       <header className="page-header">
         <div className="top-row">
           {dailyQuery.data ? (
@@ -197,6 +197,6 @@ export function Track() {
           </div>
         </>
       )}
-    </div>
+    </main>
   )
 }

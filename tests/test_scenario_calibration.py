@@ -51,6 +51,15 @@ class TestAppendScenarioLog(unittest.TestCase):
                                   [], {"defense": 90.0, "r1": 105.0, "close": 100.0})
         self.assertEqual(len(log), 2)
 
+    def test_entry_records_model_version_and_raw_probs(self):
+        # 修復 14：每筆 entry 記 model_version 與 raw_probs（供校正吃同版本／稽核回溯）。
+        log = append_scenario_log([], "2330", "2026-07-18", "yellow_x_red",
+                                  [{"id": "base", "prob_pct": 40}, {"id": "risk", "prob_pct": 50},
+                                   {"id": "bull", "prob_pct": 10}],
+                                  {"defense": 90.0, "r1": 105.0, "close": 100.0})
+        self.assertEqual(log[0]["model_version"], "v1")
+        self.assertEqual(log[0]["raw_probs"], {"base": 40, "risk": 50, "bull": 10})
+
 
 # ---------- realized 三分支（時間序第一觸發） ----------
 class TestDetermineRealized(unittest.TestCase):
@@ -59,26 +68,32 @@ class TestDetermineRealized(unittest.TestCase):
         self.assertEqual(determine_realized(closes, defense=90.0, r1=105.0), "base")
 
     def test_defense_breach_returns_risk(self):
-        closes = [95.0, 89.0, 88.0]  # 第 2 天跌破 90
+        closes = [95.0, 89.0, 88.0]  # 連 2 日（第 2、3 天）收破 90 → risk
         self.assertEqual(determine_realized(closes, defense=90.0, r1=105.0), "risk")
 
     def test_r1_breach_returns_bull(self):
-        closes = [95.0, 100.0, 106.0]  # 第 3 天站上 105
+        closes = [95.0, 106.0, 107.0]  # 連 2 日（第 2、3 天）收上 105 → bull
         self.assertEqual(determine_realized(closes, defense=90.0, r1=105.0), "bull")
 
+    def test_single_close_breach_not_confirmed_stays_base(self):
+        # 修復 3：單一收盤碰線不算（需連 2 日確認）。第 2 天破防守但第 3 天站回 → base。
+        self.assertEqual(determine_realized([95.0, 88.0, 95.0], defense=90.0, r1=105.0), "base")
+        self.assertEqual(determine_realized([95.0, 106.0, 95.0], defense=90.0, r1=105.0), "base")
+
     def test_first_trigger_wins_risk_before_later_bull(self):
-        # 先跌破防守（第 1 天），後面又反彈站上 r1（第 3 天）——先觸發的算，仍是 risk。
-        closes = [88.0, 95.0, 110.0]
+        # 先連 2 日破防守（第 1、2 天），後面又反彈連 2 日站上 r1——先觸發的算，仍是 risk。
+        closes = [88.0, 87.0, 110.0, 111.0]
         self.assertEqual(determine_realized(closes, defense=90.0, r1=105.0), "risk")
 
     def test_first_trigger_wins_bull_before_later_risk(self):
-        # 先站上壓力（第 1 天），後面才跌破防守（第 3 天）——先觸發的算，是 bull。
-        closes = [110.0, 95.0, 88.0]
+        # 先連 2 日站上壓力（第 1、2 天），後面才連 2 日破防守——先觸發的算，是 bull。
+        closes = [110.0, 111.0, 88.0, 87.0]
         self.assertEqual(determine_realized(closes, defense=90.0, r1=105.0), "bull")
 
-    def test_none_values_skipped_not_treated_as_trigger(self):
-        closes = [None, None, 95.0]
-        self.assertEqual(determine_realized(closes, defense=90.0, r1=105.0), "base")
+    def test_none_values_skipped_do_not_break_consecutive_run(self):
+        # 缺值不打斷連續計數：破防守→缺值→再破防守 仍算連 2 日確認 → risk。
+        self.assertEqual(determine_realized([88.0, None, 87.0], defense=90.0, r1=105.0), "risk")
+        self.assertEqual(determine_realized([None, None, 95.0], defense=90.0, r1=105.0), "base")
 
 
 # ---------- backfill（eligibility + fail-safe） ----------
@@ -102,9 +117,18 @@ class TestBackfillScenarioLog(unittest.TestCase):
 
     def test_eligible_after_28_days_backfills_realized(self):
         log = [self._entry(date="2026-06-01")]
-        out = backfill_scenario_log(log, price_lookup=lambda sid, date: [88.0],
-                                    today="2026-07-18")  # 47 天後，跌破防守
+        out = backfill_scenario_log(log, price_lookup=lambda sid, date: [88.0, 87.0],
+                                    today="2026-07-18")  # 47 天後，連 2 日跌破防守
         self.assertEqual(out[0]["realized"], "risk")
+
+    def test_backfill_dict_lookup_records_ex_div_adjusted(self):
+        # 修復 4：預設 lookup 回 {"closes", "ex_div_adjusted"}，backfill 應記錄該旗標。
+        log = [self._entry(date="2026-06-01")]
+        out = backfill_scenario_log(
+            log, price_lookup=lambda sid, date: {"closes": [88.0, 87.0], "ex_div_adjusted": True},
+            today="2026-07-18")
+        self.assertEqual(out[0]["realized"], "risk")
+        self.assertTrue(out[0]["ex_div_adjusted"])
 
     def test_lookup_returns_none_leaves_pending_for_next_run(self):
         log = [self._entry(date="2026-06-01")]
@@ -147,14 +171,16 @@ class TestShrinkageLambda(unittest.TestCase):
 
 # ---------- 校正表 ----------
 def _log_with_realized(bucket, realized_counts):
-    """realized_counts: {"base": n1, "risk": n2, "bull": n3}"""
+    """realized_counts: {"base": n1, "risk": n2, "bull": n3}。每筆給「不同 stock_id」，
+    確保修復 5 的（stock_id, bucket）30 天去重不會把它們折成 1 筆（每檔各只出現一次，
+    天然是獨立樣本）。日期任意（去重只在同一 stock 內生效）。"""
     log = []
     i = 0
     for realized, n in realized_counts.items():
         for _ in range(n):
             i += 1
-            log.append({"date": f"2026-01-{i:02d}" if i <= 28 else f"2026-02-{i-28:02d}",
-                       "stock_id": "2330", "bucket": bucket, "scenarios": [],
+            log.append({"date": "2026-01-01", "stock_id": f"S{i:04d}", "bucket": bucket,
+                       "model_version": "v1", "scenarios": [],
                        "levels": {"defense": 90.0, "r1": 105.0, "close": 100.0},
                        "realized": realized})
     return log
@@ -209,6 +235,47 @@ class TestComputeCalibration(unittest.TestCase):
                "scenarios": [], "levels": {}, "realized": "base"}] * 25
         calibration = compute_calibration(log)
         self.assertEqual(calibration, {})
+
+    def test_same_stock_consecutive_days_deduped_to_one_sample(self):
+        # 修復 5：同一 (stock_id, bucket) 30 天內只計 1 筆（連日快照自相關）。25 筆同股連日
+        # → 去重成 1 筆 → 遠低於 20，不產生校正條目（防連日快照灌爆 n）。
+        log = [{"date": f"2026-01-{d:02d}", "stock_id": "2330", "bucket": "yellow_x_red",
+                "model_version": "v1", "scenarios": [],
+                "levels": {"defense": 90.0, "r1": 105.0, "close": 100.0}, "realized": "risk"}
+               for d in range(1, 26)]
+        calibration = compute_calibration(log)
+        self.assertNotIn("yellow_x_red", calibration)
+
+    def test_same_stock_spaced_over_30_days_counts_separately(self):
+        # 同股但每筆間隔 40 天（>30）→ 各自獨立計入（去重只擋 30 天內的連日快照）。
+        from datetime import date, timedelta
+        base = date(2026, 1, 1)
+        dates = [(base + timedelta(days=40 * i)).strftime("%Y-%m-%d") for i in range(20)]
+        log = [{"date": d, "stock_id": "2330", "bucket": "yellow_x_red", "model_version": "v1",
+                "scenarios": [], "levels": {"defense": 90.0, "r1": 105.0, "close": 100.0},
+                "realized": "risk"} for d in dates]
+        calibration = compute_calibration(log)
+        self.assertIn("yellow_x_red", calibration)
+        self.assertEqual(calibration["yellow_x_red"]["n"], 20)
+
+    def test_final_adjusted_stays_within_15pp_of_rule_table(self):
+        # 修復 6：clamp 與 normalize 迭代後，最終每個機率仍在規則表 ±15pp 內（normalize
+        # 不得把值推出邊界）。yr 規則＝(40,40,20)，極端全 risk 觀察值也不得讓 risk 超過 55。
+        log = _log_with_realized("yellow_x_red", {"risk": 300})
+        adj = compute_calibration(log)["yellow_x_red"]["adjusted"]
+        rule = {"base": 40, "risk": 40, "bull": 20}
+        for k, rv in rule.items():
+            self.assertLessEqual(adj[k], rv + 15, f"{k} 超出規則 +15pp")
+            self.assertGreaterEqual(adj[k], rv - 15, f"{k} 低於規則 -15pp")
+        self.assertEqual(sum(adj.values()), 100)
+
+    def test_only_matching_model_version_counted(self):
+        # 修復 14：校正只吃同 model_version 的樣本；不同版本（v2）不計入。
+        log = _log_with_realized("yellow_x_red", {"base": 8, "risk": 8, "bull": 4})  # 20 筆 v1
+        for e in log[:15]:
+            e["model_version"] = "v2"  # 15 筆改成別版本 → 只剩 5 筆 v1 < 20
+        calibration = compute_calibration(log)
+        self.assertNotIn("yellow_x_red", calibration)
 
 
 # ---------- sync_scenario_log fail-closed ----------

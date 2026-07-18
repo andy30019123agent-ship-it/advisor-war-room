@@ -8,9 +8,35 @@
 全部純規則、可揭露；LLM 不介入產數字（§3.5 narration 去人工化＝依 reason_codes 套模板）。
 """
 import re
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from warroom.decision_engine import composite_score
+
+# 燈號 → 分數（跟 decision_engine._L 同一套），供短線 stance 技術＋籌碼合成用。
+_LIGHT_SCORE = {"green": 1, "amber": 0, "red": -1, "na": 0}
+
+
+def _short_stance(technical_light: str, chips_light: str) -> str:
+    """短線 stance＝0.6×技術＋0.4×籌碼（沿用 decision_engine.time_frames 的 short_s 權重），
+    門檻與該檔 stance() 一致（>0.2 偏多／<-0.2 偏空／其餘中性），落在契約五檔 enum 內。"""
+    s = 0.6 * _LIGHT_SCORE.get(technical_light, 0) + 0.4 * _LIGHT_SCORE.get(chips_light, 0)
+    return "偏多" if s > 0.2 else "偏空" if s < -0.2 else "中性"
+
+
+def next_reeval_date(from_date: str, days: int = 7) -> str:
+    """複評日＝from_date + days 曆日，再「下一交易日對齊」：落在週六 → +2（→週一）、
+    週日 → +1（→週一）。簡化版不接國定假日行事曆（僅避開週末），屬近似值。
+    from_date 格式錯誤時原樣回傳 from_date（不編日期）。"""
+    try:
+        d = datetime.strptime(from_date[:10], "%Y-%m-%d").date() + timedelta(days=days)
+    except (ValueError, TypeError):
+        return from_date
+    if d.weekday() == 5:      # 週六
+        d += timedelta(days=2)
+    elif d.weekday() == 6:    # 週日
+        d += timedelta(days=1)
+    return d.strftime("%Y-%m-%d")
 
 # action ↔ 各派生欄位（禁止各自重算，全部由 action 決定）
 ACTION_TO_DELTA = {"加碼": "increase", "續抱": "hold", "試單": "small_entry",
@@ -415,8 +441,9 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
     維持固定 10 萬起（Andy 試單檔位就是 10 萬，不需要另外接級距）。
 
     market_new_position＝當下 exposure_guidance.new_position（見 build_exposure_guidance，
-    daily.json 的大盤層級規則）。只影響 nonholder（空手）那一版——holder 已經有部位，
-    「新增部位」限制管的是還沒進場的人，不該逆推去改持有者的既有紀律：
+    daily.json 的大盤層級規則）。同時收斂 nonholder（空手進場）與 holder 的「加碼／回補」
+    ——後兩者也是「新增部位」，禁新倉時不該叫持有者加碼（大檢查・邏輯組 Y5，跟 bull 劇本
+    同源）；holder 的既有防守/減碼紀律不受影響，只有「新增」動作過閘門：
     - "禁止新增部位"：不管個股 action 算出什麼，空手一律不建議進場，plan／文案改講
       「暫不進場（大盤禁新倉）」，不得出現任何試單／買進金額（回歸：個股層級沒看大盤，
       大盤都喊禁新倉了，某些股票的 nonholder 建議還在講「試單 10 萬」，兩層互相矛盾）。
@@ -428,6 +455,11 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
     core_txt = "（核心不動）" if is_core_holding else ""
     core_act = "，核心不動" if is_core_holding else ""
     add_cap = _fmt_wan(tier_amount) if action == "加碼" else None
+    # holder 的「加碼／回補」也是「新增部位」，同樣要過大盤 new_position 閘門（大檢查・
+    # 邏輯組 Y5）：禁新倉 → 不加碼/不回補、維持既有；僅限試單 → 縮到 10 萬。與劇本層
+    # bull action、nonholder 版同一個大盤閘門同源，不再只擋 nonholder。
+    market_banned = market_new_position == "禁止新增部位"
+    trial_only = market_new_position == "僅限試單"
 
     # ---- holder ----
     hplan = []
@@ -449,8 +481,15 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
                            key=lambda a: a["price"])
         if ma_aboves:
             a = ma_aboves[0]
-            if action == "加碼":
-                add_act = f"第一段可加碼 20 萬（總上限 {add_cap}）" if add_cap else "可加碼 20 萬"
+            if market_banned:
+                # 禁新倉：加碼/回補都是新增部位，一律不加、維持既有（跟 bull 劇本同語意）。
+                verb = "加碼" if action == "加碼" else "回補"
+                add_act = f"大盤禁新倉，不{verb}、維持既有部位"
+            elif action == "加碼":
+                if trial_only:
+                    add_act = "大盤僅限試單，加碼縮到 10 萬"
+                else:
+                    add_act = f"第一段可加碼 20 萬（總上限 {add_cap}）" if add_cap else "可加碼 20 萬"
             else:
                 add_act = "可回補 10 萬"
             hplan.append({"trigger": f"站回 {a['label']} {_fmt_price(a['price'])} 且法人連 2 日買超",
@@ -467,10 +506,8 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
         htail = ""
     holder_text = f"{_HOLDER_TEXT.get(action, action)}{htail}{core_txt}。"
 
-    # ---- nonholder ----
+    # ---- nonholder ----（market_banned/trial_only 於函式頂端已定義，holder/nonholder 共用）
     entry = _nonholder_entry(price, tech_facts, entry_condition, anchors)
-    market_banned = market_new_position == "禁止新增部位"
-    trial_only = market_new_position == "僅限試單"
     nplan = []
     if entry:
         if market_banned:
@@ -674,10 +711,14 @@ def build_primary_and_context(*, price, lights, lights_facts, valuation, rr,
     # 「資料缺」，stance 欄位一律安全退回中性，否則 ETF 等常態缺基本面的標的會讓前端 zod 整頁炸掉
     # （見 6：0050 查詢「請更新 App」bug，contract.ts TimeframeSchema.stance）。
     _stance_zh = {"green": "偏多", "amber": "中性", "red": "偏空", "na": "中性"}
+    # 短線 stance＝技術＋籌碼合成（沿用 decision_engine.time_frames 的 0.6t＋0.4c 權重），
+    # 與 basis 文字「技術X＋籌碼Y」一致，不再只看技術燈丟掉籌碼（大檢查・邏輯組 Y6：
+    # 舊派生版 stance 只由 t 派生，2330 技術中性→標「中性」，但籌碼 red 連賣，標籤與依據
+    # 自相矛盾）。合成分數對映與 mid/swing 一樣落在契約五檔 enum 內。
     context = {
         "timeframes": {
             "short": {"label": "短線 1-4 週",
-                      "stance": _stance_zh.get(t, "中性"),
+                      "stance": _short_stance(t, c),
                       "basis": f"技術{_zh.get(t)}＋籌碼{_zh.get(c)}"},
             "swing": {"label": "波段 1-3 月（主）",
                       "stance": stance,                # ★ 主框架＝primary，禁止另算

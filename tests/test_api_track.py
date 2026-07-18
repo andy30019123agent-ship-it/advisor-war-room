@@ -271,10 +271,13 @@ class TestHandlerStatusCodes(unittest.TestCase):
 
 # ---------- 代號存在性（run_track 直接測，不經 handler）----------
 @patch.dict("os.environ", {"GH_PAT": "fake-token"})
+@patch("api.track._rate_limit_ok", return_value=True)
 class TestRunTrackStockExistence(unittest.TestCase):
     @patch("api.track._check_stock_exists", return_value=False)
     @patch("api.track.urlopen")
-    def test_nonexistent_stock_raises_notfound_without_touching_github(self, mock_urlopen, mock_exists):
+    def test_nonexistent_stock_raises_notfound_without_touching_github(
+        self, mock_urlopen, mock_exists, mock_rate
+    ):
         # stock_exists() 確定回 False → 直接 404，連 GitHub API 都不該碰
         with self.assertRaises(track._NotFound):
             track.run_track("9999")
@@ -282,7 +285,9 @@ class TestRunTrackStockExistence(unittest.TestCase):
 
     @patch("api.track._check_stock_exists", return_value=None)
     @patch("api.track.urlopen")
-    def test_unknown_existence_raises_unavailable_without_writing(self, mock_urlopen, mock_exists):
+    def test_unknown_existence_raises_unavailable_without_writing(
+        self, mock_urlopen, mock_exists, mock_rate
+    ):
         # 查不了（額度/網路問題，stock_exists() 回 None）→ 503，一樣不寫入
         with self.assertRaises(track._Unavailable):
             track.run_track("2603")
@@ -290,7 +295,7 @@ class TestRunTrackStockExistence(unittest.TestCase):
 
     @patch("api.track._check_stock_exists", return_value=True)
     @patch("api.track.urlopen")
-    def test_existing_stock_proceeds_to_github_lookup(self, mock_urlopen, mock_exists):
+    def test_existing_stock_proceeds_to_github_lookup(self, mock_urlopen, mock_exists, mock_rate):
         mock_urlopen.return_value = _FakeResp(_gh_get_response(["2330", "2603"]))
         result = track.run_track("2603")
         self.assertEqual(result, {"ok": True, "already": True})
@@ -330,10 +335,11 @@ class TestRateLimit(unittest.TestCase):
             self.assertTrue(track._rate_limit_ok(path))
 
     def test_run_track_raises_rate_limited_when_write_quota_exhausted(self):
-        # 整合：run_track 在 append 前檢查限流，額度用完該拋 _RateLimited，不呼叫 PUT。
+        # 整合：run_track 一開頭就檢查限流（2026-07-18 大檢查 🟡3 起，閘門挪到最前面），
+        # 額度用完該拋 _RateLimited，連 stock_exists()／GitHub GET 都不該碰到。
         with tempfile.TemporaryDirectory() as d, \
              patch.dict("os.environ", {"GH_PAT": "fake-token"}), \
-             patch("api.track._check_stock_exists", return_value=True), \
+             patch("api.track._check_stock_exists", return_value=True) as mock_exists, \
              patch("api.track._RATE_LIMIT_PATH", os.path.join(d, "rl.json")), \
              patch("api.track.urlopen") as mock_urlopen:
             # 先把限流額度打滿
@@ -342,8 +348,9 @@ class TestRateLimit(unittest.TestCase):
             mock_urlopen.return_value = _FakeResp(_gh_get_response(["2330"]))
             with self.assertRaises(track._RateLimited):
                 track.run_track("2603")
-            # 只該打過一次 GET（讀清單），沒打到 PUT
-            self.assertEqual(mock_urlopen.call_count, 1)
+            # 限流閘門在最前面：不該打到 stock_exists()，更不該打到 GitHub GET/PUT
+            mock_exists.assert_not_called()
+            mock_urlopen.assert_not_called()
 
 
 if __name__ == "__main__":

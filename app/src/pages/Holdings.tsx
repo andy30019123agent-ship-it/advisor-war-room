@@ -179,7 +179,7 @@ export function Holdings() {
   const overExposed = maxEquityPct != null && exposurePct != null && exposurePct > maxEquityPct
 
   return (
-    <div className="screen">
+    <main className="screen">
       <header className="page-header">
         <div className="top-row">
           {daily ? <FreshnessBadge dataDate={daily.meta.data_date} generatedAt={daily.meta.generated_at} /> : <span />}
@@ -363,7 +363,7 @@ export function Holdings() {
           onDelete={holdings.some((h) => h.id === editing.id) ? () => handleDelete(editing.id) : undefined}
         />
       )}
-    </div>
+    </main>
   )
 }
 
@@ -560,7 +560,15 @@ function HoldingForm({
 
         {onDelete && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
-            <button type="button" className="btn-danger-text" onClick={onDelete}>
+            <button
+              type="button"
+              className="btn-danger-text"
+              onClick={() => {
+                if (window.confirm(`確定要刪除「${initial.name || initial.id}」這筆持股嗎？此操作無法復原。`)) {
+                  onDelete()
+                }
+              }}
+            >
               <IconTrash /> 刪除這筆持股
             </button>
           </div>

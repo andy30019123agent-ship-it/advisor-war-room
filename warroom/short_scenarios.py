@@ -336,6 +336,26 @@ def _bull_scenario(price, res1, res2, primary_action, primary_position_delta,
     }
 
 
+def apply_market_new_position_gate(short_scenarios: Optional[Dict], *,
+                                   market_new_position: Optional[str],
+                                   primary_action: Optional[str],
+                                   primary_position_delta: str = "hold") -> Optional[Dict]:
+    """把 bull 劇本的大盤新倉閘門改吃「真正的 exposure_guidance.new_position」（大檢查・
+    邏輯組 Y7）。analyze 階段 build_short_scenarios 用 market_light 當 proxy 先算了一版
+    bull action；到 build_snapshots 透傳時，daily 已算好權威的 exposure_guidance.new_position
+    （由 risk_temp 來，跟 advice 層同源），這裡就地用它重跑 _bull_action，讓劇本層與 advice
+    層的大盤閘門統一同一個真結果。market_new_position 在 short_scenarios 內部「只」被
+    _bull_action 使用（機率修正走的是另一軸 market_bias），故只需重算 bull 的 action 即可
+    完全套用權威閘門，不動機率與其餘欄位。就地修改並回傳同一個 dict（None／非 ok 原樣回）。"""
+    if not short_scenarios or short_scenarios.get("status") != "ok":
+        return short_scenarios
+    for sc in short_scenarios.get("scenarios") or []:
+        if sc.get("id") == "bull":
+            stance, text = _bull_action(primary_action, primary_position_delta, market_new_position)
+            sc["action"] = {"stance": stance, "text": text}
+    return short_scenarios
+
+
 def build_short_scenarios(
     *,
     current_price: Optional[float],

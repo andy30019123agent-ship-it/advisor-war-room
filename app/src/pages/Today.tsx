@@ -60,7 +60,7 @@ export function Today({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
 
   if (isLoading) {
     return (
-      <div className="screen">
+      <main className="screen">
         <header className="page-header">
           <div className="large-title">投顧戰情室</div>
         </header>
@@ -71,19 +71,19 @@ export function Today({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
             <div className="skeleton skeleton-line" style={{ width: '70%' }} />
           </div>
         </div>
-      </div>
+      </main>
     )
   }
 
   if (isError) {
     const message = error instanceof SchemaMismatchError ? '請更新 App' : '資料讀取失敗，請稍後再試'
     return (
-      <div className="screen">
+      <main className="screen">
         <header className="page-header">
           <div className="large-title">投顧戰情室</div>
         </header>
         <div className="error-banner">{message}</div>
-      </div>
+      </main>
     )
   }
 
@@ -92,7 +92,7 @@ export function Today({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
   const { meta, market, core_holdings, watch, alerts_snapshot, events, exposure_guidance } = data
 
   return (
-    <div className="screen">
+    <main className="screen">
       <header className="page-header">
         <div className="top-row">
           <FreshnessBadge dataDate={meta.data_date} generatedAt={meta.generated_at} />
@@ -232,7 +232,7 @@ export function Today({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
           </div>
         </>
       )}
-    </div>
+    </main>
   )
 }
 

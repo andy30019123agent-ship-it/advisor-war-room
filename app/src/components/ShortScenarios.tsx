@@ -68,7 +68,48 @@ function ScenarioPricePath({ text }: { text: string }) {
   )
 }
 
-function ScenarioCard({ scenario, isPrimary }: { scenario: ShortScenario; isPrimary: boolean }) {
+// 在 trigger 文字裡找到的第一個價位後面，插入該價位距現價的漲跌幅（例：
+// 「收盤跌破 2,107（防守價）」→「收盤跌破 2,107（防守價，-8.0%）」）；沒有現價或抓不到
+// 數字時原樣輸出，不硬湊。
+function ScenarioTrigger({ trigger, close }: { trigger: string; close: number | null }) {
+  const m = trigger.match(/[\d,]+(?:\.\d+)?/)
+  if (!m || close == null || close <= 0) return <>{trigger}</>
+
+  const priceStr = m[0]
+  const price = Number(priceStr.replace(/,/g, ''))
+  if (!Number.isFinite(price)) return <>{trigger}</>
+
+  const pct = ((price - close) / close) * 100
+  const pctText = `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`
+
+  const idx = m.index ?? 0
+  const before = trigger.slice(0, idx)
+  const after = trigger.slice(idx + priceStr.length)
+  const bracketMatch = after.match(/^（([^）]*)）/)
+
+  if (bracketMatch) {
+    const inner = bracketMatch[1]
+    const rest = after.slice(bracketMatch[0].length)
+    return (
+      <>
+        {before}
+        {priceStr}（{inner}
+        <span className="scenario-trigger-pct">，{pctText}</span>）{rest}
+      </>
+    )
+  }
+
+  return (
+    <>
+      {before}
+      {priceStr}
+      <span className="scenario-trigger-pct">（{pctText}）</span>
+      {after}
+    </>
+  )
+}
+
+function ScenarioCard({ scenario, isPrimary, close }: { scenario: ShortScenario; isPrimary: boolean; close: number | null }) {
   return (
     <div className={`summary-card scenario-card ${isPrimary ? 'primary' : ''}`}>
       <div className="scenario-top">
@@ -78,7 +119,9 @@ function ScenarioCard({ scenario, isPrimary }: { scenario: ShortScenario; isPrim
       <div className="scenario-prob-bar-track">
         <div className="scenario-prob-bar-fill" style={{ width: `${scenario.probability_pct}%` }} />
       </div>
-      <div className="scenario-trigger">條件：{scenario.trigger}</div>
+      <div className="scenario-trigger">
+        條件：<ScenarioTrigger trigger={scenario.trigger} close={close} />
+      </div>
       <ScenarioPricePath text={scenario.price_path_text} />
       <div className="scenario-narrative">{scenario.narrative}</div>
       <div className="scenario-invalidation">失效：{scenario.invalidation}</div>
@@ -87,7 +130,7 @@ function ScenarioCard({ scenario, isPrimary }: { scenario: ShortScenario; isPrim
   )
 }
 
-export function ShortScenarios({ data }: { data: ShortScenariosData | null | undefined }) {
+export function ShortScenarios({ data, close }: { data: ShortScenariosData | null | undefined; close: number | null }) {
   if (!data) return null
 
   if (data.status === 'insufficient_data') {
@@ -106,7 +149,7 @@ export function ShortScenarios({ data }: { data: ShortScenariosData | null | und
       <div className="group-title">短線推演（1-4 週）</div>
       <div className="scenario-list">
         {data.scenarios.map((s) => (
-          <ScenarioCard key={s.id} scenario={s} isPrimary={s.probability_pct === topProb} />
+          <ScenarioCard key={s.id} scenario={s} isPrimary={s.probability_pct === topProb} close={close} />
         ))}
       </div>
       <div className="scenario-note">{data.prob_note}</div>

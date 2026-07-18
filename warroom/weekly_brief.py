@@ -134,7 +134,9 @@ def _stock_week_range_line(stock_id, stocks_dir):
     if not (isinstance(rng, (list, tuple)) and len(rng) == 2):
         return None
     lo, hi = rng
-    return f"下週 70% 區間：{_fmt_price(lo)} ～ {_fmt_price(hi)}"
+    # 「零漂移波動模擬」短註：這條區間是 GBM（drift=0）蒙地卡羅的 70% 分位，不是方向預測，
+    # 跟 forecast.disclaimer 同語意（見 warroom/forecast.py DISCLAIMER）。
+    return f"下週 70% 區間：{_fmt_price(lo)} ～ {_fmt_price(hi)}（零漂移波動模擬）"
 
 
 def build_holdings_section(daily, stocks_dir=DEFAULT_STOCKS_DIR):

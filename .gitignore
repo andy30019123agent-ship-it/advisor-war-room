@@ -9,3 +9,10 @@ mockups/*.png
 # FinMind 個股資訊快取無，data/ 保留（含手寫 narration）
 data/cache/
 .vercel
+
+# 大檢查 2026-07-19：截圖與備份不進版控（歷史體積既往不咎，僅止血）
+_reports/**/*.png
+app/_screenshots/
+design-system/**/*.png
+design-system/advisor-war-room_old-neu-live/
+design-system/advisor-war-room_archived-2026-07-15-neu/

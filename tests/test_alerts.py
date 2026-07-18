@@ -79,7 +79,7 @@ def test_run_dedup_sends_once_per_day(tmp_path, monkeypatch):
     ])
     state_path = str(tmp_path / "alerts_state.json")
 
-    monkeypatch.setattr(alerts, "get_price", lambda sid: 2238)
+    monkeypatch.setattr(alerts, "get_price", lambda sid, **kw: 2238)
     sent_msgs = []
     monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: sent_msgs.append(msg) or True)
 
@@ -98,7 +98,7 @@ def test_run_dedup_new_day_sends_again(tmp_path, monkeypatch):
     ])
     state_path = str(tmp_path / "alerts_state.json")
 
-    monkeypatch.setattr(alerts, "get_price", lambda sid: 2238)
+    monkeypatch.setattr(alerts, "get_price", lambda sid, **kw: 2238)
     sent_msgs = []
     monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: sent_msgs.append(msg) or True)
 
@@ -116,7 +116,7 @@ def test_run_not_triggered_no_send(tmp_path, monkeypatch):
     ])
     state_path = str(tmp_path / "alerts_state.json")
 
-    monkeypatch.setattr(alerts, "get_price", lambda sid: 2238)  # 現價遠高於防守價 → 不觸發
+    monkeypatch.setattr(alerts, "get_price", lambda sid, **kw: 2238)  # 現價遠高於防守價 → 不觸發
     sent_msgs = []
     monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: sent_msgs.append(msg) or True)
 
@@ -136,7 +136,7 @@ def test_run_telegram_failure_does_not_mark_sent_retries_next_run(tmp_path, monk
     ])
     state_path = str(tmp_path / "alerts_state.json")
 
-    monkeypatch.setattr(alerts, "get_price", lambda sid: 2238)
+    monkeypatch.setattr(alerts, "get_price", lambda sid, **kw: 2238)
     call_count = {"n": 0}
 
     def _flaky_send(msg, **kw):
@@ -161,7 +161,7 @@ def test_run_telegram_recovers_after_earlier_failure(tmp_path, monkeypatch):
     ])
     state_path = str(tmp_path / "alerts_state.json")
 
-    monkeypatch.setattr(alerts, "get_price", lambda sid: 2238)
+    monkeypatch.setattr(alerts, "get_price", lambda sid, **kw: 2238)
     outcomes = [False, True]
     sent_msgs = []
 
@@ -199,7 +199,7 @@ def test_run_missing_data_file_graceful(tmp_path, monkeypatch):
     missing_path = str(tmp_path / "does_not_exist.json")
     state_path = str(tmp_path / "alerts_state.json")
 
-    def _boom(sid):
+    def _boom(sid, **kw):
         raise AssertionError("get_price 不該被呼叫（無資料應提早 return）")
 
     monkeypatch.setattr(alerts, "get_price", _boom)
@@ -214,7 +214,7 @@ def test_run_outside_trading_hours_skips_without_force(tmp_path, monkeypatch):
     ])
     state_path = str(tmp_path / "alerts_state.json")
 
-    def _boom(sid):
+    def _boom(sid, **kw):
         raise AssertionError("非盤中不該抓即時價")
 
     monkeypatch.setattr(alerts, "get_price", _boom)
@@ -466,3 +466,47 @@ def test_run_sends_market_move_alert_even_without_alerts_snapshot(tmp_path, monk
     assert rc == 0
     assert len(sent_msgs) == 1
     assert "📉" in sent_msgs[0]
+
+
+# ── 修復 12：z 無效不得用 y 觸發；FinMind fallback 只在確定交易時段用 ──────────
+
+def test_fetch_price_twse_ignores_y_when_z_invalid(monkeypatch):
+    # 只有 y=昨收、沒有有效 z（假日休市/尚未成交）→ 不得回昨收，兩交易所都這樣 → None。
+    responses = {
+        "tse_2330.tw": {"msgArray": [{"z": "-", "y": "1000.0"}]},
+        "otc_2330.tw": {"msgArray": [{"y": "1000.0"}]},
+    }
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    assert alerts.fetch_price_twse("2330") is None
+
+
+def test_get_price_allow_finmind_false_skips_finmind(monkeypatch):
+    # 非交易時段/假日（allow_finmind=False）：TWSE 無即時 z → 不得用 FinMind 昨收，回 None。
+    monkeypatch.setattr(alerts, "fetch_price_twse", lambda sid, **kw: None)
+    monkeypatch.setattr(alerts, "fetch_price_finmind",
+                        lambda sid, **kw: pytest.fail("allow_finmind=False 不該打 FinMind"))
+    assert alerts.get_price("2330", allow_finmind=False) is None
+
+
+def test_get_price_allow_finmind_true_uses_finmind(monkeypatch):
+    # 交易時段（allow_finmind=True）：TWSE 無 z → 才 fallback FinMind。
+    monkeypatch.setattr(alerts, "fetch_price_twse", lambda sid, **kw: None)
+    monkeypatch.setattr(alerts, "fetch_price_finmind", lambda sid, **kw: 79.5)
+    assert alerts.get_price("2330", allow_finmind=True) == 79.5
+
+
+def test_run_holiday_no_taiex_skips_stock_finmind(tmp_path, monkeypatch):
+    # 假日（TAIEX z 無效 → market_live=False）：個股即時價抓不到時不得用 FinMind 昨收觸發。
+    data_path = _write_daily(tmp_path, [
+        {"id": "2330", "name": "台積電", "type": "defense", "price": 999999, "direction": "below"},
+    ])
+    state_path = str(tmp_path / "alerts_state.json")
+    monkeypatch.setattr(alerts, "fetch_taiex", lambda **kw: (None, None))  # 休市
+    monkeypatch.setattr(alerts, "fetch_price_twse", lambda sid, **kw: None)
+    monkeypatch.setattr(alerts, "fetch_price_finmind",
+                        lambda sid, **kw: pytest.fail("假日不該用 FinMind 昨收觸發"))
+    sent_msgs = []
+    monkeypatch.setattr(alerts, "send_telegram", lambda msg, **kw: sent_msgs.append(msg) or True)
+    now = datetime(2026, 7, 17, 10, 0, tzinfo=_TPE)
+    alerts.run(data_path=data_path, state_path=state_path, force=True, now=now)
+    assert sent_msgs == []  # 抓不到即時價、又禁用 FinMind → 不觸發

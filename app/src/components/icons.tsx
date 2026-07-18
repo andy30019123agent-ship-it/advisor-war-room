@@ -68,15 +68,6 @@ export function IconPlus({ size = 20 }: IconProps) {
   )
 }
 
-export function IconTrendUp({ size = 15 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 18L10 10L14 14L20 6" />
-      <path d="M15 6H20V11" />
-    </svg>
-  )
-}
-
 export function IconEmptyBriefcase({ size = 56 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

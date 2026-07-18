@@ -142,6 +142,49 @@ class TestAdvice(unittest.TestCase):
                                tier_amount=400000, market_new_position=mnp)
             self.assertIn("40 萬", adv["nonholder"]["plan"][0]["act"])
 
+    def test_holder_add_action_banned_no_add_keeps_existing(self):
+        # 修復 9／Y5：holder 的加碼也是「新增部位」，禁新倉時 plan 改「不加碼、維持既有」，
+        # 不再無視大盤閘門叫持有者加碼（與 bull 劇本同源）。
+        adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False,
+                           tier_amount=400000, market_new_position="禁止新增部位")
+        holder_acts = " ".join(p["act"] for p in adv["holder"]["plan"])
+        self.assertIn("不加碼", holder_acts)
+        self.assertIn("維持既有", holder_acts)
+        self.assertNotIn("20 萬", holder_acts)
+        self.assertNotIn("40 萬", holder_acts)
+
+    def test_holder_add_action_trial_only_caps_to_10_wan(self):
+        # 僅限試單：holder 加碼縮到 10 萬（cap），不是 20/40 萬階梯。
+        adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False,
+                           tier_amount=400000, market_new_position="僅限試單")
+        holder_acts = " ".join(p["act"] for p in adv["holder"]["plan"])
+        self.assertIn("10 萬", holder_acts)
+        self.assertNotIn("40 萬", holder_acts)
+
+    def test_holder_hold_action_banned_no_refill(self):
+        # 續抱時 holder 的「回補」也過閘門：禁新倉→不回補、維持既有。
+        adv = build_advice(action="續抱", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False,
+                           market_new_position="禁止新增部位")
+        holder_acts = " ".join(p["act"] for p in adv["holder"]["plan"])
+        self.assertIn("不回補", holder_acts)
+        self.assertNotIn("可回補 10 萬", holder_acts)
+
+    def test_holder_add_action_unrestricted_keeps_normal_amount(self):
+        # 大盤可正常布局 → holder 加碼維持原級距文案（不被閘門動到）。
+        adv = build_advice(action="加碼", reason_codes=["trend_ok"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=False,
+                           tier_amount=400000, market_new_position="可正常布局")
+        holder_acts = " ".join(p["act"] for p in adv["holder"]["plan"])
+        self.assertIn("第一段", holder_acts)
+        self.assertIn("40 萬", holder_acts)
+
     def test_build_all_daily_banned_no_stock_nonholder_suggests_entry_amount(self):
         # 一致性測試：daily 若判定禁新倉，所有股票的 nonholder plan 都不得出現「試單/買進 N 萬」。
         FAKE_MARKET_BANNED = {
@@ -300,18 +343,24 @@ class TestTrackStats(unittest.TestCase):
             st = build_track_stats(p)
         self.assertEqual(st["hit_rate_5d"], 0.8)  # 4/5 為負（防禦動作猜對下跌）
 
-    def test_watch_rating_defensive_direction_includes_zero(self):
-        # 觀望也是防禦動作；r==0（不漲不跌）視為「沒漲」→ 算命中
+    def test_watch_rating_excluded_from_hit_rate(self):
+        # 修復 2：觀望＝無方向主張，一律排除在命中率統計外（不算 hit 也不算 miss，
+        # n 只計有方向的建議）。5 筆看多（3 漲）＋3 筆觀望（全排除，不得拉高/拉低命中率）。
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, "log.json")
             entries = [
-                {"date": f"2026-06-{10+i:02d}", "stock_id": "2330", "rating": "觀望",
-                 "price": 100.0, "outcome": {"r5": (0.0 if i < 3 else 2.0), "r20": None, "r60": None}}
+                {"date": f"2026-06-{10+i:02d}", "stock_id": "2330", "rating": "買進",
+                 "price": 100.0, "outcome": {"r5": (2.0 if i < 3 else -1.0), "r20": None, "r60": None}}
                 for i in range(5)
+            ] + [
+                {"date": f"2026-06-{20+i:02d}", "stock_id": "2454", "rating": "觀望",
+                 "price": 100.0, "outcome": {"r5": -5.0, "r20": None, "r60": None}}
+                for i in range(3)
             ]
             json.dump(entries, open(p, "w"))
             st = build_track_stats(p)
-        self.assertEqual(st["hit_rate_5d"], 0.6)  # 3/5 為 <=0
+        # 只算 5 筆有方向的看多：3/5=0.6。若觀望被誤當防禦命中，會變成 6/8=0.75。
+        self.assertEqual(st["hit_rate_5d"], 0.6)
 
     def test_bullish_vs_defensive_computed_per_entry_not_globally(self):
         with tempfile.TemporaryDirectory() as d:
@@ -325,12 +374,14 @@ class TestTrackStats(unittest.TestCase):
                  "price": 100.0, "outcome": {"r5": -1.0, "r20": None, "r60": None}},  # 看多＋跌 → 沒中
                 {"date": "2026-06-13", "stock_id": "2882", "rating": "減碼",
                  "price": 100.0, "outcome": {"r5": 1.0, "r20": None, "r60": None}},   # 防禦＋漲 → 沒中
-                {"date": "2026-06-14", "stock_id": "2317", "rating": "觀望",
-                 "price": 100.0, "outcome": {"r5": -0.5, "r20": None, "r60": None}},  # 防禦＋跌 → 命中
+                {"date": "2026-06-14", "stock_id": "2317", "rating": "買進",
+                 "price": 100.0, "outcome": {"r5": 3.0, "r20": None, "r60": None}},   # 看多＋漲 → 命中
+                {"date": "2026-06-15", "stock_id": "3008", "rating": "觀望",
+                 "price": 100.0, "outcome": {"r5": -0.5, "r20": None, "r60": None}},  # 觀望 → 排除
             ]
             json.dump(entries, open(p, "w"))
             st = build_track_stats(p)
-        self.assertEqual(st["hit_rate_5d"], 0.6)  # 3/5 命中
+        self.assertEqual(st["hit_rate_5d"], 0.6)  # 5 筆有方向中 3 命中；觀望那筆不計
 
 
 # ---------- 六角色人話化 ----------

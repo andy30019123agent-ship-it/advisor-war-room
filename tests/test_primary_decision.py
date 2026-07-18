@@ -4,7 +4,7 @@ import unittest
 
 from warroom.primary_decision import (
     decide_action, build_primary_and_context, derive_summary, apply_derivations,
-    ACTION_TO_RATING, ACTION_TO_DIRECTION,
+    ACTION_TO_RATING, ACTION_TO_DIRECTION, next_reeval_date, _short_stance,
 )
 from warroom.consistency import check_primary_consistency
 
@@ -249,6 +249,48 @@ class TestLightsColorNormalization(unittest.TestCase):
         self.assertEqual(colors["chips"], "red")
         for c in colors.values():
             self.assertIn(c, ("green", "yellow", "red", None))
+
+
+class TestShortStanceComposite(unittest.TestCase):
+    """修復 17-Y6：短線 stance 由技術＋籌碼合成（0.6t＋0.4c），不再只看技術丟掉籌碼，
+    與 basis 文字「技術X＋籌碼Y」一致。"""
+
+    def test_short_stance_pure_composite(self):
+        self.assertEqual(_short_stance("green", "green"), "偏多")
+        self.assertEqual(_short_stance("amber", "amber"), "中性")
+        # 技術中性、籌碼偏空（red 連賣）→ 合成偏空（0.4×-1=-0.4），不再標「中性」自相矛盾。
+        self.assertEqual(_short_stance("amber", "red"), "偏空")
+        self.assertEqual(_short_stance("red", "green"), "中性")  # -0.6+0.4=-0.2，不過門檻→中性
+
+    def test_short_stance_reflects_chips_in_context(self):
+        # 2330 樣態：technical amber（中性）、chips red（偏空）→ 短線 stance 應為偏空。
+        primary, context, _ = build_primary_and_context(
+            price=100.0, lights=["amber", "amber", "red"], lights_facts={},
+            valuation=VAL_OK, rr=2.0, defense_price=90.0, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="amber",
+            confidence=50, profile=PROFILE, is_core_holding=False, holding=True)
+        short = context["timeframes"]["short"]
+        self.assertEqual(short["stance"], "偏空")
+        self.assertIn("籌碼偏空", short["basis"])  # 標籤與依據一致
+
+
+class TestNextReevalDate(unittest.TestCase):
+    """修復 11：+7 曆日後「下一交易日對齊」（週六→+2、週日→+1；近似，不接假日行事曆）。"""
+
+    def test_weekday_result_unchanged(self):
+        # 2026-07-15（週三）+7 = 2026-07-22（週三）→ 不調整。
+        self.assertEqual(next_reeval_date("2026-07-15"), "2026-07-22")
+
+    def test_saturday_shifts_to_monday(self):
+        # 2026-07-11（週六）+7 = 2026-07-18（週六）→ +2 → 2026-07-20（週一）。
+        self.assertEqual(next_reeval_date("2026-07-11"), "2026-07-20")
+
+    def test_sunday_shifts_to_monday(self):
+        # 2026-07-12（週日）+7 = 2026-07-19（週日）→ +1 → 2026-07-20（週一）。
+        self.assertEqual(next_reeval_date("2026-07-12"), "2026-07-20")
+
+    def test_bad_date_returns_input(self):
+        self.assertEqual(next_reeval_date("not-a-date"), "not-a-date")
 
 
 STANCE_ENUM = ("偏多", "中性偏多", "中性", "中性偏空", "偏空")

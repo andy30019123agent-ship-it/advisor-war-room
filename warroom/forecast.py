@@ -48,7 +48,7 @@ CAL_TO_TRADING_RATIO = 5 / 7  # 曆日→交易日粗略近似（不含國定假
 # analyze_tw.py 用同一相對路徑常數，三處保持一致。
 EARNINGS_CALENDAR = "../tw-earnings-calendar/data/latest.json"
 
-DISCLAIMER = "統計推算（歷史波動隨機模擬），非方向預測；突發事件不在模型內。"
+DISCLAIMER = "統計推算（零漂移歷史波動隨機模擬），非方向預測；突發事件不在模型內。"
 _ACCURACY_NOTE = "樣本累積中：每天記錄預估區間，5 日後開始回填驗證"
 
 
@@ -193,8 +193,15 @@ def build_forecast(price_df, valuation: Optional[Dict], data_date: str, stock_id
 
     w15, w85 = np.percentile(paths[:, WEEK_DAYS - 1], [15, 85])
 
+    # scenarios 直接引用 valuation 三情境（錨在 m3，維持 v1.2 語意），但估值有 warning
+    # （Base 偏離現價過大、可能低估，不作為減碼依據）時，這裡不得把同一個悲觀原始值裸奔
+    # 端到前端——primary_decision 已用同一個護欄壓抑減碼，forecast.scenarios 也一律回 null
+    # （bear/base/bull 全 None，維持契約物件形狀，前端據此不畫線）。見大檢查・邏輯組 R1。
     fair = (valuation or {}).get("fair_value") or {}
-    scenarios = {"bear": fair.get("bear"), "base": fair.get("base"), "bull": fair.get("bull")}
+    if (valuation or {}).get("warning"):
+        scenarios = {"bear": None, "base": None, "bull": None}
+    else:
+        scenarios = {"bear": fair.get("bear"), "base": fair.get("base"), "bull": fair.get("bull")}
 
     event_markers = _build_event_markers(stock_id, data_date, events, calendar_path, MAX_HORIZON_DAYS)
 

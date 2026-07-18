@@ -128,8 +128,10 @@ def build_message(alert, price):
 
 
 def _fetch_price_twse_exchange(stock_id, prefix, timeout=6):
-    """打單一交易所前綴（tse=上市／otc=上櫃）；z=成交價，若尚未開盤成交則退回 y=昨收。
-    查無資料（該股不在這個交易所）回 None，不當例外——呼叫方要能接著試下一個交易所。"""
+    """打單一交易所前綴（tse=上市／otc=上櫃），只取 z=即時成交價。
+    z 無效（尚未成交／假日休市：值為空或 "-"）一律回 None，**不得**退回 y=昨收（大檢查・
+    邏輯組修復 12：假日用昨收會誤觸防守警報，用戶收到早已知道的「跌破」——寧可跳過該檔）。
+    查無資料（該股不在這個交易所）也回 None，讓呼叫方接著試下一個交易所。"""
     url = _TWSE_URL.format(prefix=prefix, id=stock_id)
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -137,14 +139,12 @@ def _fetch_price_twse_exchange(stock_id, prefix, timeout=6):
     arr = payload.get("msgArray") or []
     if not arr:
         return None
-    info = arr[0]
-    for field in ("z", "y"):
-        v = info.get(field)
-        if v and v != "-":
-            try:
-                return float(v)
-            except ValueError:
-                continue
+    v = arr[0].get("z")
+    if v and v != "-":
+        try:
+            return float(v)
+        except ValueError:
+            return None
     return None
 
 
@@ -187,14 +187,19 @@ def fetch_price_finmind(stock_id, timeout=8, token=None):
     return float(close) if close is not None else None
 
 
-def get_price(stock_id):
-    """優先 TWSE 即時，失敗 fallback FinMind 收盤；兩者皆失敗回 None（不炸主流程）。"""
+def get_price(stock_id, allow_finmind=True):
+    """優先 TWSE 即時成交價（z）；抓不到時，只有在 allow_finmind=True（確定是交易日時段，
+    由 run() 依大盤即時值判定）才 fallback FinMind 收盤。allow_finmind=False（假日/非交易
+    時段）時不用 FinMind 昨收，直接回 None（跳過該檔），避免用陳舊收盤誤觸警報（修復 12）。
+    兩者皆失敗回 None（不炸主流程）。"""
     try:
         p = fetch_price_twse(stock_id)
         if p is not None:
             return p
     except Exception as e:
         print(f"  [warn] TWSE 即時價失敗 {stock_id}: {type(e).__name__} {str(e)[:60]}")
+    if not allow_finmind:
+        return None
     try:
         p = fetch_price_finmind(stock_id)
         if p is not None:
@@ -264,11 +269,12 @@ def build_market_move_message(direction, price, change_pct):
     )
 
 
-def check_market_move(state, today_str):
-    """抓 TAIEX、判斷是否劇烈波動、依 state 去重後發送。回傳已發送則數（0 或 1）。
+def check_market_move(state, today_str, taiex=None):
+    """抓 TAIEX（或用 run() 已抓好的 taiex=(current, prev_close)，避免一輪抓兩次）、判斷
+    是否劇烈波動、依 state 去重後發送。回傳已發送則數（0 或 1）。
     send_telegram 失敗（回 False）不 mark_sent——留到下一輪再試，不能把「發送失敗」
     誤標成「已發過」，否則這則警報就永久消失，使用者永遠收不到。"""
-    current, prev_close = fetch_taiex()
+    current, prev_close = taiex if taiex is not None else fetch_taiex()
     change_pct = compute_change_pct(current, prev_close)
     direction = evaluate_market_move(change_pct)
     if direction is None:
@@ -314,8 +320,11 @@ def run(data_path=DEFAULT_DATA_PATH, state_path=DEFAULT_STATE_PATH, force=False,
     state = load_state(state_path)
     sent = 0
 
-    # 大盤劇烈波動檢查：獨立於 alerts_snapshot 是否有資料，每輪都順帶抓一次。
-    sent += check_market_move(state, today)
+    # 大盤即時值抓一次，供「大盤劇烈波動警報」與「交易日時段確認」共用。TAIEX z 有效＝
+    # 確實在交易時段（非假日休市），此時才允許個股用 FinMind 昨收 fallback（修復 12）。
+    taiex_current, taiex_prev = fetch_taiex()
+    market_live = taiex_current is not None
+    sent += check_market_move(state, today, taiex=(taiex_current, taiex_prev))
 
     alerts = load_snapshot(data_path)
     if not alerts:
@@ -325,7 +334,7 @@ def run(data_path=DEFAULT_DATA_PATH, state_path=DEFAULT_STATE_PATH, force=False,
             key = alert_key(alert)
             if already_sent(state, today, key):
                 continue
-            price = get_price(alert.get("id"))
+            price = get_price(alert.get("id"), allow_finmind=market_live)
             if price is None:
                 print(f"  [warn] {alert.get('name')} {alert.get('id')} 抓不到即時價，跳過本輪。")
                 continue

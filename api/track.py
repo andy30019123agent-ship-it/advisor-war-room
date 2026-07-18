@@ -1,10 +1,12 @@
 """POST /api/track — 一鍵加入監控（契約 v1.1「新 API：POST /api/track」節）。
 
-流程：驗代號格式 → 驗 Origin/Referer（擋跨站濫用）→ 驗代號真的存在（複用
+流程：驗代號格式 → 驗 Origin/Referer（擋跨站濫用）→ 每 instance 每小時最多 10 次，
+超過回 429（2026-07-18 大檢查 🟡3：限流閘門挪到 stock_exists／GitHub 呼叫之前，
+不論這次 POST 後續是否真的寫入，都先計入額度——避免「重複 POST 已在清單內的代號」
+之類的請求繞過限流、無限次打 stock_exists()／GitHub API）→ 驗代號真的存在（複用
 api/analyze.py 的 lite 環境呼叫 stock_exists()）→ 用 GitHub contents API（token 來自
 env GH_PAT）讀 data/tracked_stocks.json（拿 sha）→ 已在清單內回 200 idempotent →
-滿 20 檔回 409 → 每 instance 每小時最多 10 次寫入，超過回 429 → 否則 append 後 PUT
-回寫（commit message 註明來源）→ 201。
+滿 20 檔回 409 → 否則 append 後 PUT 回寫（commit message 註明來源）→ 201。
 
 GH_PAT 缺失或 GitHub API 任何一步失敗都回 503，不把 token 洩進回應或 log
 （例外訊息一律用固定文案，不夾帶 urllib 例外物件裡可能帶到的 header/url）。
@@ -155,7 +157,15 @@ def _gh_put_file(token: str, data: dict, sha: str, stock_id: str) -> None:
 
 def run_track(stock_id: str) -> dict:
     """回成功時的 body dict（200 idempotent 或 201 新增）。
-    失敗拋 _NotFound（代號不存在）／_ListFull／_RateLimited／_Unavailable。"""
+    失敗拋 _RateLimited／_NotFound（代號不存在）／_ListFull／_Unavailable。
+
+    限流閘門排最前面（2026-07-18 大檢查 🟡3）：任何一次通過格式/Origin 驗證的 POST，
+    不論後續是否真的寫入，都先計入額度，才碰 stock_exists()／GitHub API——避免
+    「重複 POST 已在清單內的代號」或「清單已滿」這類請求繞過限流、無限次觸發
+    GitHub Contents API GET（跟排程 workflow 共用同一組 PAT 額度）。"""
+    if not _rate_limit_ok():
+        raise _RateLimited()
+
     exists = _check_stock_exists(stock_id)
     if exists is False:
         raise _NotFound(stock_id)
@@ -176,9 +186,6 @@ def run_track(stock_id: str) -> dict:
 
     if len(stocks) >= _MAX_TRACKED:
         raise _ListFull()
-
-    if not _rate_limit_ok():
-        raise _RateLimited()
 
     stocks.append(stock_id)
     _gh_put_file(token, data, sha, stock_id)

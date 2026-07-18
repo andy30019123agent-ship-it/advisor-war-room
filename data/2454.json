@@ -189,13 +189,13 @@
       "price": 3809.4,
       "condition": "站回 MA60 且法人連 2 日買超"
     },
-    "reeval_date": "2026-07-25"
+    "reeval_date": "2026-07-27"
   },
   "context": {
     "timeframes": {
       "short": {
         "label": "短線 1-4 週",
-        "stance": "中性",
+        "stance": "偏空",
         "basis": "技術中性＋籌碼偏空"
       },
       "swing": {
@@ -1158,9 +1158,9 @@
       3726.58
     ],
     "scenarios": {
-      "bear": 930.1,
-      "base": 1297.9,
-      "bull": 1331.6
+      "bear": null,
+      "base": null,
+      "bull": null
     },
     "event_markers": [],
     "accuracy": {
@@ -1168,7 +1168,7 @@
       "hit_rate_70": null,
       "note": "樣本累積中：每天記錄預估區間，5 日後開始回填驗證"
     },
-    "disclaimer": "統計推算（歷史波動隨機模擬），非方向預測；突發事件不在模型內。"
+    "disclaimer": "統計推算（零漂移歷史波動隨機模擬），非方向預測；突發事件不在模型內。"
   },
   "short_scenarios": {
     "status": "ok",

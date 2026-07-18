@@ -460,7 +460,11 @@ def _attach_primary(res, dec, valuation, price, market_light, rev_sig, chip_sig,
     chips_broken = bool(chip_sig.get("sell_streak_ge3") and chip_sig.get("ratio_gt_15pct"))
     defense_broken = "已觸發" in (dec.get("invalidation", {}) or {}).get("price", "")
     is_core = stock_id in profile.get("core_holdings", [])
-    reeval = (datetime.now(timezone(timedelta(hours=8))) + timedelta(days=7)).strftime("%Y-%m-%d")
+    # 複評日：+7 曆日後「下一交易日對齊」（週六→+2、週日→+1；簡化版僅避開週末，不接
+    # 國定假日行事曆，屬近似）。見 warroom/primary_decision.next_reeval_date。
+    from warroom.primary_decision import next_reeval_date
+    _today_tpe = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+    reeval = next_reeval_date(_today_tpe, days=7)
     entry_cond = ({"price": round(high20, 1), "condition": "帶量突破近20日高、法人回補"}
                   if high20 is not None else None)
 
