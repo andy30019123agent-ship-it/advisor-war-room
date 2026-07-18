@@ -179,3 +179,28 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 ### 前端本地新設定（localStorage，不進契約檔案）
 
 `total_capital`（預設 1,000,000）：持股頁可改；組合總覽卡用它算曝險 %／現金水位，與 exposure_guidance 比對超標提示。
+
+---
+
+## v1.2 增補（2026-07-18 夜，Andy 拍板：機率扇形圖預估走勢）
+
+### stocks/<id>.json 新增 `forecast`（整組可為 null＝樣本不足）
+
+```jsonc
+"forecast": {
+  "method": "monte_carlo_gbm",     // 幾何布朗運動蒙地卡羅；drift=0（不假裝知道方向），vol=歷史波動（EWMA 250d）
+  "horizon_days": 63,              // 約 3 個月
+  "n_paths": 2000,
+  "vol_annualized": 0.42,
+  "as_of": "2026-07-17",
+  "bands": [                       // 每 3 個交易日取樣一點，含 d=0（現價）與 d=63
+    { "d": 0, "p10": 2290, "p25": 2290, "p50": 2290, "p75": 2290, "p90": 2290 },
+    { "d": 63, "p10": 1980, "p25": 2140, "p50": 2295, "p75": 2460, "p90": 2650 }
+  ],
+  "scenarios": { "bear": 1900, "base": 2150, "bull": 2600 },  // 3 個月估值錨（context.valuation 派生；null 可）
+  "prob_range_70": [2050, 2600],   // horizon 的 p15~p85（「3 個月後 70% 機率落在此區間」）
+  "disclaimer": "統計推算（歷史波動隨機模擬），非方向預測；突發事件不在模型內。"
+}
+```
+
+規則：模擬 seed 由 stock_id＋data_date 決定（同日重跑結果一致、可測試）；價格樣本 <120 根日 K → 整組 null；scenarios 直接引用 valuation 三情境不得另算。前端 zod optional/nullable。
