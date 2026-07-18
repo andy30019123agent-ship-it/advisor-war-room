@@ -12,6 +12,8 @@ from warroom.market import fetch_market
 from warroom.sectors import fetch_sectors
 
 OPPS = os.path.expanduser("~/Desktop/agent/tw-stock-screener/dist/data/opportunities.json")
+TRACKED = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       "data", "tracked_stocks.json")
 LZH = {"green": "🟢", "amber": "🟡", "red": "🔴"}
 
 
@@ -19,6 +21,17 @@ def stocks_from_opps():
     try:
         d = json.load(open(OPPS, encoding="utf-8"))
         return [p["id"] for p in d.get("picks", [])]
+    except Exception:
+        return []
+
+
+def stocks_from_tracked():
+    """repo 內的追蹤清單（data/tracked_stocks.json）——GH Actions runner 上唯一可靠來源。
+    opportunities.json 是本機另一個 repo 的路徑，CI 上不存在；聯測 2026-07-18 抓到
+    靜默 fallback 成 ["2330"] 導致其他股永遠不更新，故清單權威改為 repo 內檔案。"""
+    try:
+        d = json.load(open(TRACKED, encoding="utf-8"))
+        return [str(s) for s in d.get("stocks", [])]
     except Exception:
         return []
 
@@ -89,5 +102,6 @@ if __name__ == "__main__":
     ap.add_argument("--stocks", default="")
     ap.add_argument("--no-themes", action="store_true")
     a = ap.parse_args()
-    ids = [s.strip() for s in a.stocks.split(",") if s.strip()] or stocks_from_opps() or ["2330"]
+    ids = ([s.strip() for s in a.stocks.split(",") if s.strip()]
+           or stocks_from_tracked() or stocks_from_opps() or ["2330"])
     run(ids, not a.no_themes)

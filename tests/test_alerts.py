@@ -191,3 +191,93 @@ def test_mark_sent_and_already_sent_roundtrip():
     assert alerts.already_sent(state, "2026-07-18", key) is False
     alerts.mark_sent(state, "2026-07-18", key)
     assert alerts.already_sent(state, "2026-07-18", key) is True
+
+
+# ── fetch_price_twse()：tse_ 查無時 fallback otc_（2026-07-18 聯測 #5） ──────────
+
+class _FakeTwseResponse:
+    def __init__(self, payload):
+        self._body = json.dumps(payload).encode("utf-8")
+
+    def read(self):
+        return self._body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def _fake_urlopen_by_url_substring(responses):
+    """responses: {url 裡要含的子字串: payload dict 或例外實例}。
+    呼叫的 URL 沒有任何一個子字串命中就直接 assert 失敗，用來抓「呼叫了不該打的交易所」。"""
+
+    def _fn(req, timeout=None):
+        url = req.full_url
+        for needle, val in responses.items():
+            if needle in url:
+                if isinstance(val, BaseException):
+                    raise val
+                return _FakeTwseResponse(val)
+        raise AssertionError(f"未預期的 URL：{url}")
+
+    return _fn
+
+
+def test_fetch_price_twse_falls_back_to_otc_when_tse_has_no_data(monkeypatch):
+    # 上櫃股（例如 6505）：tse_ 查無資料（msgArray 空），要接著試 otc_ 才拿得到價。
+    responses = {
+        "tse_6505.tw": {"msgArray": []},
+        "otc_6505.tw": {"msgArray": [{"z": "81.30"}]},
+    }
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    assert alerts.fetch_price_twse("6505") == 81.30
+
+
+def test_fetch_price_twse_prefers_tse_without_querying_otc(monkeypatch):
+    # 上市股：tse_ 就查得到，不該多打一次 otc_（otc_ 沒在 responses 裡，打了就會 assert 失敗）。
+    responses = {"tse_2330.tw": {"msgArray": [{"z": "1050.0"}]}}
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    assert alerts.fetch_price_twse("2330") == 1050.0
+
+
+def test_fetch_price_twse_both_exchanges_empty_returns_none(monkeypatch):
+    responses = {
+        "tse_9999.tw": {"msgArray": []},
+        "otc_9999.tw": {"msgArray": []},
+    }
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    assert alerts.fetch_price_twse("9999") is None
+
+
+def test_fetch_price_twse_tse_network_error_still_tries_otc(monkeypatch):
+    # tse_ 連線失敗（不是「查無」，是真的斷線/逾時）也不該放棄，還是要試 otc_。
+    responses = {
+        "tse_6505.tw": OSError("timed out"),
+        "otc_6505.tw": {"msgArray": [{"z": "81.30"}]},
+    }
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    assert alerts.fetch_price_twse("6505") == 81.30
+
+
+def test_fetch_price_twse_both_exchanges_fail_raises(monkeypatch):
+    # 兩個交易所都失敗才該真的往上丟例外，讓 get_price() 的既有 try/except 接手 fallback FinMind。
+    responses = {
+        "tse_6505.tw": OSError("timed out"),
+        "otc_6505.tw": OSError("timed out"),
+    }
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    with pytest.raises(OSError):
+        alerts.fetch_price_twse("6505")
+
+
+def test_get_price_falls_back_to_finmind_when_both_twse_exchanges_empty(monkeypatch):
+    # 端到端：tse_/otc_ 都查無 → get_price() 該接著打 FinMind fallback，不是直接放棄回 None。
+    responses = {
+        "tse_6505.tw": {"msgArray": []},
+        "otc_6505.tw": {"msgArray": []},
+    }
+    monkeypatch.setattr(alerts.urllib.request, "urlopen", _fake_urlopen_by_url_substring(responses))
+    monkeypatch.setattr(alerts, "fetch_price_finmind", lambda stock_id, **kw: 79.5)
+    assert alerts.get_price("6505") == 79.5

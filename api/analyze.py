@@ -31,6 +31,11 @@ _TPE = timezone(timedelta(hours=8))
 _STOCK_ID_RE = re.compile(r"^\d{4,6}$")
 _TMP_CACHE_DIR = "/tmp/analyze_cache"
 
+# 整體查詢時間預算：Vercel serverless 硬限 30s，冷查最壞序列要打 8 個 FinMind dataset
+# （每個最久 6s，見 finmind_lite._TIMEOUT），22s 留 8s buffer 給 build_stock_detail 組裝、
+# 寫快取等其餘開銷（2026-07-18 聯測 #1：8×8s 舊序列會直接 FUNCTION_INVOCATION_TIMEOUT）。
+_ANALYZE_DEADLINE_SECONDS = 22
+
 _ready = False  # 冷啟只需設一次的 lite 環境（見 _setup_lite_env）
 
 
@@ -105,24 +110,36 @@ def run_analyze(stock_id: str) -> dict:
         return cached
 
     _setup_lite_env()
-    from warroom.analyze_tw import analyze, stock_exists
+    from warroom.analyze_tw import analyze, stock_exists, FinMindUnavailable
     from warroom.build_snapshots import build_meta, build_stock_detail
     from warroom.profile import load_profile
+    import warroom.finmind_cache as fc
+
+    # 每次請求重設整體查詢時間預算（不能塞進 _setup_lite_env：那支只在冷啟跑一次，
+    # warm lambda 會重用同一個 LiteLoader 實例）。LiteLoader._fetch 靠這個時間戳
+    # 判斷「非必要」dataset（財報/月營收/法人/股利）該不該跳過（見 finmind_lite.py）。
+    fc._LOADER.deadline = time.time() + _ANALYZE_DEADLINE_SECONDS
 
     # 先確認代號存在，區分「查無此股票」(404) 和「查得到但這次抓資料失敗」(503)。
     # stock_exists() 查不了（額度/網路問題）時回 None，此時不誤判成不存在，照舊往下試抓資料。
     if stock_exists(stock_id) is False:
         raise _NotFound(stock_id)
 
-    res = analyze(stock_id, with_news=False)  # with_news=False：news.py 打 GDELT/Google 序列重試最壞近 1 分鐘，不符合即時查詢的延遲預算
+    try:
+        # with_news=False：news.py 打 GDELT/Google 序列重試最壞近 1 分鐘，不符合即時查詢的延遲預算
+        res = analyze(stock_id, with_news=False)
+    except FinMindUnavailable:
+        # fetch() 辨識出額度用完/429/402 等「全域不可用」訊號才會冒泡到這裡（見
+        # warroom/analyze_tw.py），跟一般缺資料降級分開處理，給使用者明確訊息而非猜測。
+        raise _UpstreamUnavailable("FinMind 額度用完，請稍後再試")
 
     if not res.get("data_flags", {}).get("technical"):
-        # 日線資料抓不到：代號存在但這次抓不到股價（FinMind 額度用完／資料源當下不可用），
+        # 日線資料抓不到：代號存在但這次抓不到股價（deadline 到了或其他非額度性失敗），
         # 引擎雖然會降級成一筆「觀望」，但對即時查詢來說這不是可用結果。
         raise _UpstreamUnavailable(f"抓不到 {stock_id} 的股價資料，可能是 FinMind 額度用完，請稍後再試")
 
     profile = load_profile(os.path.join(_ROOT, "data", "investor_profile.json"))
-    meta = build_meta(sources=["FinMind REST (lite)"])
+    meta = build_meta(sources=["FinMind REST (lite)"], data_date=res.get("as_of_date"))
     detail = build_stock_detail(stock_id, res, profile, meta)
     _write_cache(stock_id, detail)
     return detail

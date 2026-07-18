@@ -20,11 +20,12 @@ export function Track() {
   // 戰績頁＝聚合追蹤清單裡每一檔的 track 歷史（來源：daily.json 的 tracked[]，逐檔讀 stocks/<id>.json）。
   const dailyQuery = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
   const trackedIds = dailyQuery.data?.tracked.map((t) => t.id) ?? []
+  const trackedIdSet = new Set(trackedIds)
 
   const detailQueries = useQueries({
     queries: trackedIds.map((id) => ({
       queryKey: ['stock', id],
-      queryFn: () => fetchStockDetail(id),
+      queryFn: () => fetchStockDetail(id, trackedIdSet),
       enabled: trackedIds.length > 0,
     })),
   })

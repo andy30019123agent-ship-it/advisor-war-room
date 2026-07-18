@@ -251,5 +251,43 @@ class TestLightsColorNormalization(unittest.TestCase):
             self.assertIn(c, ("green", "yellow", "red", None))
 
 
+STANCE_ENUM = ("偏多", "中性偏多", "中性", "中性偏空", "偏空")
+
+
+class TestStanceNeverLeaksNA(unittest.TestCase):
+    """2026-07-18 聯測 #6：ETF／缺基本面標的（如 0050）查詢整頁顯示「請更新 App」。
+    根因：context.timeframes.{short,mid}.stance 在對應燈號＝na 時吐出中文字串「缺」，
+    不在前端 StanceSchema 五檔 enum 裡，Zod 驗證失敗。stance 欄位任何情況都只能是
+    契約五檔之一——「缺」只准出現在 basis 說明文字，不准進 stance。"""
+
+    def test_timeframe_stance_is_always_contract_enum_even_when_light_na(self):
+        # technical＝na（模擬個股缺技術資料）＋fundamental＝na（模擬 ETF 缺財報）同時測。
+        primary, context, roles = build_primary_and_context(
+            price=100.0, lights=["na", "na", "green"], lights_facts={},
+            valuation={"band": None, "warning": None, "current_percentile": None,
+                      "fair_value": {}, "regime": None},
+            rr=None, defense_price=None, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="amber",
+            confidence=0, profile=PROFILE, is_core_holding=False, holding=False)
+        for tf_key in ("short", "swing", "mid"):
+            stance = context["timeframes"][tf_key]["stance"]
+            self.assertIn(stance, STANCE_ENUM, f"{tf_key}.stance={stance!r} 不在契約 enum 裡")
+        self.assertIn(primary["stance"], STANCE_ENUM)
+
+    def test_etf_like_missing_fundamental_gets_observe_action_and_specific_reason(self):
+        # f=="na" 但技術/籌碼仍有 ≥2 筆可判讀（ETF 常態）：action=觀望（非核心持股空手觀點）、
+        # stance=中性、readable_reason 講清楚是 ETF/特殊標的缺基本面，不是系統壞掉。
+        primary, context, roles = build_primary_and_context(
+            price=100.0, lights=["na", "green", "amber"], lights_facts={},
+            valuation={"band": None, "warning": None, "current_percentile": None,
+                      "fair_value": {}, "regime": None},
+            rr=2.0, defense_price=None, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="amber",
+            confidence=50, profile=PROFILE, is_core_holding=False, holding=False)
+        self.assertEqual(primary["action"], "觀望")
+        self.assertEqual(primary["stance"], "中性")
+        self.assertIn("ETF", primary["readable_reason"])
+
+
 if __name__ == "__main__":
     unittest.main()

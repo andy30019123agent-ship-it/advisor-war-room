@@ -20,7 +20,7 @@ _TPE = timezone(timedelta(hours=8))
 DEFAULT_DATA_PATH = "public/data/daily.json"
 DEFAULT_STATE_PATH = "data/alerts_state.json"
 
-_TWSE_URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{id}.tw"
+_TWSE_URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={prefix}_{id}.tw"
 _FINMIND_URL = "https://api.finmindtrade.com/api/v4/data"
 _TG_URL = "https://api.telegram.org/bot{token}/sendMessage"
 
@@ -124,9 +124,10 @@ def build_message(alert, price):
     return f"ℹ️ {name} {sid} 到價提醒：{target}（現價 {cur}）。"
 
 
-def fetch_price_twse(stock_id, timeout=6):
-    """TWSE 官方即時報價；z=成交價，若尚未開盤成交則退回 y=昨收。查無資料回 None。"""
-    url = _TWSE_URL.format(id=stock_id)
+def _fetch_price_twse_exchange(stock_id, prefix, timeout=6):
+    """打單一交易所前綴（tse=上市／otc=上櫃）；z=成交價，若尚未開盤成交則退回 y=昨收。
+    查無資料（該股不在這個交易所）回 None，不當例外——呼叫方要能接著試下一個交易所。"""
+    url = _TWSE_URL.format(prefix=prefix, id=stock_id)
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         payload = json.loads(resp.read().decode("utf-8"))
@@ -141,6 +142,26 @@ def fetch_price_twse(stock_id, timeout=6):
                 return float(v)
             except ValueError:
                 continue
+    return None
+
+
+def fetch_price_twse(stock_id, timeout=6):
+    """TWSE 官方即時報價：先試上市（tse_），查無（該股其實是上櫃）再試上櫃（otc_）。
+    兩個交易所都查無資料回 None（2026-07-18 聯測 #5：舊版只打 tse_，上櫃股永遠抓不到價，
+    到價提醒對上櫃持股形同虛設）。第一個交易所連線／逾時失敗也還是要試第二個，不能直接
+    放棄——只有兩個都失敗才把最後一個例外往上丟，讓 get_price() 的既有 try/except
+    接手 fallback FinMind。"""
+    last_exc = None
+    for prefix in ("tse", "otc"):
+        try:
+            price = _fetch_price_twse_exchange(stock_id, prefix, timeout=timeout)
+        except Exception as e:
+            last_exc = e
+            continue
+        if price is not None:
+            return price
+    if last_exc is not None:
+        raise last_exc
     return None
 
 

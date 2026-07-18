@@ -1,11 +1,13 @@
 """T5：缺資料降級 + 純訊號抽取函式測試（純函式，不打真 API）。"""
 import unittest
+from unittest.mock import patch
 
 import pandas as pd
 
+import warroom.analyze_tw as analyze_tw
 from warroom.analyze_tw import (
     technical, rev_signals_from_df, chip_signals_from_df, fundamental, prior_n_high_low,
-    _normalize_news, _parse_news_date,
+    _normalize_news, _parse_news_date, fetch, FinMindUnavailable, _is_finmind_unavailable,
 )
 
 
@@ -164,6 +166,50 @@ class TestNewsNormalization(unittest.TestCase):
     def test_parse_news_date_none_on_empty(self):
         self.assertIsNone(_parse_news_date(None))
         self.assertIsNone(_parse_news_date(""))
+
+
+class _FakeFinMindRateLimited(Exception):
+    """模擬 api/_lib/finmind_lite.py 的 FinMindRateLimited——用同名類別（不 import 真的，
+    維持 warroom 不依賴 api 的分層），驗證 fetch() 是用「類別名字串」辨識，不是 isinstance。"""
+
+
+class TestFetchBubblesFinMindUnavailable(unittest.TestCase):
+    """2026-07-18 聯測 #2：fetch() 過去把所有例外（含額度用完）都吞成 None，即時查詢
+    會靜默降級成一筆「資料缺、觀望」，使用者跟系統都以為是正常結果。改法：辨識出
+    「全域不可用」訊號時改丟 FinMindUnavailable 往上冒泡；其餘單一 dataset 失敗仍照舊
+    降級（out[key]=None），不能讓批次排程（update.py）多顆股票只因一顆缺資料就整批中斷。"""
+
+    def test_rate_limited_class_name_bubbles(self):
+        with patch.object(analyze_tw, "cached_fetch", side_effect=_FakeFinMindRateLimited("FinMind HTTP 402")):
+            with self.assertRaises(FinMindUnavailable):
+                fetch("2330")
+
+    def test_quota_message_from_real_sdk_bubbles(self):
+        # 真 FinMind SDK 額度用完時丟的是通用 Exception（見 FinMind/utility/request.py），
+        # 訊息含 login/limit 字樣，不是專屬類別，靠訊息文字辨識。
+        msg = "FinMind API unexpected response: Data quantity limit reached, please login with a valid token"
+        with patch.object(analyze_tw, "cached_fetch", side_effect=Exception(msg)):
+            with self.assertRaises(FinMindUnavailable):
+                fetch("2330")
+
+    def test_ordinary_failure_still_degrades_to_none(self):
+        # 一般性失敗（格式錯誤、單一 dataset 沒資料等）不是「全域不可用」訊號，
+        # 維持既有降級行為：該欄位標 None，不中斷、不冒泡。
+        with patch.object(analyze_tw, "cached_fetch", side_effect=ValueError("unexpected column")):
+            out = fetch("2330")
+        self.assertIsNone(out["price"])
+        self.assertIsNone(out["rev"])
+        self.assertEqual(set(out.keys()), {"price", "rev", "val", "chip", "div", "fs", "bs", "cf"})
+
+    def test_is_finmind_unavailable_detects_http_status_codes(self):
+        self.assertTrue(_is_finmind_unavailable(Exception("Final response status: 402, text: ...")))
+        self.assertTrue(_is_finmind_unavailable(Exception("Final response status: 429, text: ...")))
+        self.assertFalse(_is_finmind_unavailable(ValueError("unrelated parsing error")))
+
+    def test_deadline_skip_is_not_misclassified_as_unavailable(self):
+        # LiteLoader 的 deadline 跳過訊息不該被誤判成「全域不可用」，否則單純逾時
+        # 也會被冒泡成「額度用完」的誤導訊息（見 api/_lib/finmind_lite.FinMindDeadlineSkipped）。
+        self.assertFalse(_is_finmind_unavailable(Exception("已超過查詢時間預算，略過非必要資料 TaiwanStockDividend")))
 
 
 if __name__ == "__main__":

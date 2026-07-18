@@ -1,14 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail } from '../lib/api'
 import { loadHoldings, saveHolding, deleteHolding, type Holding } from '../lib/holdings'
 import { FreshnessBadge } from '../components/FreshnessBadge'
 import { IconEmptyBriefcase, IconPlus, IconTrash, IconClose } from '../components/icons'
+import type { Daily } from '../types/contract'
 
 // 自加持股若不在追蹤清單（daily.tracked）裡，daily.json 沒有它的現價/決策，
 // 改即時打 fetchStockDetail（fallback /api/analyze 現算）補上。staleTime 拉到
 // 「當日」等級，同一天內切分頁/重渲染不重打 API，只有隔天或手動重整才會再抓。
 const STALE_TIME_TODAY = 12 * 60 * 60 * 1000
+
+// 非追蹤持股的即時分析：最多同時 2 個併發、總數最多 8 檔（超過排隊）。持股清單沒上限，
+// 一次全打會同時炸出多支 /api/analyze 冷查（各自最久 20 幾秒），互搶時間又吃 FinMind 額度
+// （聯測 2026-07-18 #3）。
+const MAX_LIVE_CONCURRENT = 2
+const MAX_LIVE_TOTAL = 8
 
 export function Holdings() {
   const [holdings, setHoldings] = useState<Holding[]>(() => loadHoldings())
@@ -18,18 +25,46 @@ export function Holdings() {
   const { data: daily } = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
 
   const trackedIds = new Set((daily?.tracked ?? []).map((t) => t.id))
-  // enabled 只在 daily 已載入且確定「不在追蹤清單」時才打 API，避免每次 render 都打、
-  // 也避免 daily 還沒回來時誤判成「不在清單」而提前打了不必要的請求。
+  const untrackedHoldings = holdings.filter((h) => !trackedIds.has(h.id))
+  const liveEligible = untrackedHoldings.slice(0, MAX_LIVE_TOTAL)
+  const queuedIds = new Set(untrackedHoldings.slice(MAX_LIVE_TOTAL).map((h) => h.id))
+
+  // 併發池：settledIds 記錄「已經有結果（成功或失敗）」的持股。某檔一結算，佇列裡排在
+  // 它後面、還沒開始跑的下一檔就補上這個併發名額——不是死板地固定跑前兩個，而是同時最多
+  // 兩個在飛行中。
+  const [settledIds, setSettledIds] = useState<Set<string>>(new Set())
+
+  // enabled 只在 daily 已載入、確定「不在追蹤清單」、且併發池還有名額（或本來就已結算過）
+  // 時才打 API，避免每次 render 都打、也避免 daily 還沒回來時誤判成「不在清單」而提前打了
+  // 不必要的請求。
   const liveDetailQueries = useQueries({
-    queries: holdings.map((h) => ({
-      queryKey: ['stock', h.id],
-      queryFn: () => fetchStockDetail(h.id),
-      enabled: !!daily && !trackedIds.has(h.id),
-      staleTime: STALE_TIME_TODAY,
-      retry: 1,
-    })),
+    queries: liveEligible.map((h, i) => {
+      const pendingAhead = liveEligible.slice(0, i).filter((h2) => !settledIds.has(h2.id)).length
+      return {
+        queryKey: ['stock', h.id],
+        queryFn: () => fetchStockDetail(h.id, trackedIds),
+        enabled: !!daily && (settledIds.has(h.id) || pendingAhead < MAX_LIVE_CONCURRENT),
+        staleTime: STALE_TIME_TODAY,
+        retry: 1,
+      }
+    }),
   })
-  const liveById = new Map(holdings.map((h, i) => [h.id, liveDetailQueries[i]]))
+  const liveById = new Map(liveEligible.map((h, i) => [h.id, liveDetailQueries[i]]))
+
+  useEffect(() => {
+    setSettledIds((prev) => {
+      let next: Set<string> | null = null
+      liveEligible.forEach((h, i) => {
+        const q = liveDetailQueries[i]
+        if (q && (q.isSuccess || q.isError) && !prev.has(h.id)) {
+          if (!next) next = new Set(prev)
+          next.add(h.id)
+        }
+      })
+      return next ?? prev
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveDetailQueries])
 
   function openNew() {
     setEditing({ id: '', name: '', shares: 0, costPrice: 0 })
@@ -51,6 +86,11 @@ export function Holdings() {
   function handleDelete(id: string) {
     const next = deleteHolding(id)
     setHoldings(next)
+    // 刪除後彈窗要跟著關：不關的話 editing 還指著剛刪的舊資料，isNew 判斷
+    // （holdings.every(id 不在清單) ）會被算成 true，彈窗變身「新增持股」還殘留舊欄位值，
+    // 使用者按儲存等於把剛刪的持股用同一個 id 加回來（07-18 聯測 bug #7）。
+    setShowForm(false)
+    setEditing(null)
   }
 
   return (
@@ -87,8 +127,11 @@ export function Holdings() {
             <div className="list-card">
               {holdings.map((h) => {
                 const tracked = daily?.tracked.find((t) => t.id === h.id)
+                // 超過併發池總量上限（MAX_LIVE_TOTAL）的非追蹤持股：不進 useQueries、不打 API，
+                // 只顯示「排隊中」。
+                const isQueued = !tracked && queuedIds.has(h.id)
                 // 不在追蹤清單 → 用 fetchStockDetail（fallback /api/analyze）現算的結果補現價/決策。
-                const live = !tracked ? liveById.get(h.id) : undefined
+                const live = !tracked && !isQueued ? liveById.get(h.id) : undefined
                 const liveDetail = live?.data
 
                 const currentPrice = tracked?.close ?? liveDetail?.price.close ?? null
@@ -138,6 +181,11 @@ export function Holdings() {
                         <span className="pill neutral">暫時抓不到分析（稍後自動重試）</span>
                       </div>
                     )}
+                    {isQueued && (
+                      <div className="row-tags" style={{ marginTop: 8 }}>
+                        <span className="pill neutral">分析排隊中</span>
+                      </div>
+                    )}
                     {!isLiveLoading && !isLiveError && action && (
                       <div className="row-tags" style={{ marginTop: 8 }}>
                         <span className="pill">{action}</span>
@@ -158,6 +206,7 @@ export function Holdings() {
         <HoldingForm
           initial={editing}
           isNew={holdings.every((h) => h.id !== editing.id) || editing.id === ''}
+          daily={daily}
           onCancel={() => {
             setShowForm(false)
             setEditing(null)
@@ -170,15 +219,20 @@ export function Holdings() {
   )
 }
 
+const STOCK_ID_RE = /^\d{4,6}$/
+const NAME_LOOKUP_DEBOUNCE_MS = 500
+
 function HoldingForm({
   initial,
   isNew,
+  daily,
   onCancel,
   onSave,
   onDelete,
 }: {
   initial: Holding
   isNew: boolean
+  daily: Daily | undefined
   onCancel: () => void
   onSave: (h: Holding) => void
   onDelete?: () => void
@@ -187,8 +241,48 @@ function HoldingForm({
   const [name, setName] = useState(initial.name)
   const [shares, setShares] = useState(initial.shares ? String(initial.shares) : '')
   const [costPrice, setCostPrice] = useState(initial.costPrice ? String(initial.costPrice) : '')
+  // 使用者只要手動動過名稱欄位一次，就不再自動覆蓋（找不到就留手動輸入，聯測 07-18 #9）。
+  const [nameEditedByUser, setNameEditedByUser] = useState(!isNew && initial.name.length > 0)
 
   const canSave = id.trim().length > 0 && Number(shares) > 0 && Number(costPrice) > 0
+  const trimmedId = id.trim()
+
+  // 代號輸入後先查 daily.json 的 tracked/watch（反正已載入，免打 API）帶名稱；查不到、格式又
+  // 合法時，debounce 後打一次即時分析拿 profile.name 補上（找不到就留手動輸入）。
+  useEffect(() => {
+    if (!isNew || nameEditedByUser || !trimmedId) return
+    const fromDaily =
+      daily?.tracked.find((t) => t.id === trimmedId)?.name ??
+      daily?.watch.find((w) => w.id === trimmedId)?.name
+    if (fromDaily) setName(fromDaily)
+  }, [trimmedId, daily, isNew, nameEditedByUser])
+
+  const knownInDaily = !!(
+    daily?.tracked.some((t) => t.id === trimmedId) || daily?.watch.some((w) => w.id === trimmedId)
+  )
+  const [debouncedId, setDebouncedId] = useState(trimmedId)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedId(trimmedId), NAME_LOOKUP_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [trimmedId])
+
+  const liveNameQuery = useQuery({
+    // 沿用跟持股清單/查股票頁一樣的 queryKey（['stock', id]），同一代號若別處已查過就直接共用
+    // 快取，不重打。
+    queryKey: ['stock', debouncedId],
+    // enabled 已排除 knownInDaily，這裡打的一定是不在追蹤清單裡的代號 → 傳空 Set 讓
+    // fetchStockDetail 直接跳過注定 404 的靜態檔、走 /api/analyze。
+    queryFn: () => fetchStockDetail(debouncedId, new Set<string>()),
+    enabled: isNew && !nameEditedByUser && !knownInDaily && STOCK_ID_RE.test(debouncedId),
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  })
+  useEffect(() => {
+    if (liveNameQuery.data && !nameEditedByUser) {
+      setName(liveNameQuery.data.profile.name)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveNameQuery.data])
 
   function submit() {
     if (!canSave) return
@@ -216,7 +310,15 @@ function HoldingForm({
         </div>
         <div className="field">
           <label htmlFor="hf-name">名稱</label>
-          <input id="hf-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="例如 台積電" />
+          <input
+            id="hf-name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              setNameEditedByUser(true)
+            }}
+            placeholder={isNew && liveNameQuery.isLoading ? '查詢名稱中…' : '例如 台積電'}
+          />
         </div>
         <div className="field">
           <label htmlFor="hf-shares">股數</label>

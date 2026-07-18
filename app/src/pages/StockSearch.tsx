@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchStockDetail, NotFoundError, SchemaMismatchError } from '../lib/api'
+import { fetchDaily, fetchStockDetail, NotFoundError, SchemaMismatchError } from '../lib/api'
 import { IconSearch } from '../components/icons'
 import type { StockDetail } from '../types/contract'
 
@@ -8,9 +8,18 @@ export function StockSearch() {
   const [queryId, setQueryId] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState('')
 
+  // daily.json 反正各分頁都會載、有共用快取；先知道追蹤清單再決定要不要試靜態檔，
+  // 省一次注定 404 的請求（聯測 2026-07-18 #3/#8）。
+  const { data: daily } = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
+  // daily 還沒回來時給 undefined（不是空 Set！）：fetchStockDetail 收到 undefined 會退回
+  // 舊行為（先試靜態檔、404 才 fallback），避免把「還不知道」誤判成「確定不在追蹤清單」。
+  const trackedIds = daily
+    ? new Set([...daily.tracked.map((t) => t.id), ...daily.watch.map((w) => w.id)])
+    : undefined
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['stock', queryId],
-    queryFn: () => fetchStockDetail(queryId!),
+    queryFn: () => fetchStockDetail(queryId!, trackedIds),
     enabled: queryId !== null,
   })
 

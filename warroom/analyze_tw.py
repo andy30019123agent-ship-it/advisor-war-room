@@ -62,9 +62,34 @@ def stock_exists(stock_id):
         return None
 
 
+class FinMindUnavailable(Exception):
+    """FinMind 全域不可用（額度用完/429/402 等）往上冒泡的訊號——跟一般單一 dataset
+    抓不到（缺資料，標 None 走既有降級）分開。api/analyze.py 接到這個會回 503
+    「FinMind 額度用完，請稍後再試」；批次排程（warroom/update.py 的 analyze() 呼叫）
+    本來就用 try/except Exception 包整支，會照舊 warn＋跳過該檔，不影響其餘股票。"""
+
+
+def _is_finmind_unavailable(exc: Exception) -> bool:
+    """辨識「全域不可用」型錯誤：serverless lite loader 丟的 FinMindRateLimited
+    （HTTP 402/429/連線失敗，見 api/_lib/finmind_lite.py；用類別名字串比對，不 import
+    api 套件，維持 warroom 不依賴 api 的分層），以及正式 FinMind SDK 丟的通用 Exception
+    （'Final response status: 402/429...' 或訊息含 limit/login 等額度字樣）。
+    只有這裡認得出的訊號才冒泡，其餘（單一 dataset 沒資料、格式錯誤等）仍走原本的
+    單一維度降級（out[key]=None），不影響批次排程既有行為。"""
+    if type(exc).__name__ == "FinMindRateLimited":
+        return True
+    msg = str(exc).lower()
+    if any(s in msg for s in ("status: 402", "status: 429", "http 402", "http 429")):
+        return True
+    return any(kw in msg for kw in ("rate limit", "login", "額度", "quota"))
+
+
 # ---------- 抓資料 ----------
 def fetch(stock_id):
-    """抓個股所需各資料源。任一源失敗回 None（該維度後續標「資料缺」）。"""
+    """抓個股所需各資料源。任一源失敗回 None（該維度後續標「資料缺」）；
+    但辨識出「FinMind 全域不可用」（額度用完/429/402）時改丟 FinMindUnavailable
+    往上冒泡，不再默默吞成 None——不然查詢額度用完時，即時查詢會靜默降級成一筆
+    看起來正常的「資料缺、觀望」，使用者跟系統都以為是正常結果（2026-07-18 聯測 #2）。"""
     out = {}
     sources = [
         ("price", "taiwan_stock_daily", dict(stock_id=stock_id, start_date="2024-01-01")),
@@ -80,7 +105,9 @@ def fetch(stock_id):
         try:
             df = cached_fetch(method, **kw)
             out[key] = df if (df is not None and len(df) > 0) else None
-        except Exception:
+        except Exception as e:
+            if _is_finmind_unavailable(e):
+                raise FinMindUnavailable(str(e)) from e
             out[key] = None
     return out
 
@@ -366,7 +393,8 @@ def analyze(stock_id, with_news=True):
     try:
         from warroom.track_record import log_recommendation
         _today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
-        log_recommendation(res, _today)
+        # 建議日＝行情資料日（price_at_rec 是那天的收盤），週末補跑才不會標成無交易的日期
+        log_recommendation(res, res.get("as_of_date") or _today)
     except Exception:
         pass
     return res
@@ -511,6 +539,7 @@ def _decide(stock_id, d, res, flags):
 
     ex_div_map = build_ex_div_map(d.get("div"))
     latest_date = str(pdf["date"].iloc[-1])
+    res["as_of_date"] = latest_date[:10]   # 行情資料日（最後一根日 K 的日期），戰績 log 與 API meta 用
     ex_today = latest_date in ex_div_map
     ex_amt = float(ex_div_map.get(latest_date, 0.0))
     atr = atr14(pdf, ex_div_map=ex_div_map)

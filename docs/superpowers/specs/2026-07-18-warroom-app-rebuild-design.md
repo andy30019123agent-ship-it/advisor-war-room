@@ -109,3 +109,8 @@
 
 1. 引擎 layer 3 的持股狀態只認核心持股；使用者 localStorage 實際持股應能覆寫（前端對已持有的非核心股把「試單/觀望」語意換成持有視角，或 API 帶持股參數）。
 2. 舊靜態報告 report_stock.py 仍強制讀手寫 narration.json；若要保留舊站活著，應 fallback 用 primary_decision.readable_reason＋evidence.roles 自動生成（目前舊站定位＝唯讀存檔，故延後）。
+3. （Codex 07-18 聯測）API /tmp 快取不跨 Vercel instance——單人使用風險低；多人前要上 KV＋server-side rate limit。
+4. （Codex 07-18 聯測）stocks json 的 profile.market 硬標 TWSE，上櫃股標示錯——需從 FinMind stock info 帶市場別。
+5. （Codex 07-18 聯測）停牌/資料源停更偵測：as_of_date 落後 N 交易日應標 stale 並降級（as_of_date 欄位已就緒）。
+6. （Codex 07-18 聯測）漲跌停狀態未入決策語意（跌停顯示可出場其實排不到隊）。
+7. （主對話 07-18）估值 band（PER 分位）與 base（品質調整合理價）兩法可能打架——2330 band=很貴但 base≈現價；band 判定應納入 price/base 比值做一致化。

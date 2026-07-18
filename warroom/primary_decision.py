@@ -43,6 +43,9 @@ _REASON_PHRASE = {
     "valuation_warning": "估值模型可能低估（僅參考）",
     "rr_insufficient": "報酬風險比不足",
     "data_insufficient": "資料不足",
+    # ETF／特殊標的通常沒有月營收、估值等基本面資料源，f=="na" 是常態而非異常，
+    # 用專屬措辭跟「三燈都缺」的 data_insufficient 區分，讀起來才不像系統壞掉（見 build_primary_and_context 呼叫端）。
+    "fundamental_data_missing": "基本面資料不足（ETF/特殊標的），僅以技術與籌碼判讀",
     "market_bull": "大盤偏多",
     "market_bear": "大盤偏空",
 }
@@ -147,8 +150,11 @@ def decide_action(*, lights, valuation, rr, defense_broken, fundamental_broken,
     # 層 1：資料品質 — 不足只能觀望/續抱，不得建議買進
     if len(present) < 2 or f == "na":
         action = "續抱" if holding else "觀望"
-        codes = _dedup(["data_insufficient"] + codes)
-        return action, 1, codes, "data_insufficient"
+        # ETF/特殊標的常態性缺基本面（f=="na"）但技術/籌碼仍有 ≥2 筆可判讀，跟「三燈幾乎全缺」
+        # 的一般資料不足分開措辭，避免讀起來像系統出錯（見 6：0050 查詢 stance 契約修復）。
+        primary_code = "fundamental_data_missing" if (f == "na" and len(present) >= 2) else "data_insufficient"
+        codes = _dedup([primary_code] + codes)
+        return action, 1, codes, primary_code
 
     # 核心持股（§3.4）：僅基本面長期失效才動核心，其他硬訊號記為風險但不改方向
     core_protected = is_core_holding and not fundamental_broken
@@ -329,16 +335,20 @@ def build_primary_and_context(*, price, lights, lights_facts, valuation, rr,
 
     f, t, c = lights
     _zh = {"green": "偏多", "amber": "中性", "red": "偏空", "na": "缺"}
+    # stance 是契約五檔 enum（StanceSchema），"缺"不在裡面——na 燈只能在 basis 說明文字裡講
+    # 「資料缺」，stance 欄位一律安全退回中性，否則 ETF 等常態缺基本面的標的會讓前端 zod 整頁炸掉
+    # （見 6：0050 查詢「請更新 App」bug，contract.ts TimeframeSchema.stance）。
+    _stance_zh = {"green": "偏多", "amber": "中性", "red": "偏空", "na": "中性"}
     context = {
         "timeframes": {
             "short": {"label": "短線 1-4 週",
-                      "stance": _zh.get(t, "中性"),
+                      "stance": _stance_zh.get(t, "中性"),
                       "basis": f"技術{_zh.get(t)}＋籌碼{_zh.get(c)}"},
             "swing": {"label": "波段 1-3 月（主）",
                       "stance": stance,                # ★ 主框架＝primary，禁止另算
                       "basis": primary["readable_reason"]},
             "mid": {"label": "中期 3-12 月",
-                    "stance": _zh.get(f, "中性"),
+                    "stance": _stance_zh.get(f, "中性"),
                     "basis": f"基本面{_zh.get(f)}＋估值{(valuation or {}).get('band') or '—'}"},
         },
         "lights": {
