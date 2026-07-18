@@ -37,6 +37,16 @@ export function FreshnessBadge({ dataDate, generatedAt }: { dataDate: string; ge
     )
   }
 
+  if (daysAgo === 1) {
+    // 行情是前一交易日（例如週六看週五盤）：綠燈但明講收盤日，不假裝是今天的行情
+    return (
+      <div className="freshness">
+        <span className="dot" />
+        {formatMMDD(dataDate)} 收盤（今日更新）
+      </div>
+    )
+  }
+
   return (
     <div className="freshness">
       <span className="dot" />
