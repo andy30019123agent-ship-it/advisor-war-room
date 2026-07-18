@@ -26,16 +26,26 @@
       "id": "2330",
       "name": "台積電",
       "close": 2440,
-      "change_pct": -0.4,
+      "change_pct": null,
       "decision": {
         "action": "續抱",
         "readable_reason": "趨勢仍在且基本面未壞；但估值偏貴，未突破前不加碼。",
         "defense_price": 2245
       }
+    },
+    {
+      "id": "2454",
+      "name": "聯發科",
+      "close": 3740,
+      "change_pct": null,
+      "decision": {
+        "action": "觀望",
+        "readable_reason": "均線糾結，外資賣壓未歇，等站回 MA20 再進場。",
+        "defense_price": null
+      }
     }
   ],
   "watch": [
-    { "id": "2454", "name": "聯發科", "wait_condition": "等站回 MA20" },
     { "id": "2412", "name": "中華電", "wait_condition": "等法人回補" }
   ],
   "alerts_snapshot": [

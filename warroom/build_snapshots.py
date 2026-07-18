@@ -1,0 +1,475 @@
+"""快照產線：讀 data/<id>.json（引擎產物）＋大盤資料 → 組出 public/data/daily.json 與
+public/data/stocks/<id>.json，嚴格照 docs/contracts/data-contract-v1.md（下稱「契約」）。
+
+用法：
+  python3 -m warroom.build_snapshots
+
+設計原則：
+- 網路呼叫（FinMind／yfinance）只集中在 fetch_market_inputs()；其餘全是純函式，
+  離線可測（tests/test_build_snapshots.py 用 repo 內既有 data/*.json 跑，不打網路）。
+- 個股 data/<id>.json 缺 primary_decision/context/evidence（舊格式）→ 該股跳過並在
+  stderr 警告，不得讓整批 build 失敗（契約硬規則 3：graceful degrade）。
+- 契約沒有資料源可產生的欄位一律給 null，不編數字（見模組尾端「已知缺口」說明）。
+"""
+import glob
+import json
+import os
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
+from typing import Dict, List, Optional, Tuple
+
+from warroom.finmind_cache import cached_fetch
+from warroom.market import fetch_market
+from warroom.profile import load_profile
+
+_TPE = timezone(timedelta(hours=8))
+
+DATA_DIR = "data"
+OUT_DIR = "public/data"
+STOCK_ID_RE = re.compile(r"^\d{4,6}$")
+RECOMMENDATION_LOG = "data/recommendation_log.json"
+
+# 契約 context.lights.color 只收 green/yellow/red/null。warroom/primary_decision.py
+# 端已把 amber→yellow、na→null 正規化過（見該檔 _normalize_light_color），這裡只做
+# 防禦性透传：遇到未預期的舊值仍保留一次 fallback 對照表，缺資料一律回 None，不編色。
+_COLOR_MAP = {"green": "green", "yellow": "yellow", "amber": "yellow", "red": "red"}
+
+# 核心持股中，非引擎覆蓋範圍（如 ETF）的已知名稱，供 core_holdings 區塊顯示用。
+_KNOWN_UNTRACKED_NAMES = {"0050": "元大台灣50"}
+
+_US_INDEXES = [
+    ("SPX", "S&P 500", "^GSPC"),
+    ("NDX", "Nasdaq 100", "^NDX"),
+    ("SOX", "費城半導體", "^SOX"),
+    ("VIX", "VIX", "^VIX"),
+]
+
+_CONCLUSION_TEMPLATE = {
+    "偏空防禦": "今天不加碼，守好停損位。",
+    "中性": "盤勢中性，維持既有部位觀察。",
+    "偏多進攻": "偏多格局，可留意進場機會。",
+}
+
+
+# ---------- 共用小工具 ----------
+def _today() -> str:
+    return datetime.now(_TPE).strftime("%Y-%m-%d")
+
+
+def _now_iso() -> str:
+    return datetime.now(_TPE).isoformat(timespec="seconds")
+
+
+def _num(x) -> Optional[float]:
+    """寬鬆轉數值；非數字（如「樣本不足」字串、None）一律回 None，不得編數字。"""
+    if x is None:
+        return None
+    if isinstance(x, bool):
+        return None
+    if isinstance(x, (int, float)):
+        return float(x)
+    try:
+        return float(str(x).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+def build_meta(sources: List[str]) -> Dict:
+    return {
+        "schema_version": 1,
+        "data_date": _today(),
+        "generated_at": _now_iso(),
+        "sources": sources,
+    }
+
+
+def write_json(path: str, obj: Dict) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = f"{path}.tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
+
+
+# ---------- 讀個股引擎產物 ----------
+def discover_stock_files(data_dir: str = DATA_DIR) -> Dict[str, str]:
+    """回 {stock_id: path}，只取檔名為純數字（4-6 碼）的個股 json，
+    排除 investor_profile.json／recommendation_log.json／*.narration.json 等設定或衍生檔。"""
+    out = {}
+    for path in sorted(glob.glob(os.path.join(data_dir, "*.json"))):
+        stem = os.path.splitext(os.path.basename(path))[0]
+        if STOCK_ID_RE.match(stem):
+            out[stem] = path
+    return out
+
+
+def is_new_format(res) -> bool:
+    return (isinstance(res, dict) and "primary_decision" in res
+            and "context" in res and "evidence" in res)
+
+
+def load_stock_results(stock_files: Dict[str, str]) -> Tuple[Dict[str, Dict], List[Tuple[str, str]]]:
+    """讀每檔 data/<id>.json；缺新欄位（舊格式）或讀檔失敗都跳過該股，記警告，不中斷整批。"""
+    results, skipped = {}, []
+    for sid, path in stock_files.items():
+        try:
+            with open(path, encoding="utf-8") as f:
+                res = json.load(f)
+        except Exception as e:
+            skipped.append((sid, f"讀檔失敗：{type(e).__name__} {e}"))
+            continue
+        if not is_new_format(res):
+            skipped.append((sid, "缺 primary_decision/context/evidence（舊格式引擎產物），跳過"))
+            continue
+        results[sid] = res
+    return results, skipped
+
+
+# ---------- 大盤區塊 ----------
+def _daily_change_finmind(stock_id: str = "TAIEX") -> Tuple[Optional[float], Optional[float]]:
+    """回 (今日收盤, 日漲跌%)。抓失敗或資料不足 2 天 → (None, None)。"""
+    try:
+        start = (datetime.now(_TPE) - timedelta(days=14)).strftime("%Y-%m-%d")
+        df = cached_fetch("taiwan_stock_daily", stock_id=stock_id, start_date=start)
+        df = df.sort_values("date")
+        if len(df) < 2:
+            return None, None
+        last = float(df.iloc[-1]["close"])
+        prev = float(df.iloc[-2]["close"])
+        chg = round((last / prev - 1) * 100, 2) if prev else None
+        return round(last, 1), chg
+    except Exception:
+        return None, None
+
+
+def _daily_change_yf(ticker: str) -> Optional[float]:
+    """回美股/總經指數日漲跌%。抓失敗或資料不足 → None。"""
+    try:
+        import yfinance as yf
+        c = yf.Ticker(ticker).history(period="10d")["Close"].dropna()
+        if len(c) < 2:
+            return None
+        last, prev = float(c.iloc[-1]), float(c.iloc[-2])
+        return round((last / prev - 1) * 100, 2) if prev else None
+    except Exception:
+        return None
+
+
+def fetch_market_inputs() -> Dict:
+    """打網路：TAIEX 當日漲跌%（FinMind）＋ US 四指數當日漲跌%（yfinance）＋外資買賣超
+    （沿用 warroom.market.fetch_market() 的合計，避免重算）。任何一段失敗都給 None，
+    不讓整批 build 失敗（契約硬規則 3）。"""
+    taiex_close, taiex_chg = _daily_change_finmind("TAIEX")
+    us = [{"id": id_, "name": name, "change_pct": _daily_change_yf(ticker)}
+          for id_, name, ticker in _US_INDEXES]
+    foreign_net_yi = None
+    try:
+        m = fetch_market()
+        foreign_net_yi = (m.get("foreign") or {}).get("net_yi")
+    except Exception:
+        pass
+    return {"taiex": {"close": taiex_close, "change_pct": taiex_chg},
+            "us": us, "foreign_net_yi": foreign_net_yi}
+
+
+def compute_market_status(taiex_chg, sox_chg, vix_chg, foreign_net_yi) -> str:
+    """三檔 status（偏多進攻｜中性｜偏空防禦），固定規則、可揭露：
+    以台股加權指數、費半 SOX 當日漲跌，及外資買賣超（億元）為三個主訊號，
+    VIX 大幅跳動為輔助訊號；同向訊號 ≥2 個且多於反向訊號 → 偏多/偏空，否則中性。"""
+    bearish = sum([
+        taiex_chg is not None and taiex_chg <= -1.0,
+        sox_chg is not None and sox_chg <= -1.0,
+        foreign_net_yi is not None and foreign_net_yi <= -100,
+    ])
+    bullish = sum([
+        taiex_chg is not None and taiex_chg >= 1.0,
+        sox_chg is not None and sox_chg >= 1.0,
+        foreign_net_yi is not None and foreign_net_yi >= 100,
+    ])
+    if vix_chg is not None and vix_chg >= 8:
+        bearish += 1
+    if vix_chg is not None and vix_chg <= -8:
+        bullish += 1
+    if bearish >= 2 and bearish > bullish:
+        return "偏空防禦"
+    if bullish >= 2 and bullish > bearish:
+        return "偏多進攻"
+    return "中性"
+
+
+def compute_risk_temp(status: str, taiex_chg, vix_chg) -> int:
+    """1-10 風險溫度：以狀態為基準（偏空防禦 7／中性 5／偏多進攻 3），
+    再依 VIX／TAIEX 波動幅度微調 ±1，夾在 1-10。"""
+    base = {"偏空防禦": 7, "中性": 5, "偏多進攻": 3}[status]
+    if vix_chg is not None:
+        base += 1 if vix_chg >= 10 else -1 if vix_chg <= -10 else 0
+    if taiex_chg is not None:
+        base += 1 if taiex_chg <= -2 else -1 if taiex_chg >= 2 else 0
+    return max(1, min(10, base))
+
+
+def compute_conclusion(status: str) -> str:
+    """一句話結論（≤20 字），純模板、不依賴人工 narration。"""
+    return _CONCLUSION_TEMPLATE.get(status, "盤勢待觀察，紀律優先。")
+
+
+def build_market_block(market_inputs: Dict) -> Dict:
+    """純函式：由 fetch_market_inputs() 的資料組契約 market 區塊，離線可測。"""
+    taiex = market_inputs.get("taiex") or {}
+    us = market_inputs.get("us") or []
+    foreign_net_yi = market_inputs.get("foreign_net_yi")
+    by_id = {u.get("id"): u.get("change_pct") for u in us}
+    taiex_chg = taiex.get("change_pct")
+    status = compute_market_status(taiex_chg, by_id.get("SOX"), by_id.get("VIX"), foreign_net_yi)
+    risk_temp = compute_risk_temp(status, taiex_chg, by_id.get("VIX"))
+    return {
+        "status": status,
+        "risk_temp": risk_temp,
+        "conclusion": compute_conclusion(status),
+        "taiex": {"close": _num(taiex.get("close")), "change_pct": _num(taiex_chg)},
+        "us": [{"id": u.get("id"), "name": u.get("name"), "change_pct": _num(u.get("change_pct"))}
+               for u in us],
+    }
+
+
+# ---------- core_holdings ----------
+def build_core_holdings(profile: Dict, results: Dict[str, Dict]) -> List[Dict]:
+    out = []
+    for sid in profile.get("core_holdings", []):
+        if sid in results:
+            name = results[sid].get("name", sid)
+            out.append({"id": sid, "name": name, "action": "核心續扣", "note": "波段不加碼"})
+        else:
+            name = _KNOWN_UNTRACKED_NAMES.get(sid, sid)
+            out.append({"id": sid, "name": name, "action": "定期定額照常",
+                        "note": "不受本週訊號影響"})
+    return out
+
+
+# ---------- tracked / alerts ----------
+def build_tracked_entry(stock_id: str, res: Dict) -> Dict:
+    primary = res["primary_decision"]
+    dec = res.get("decision") or {}
+    return {
+        "id": stock_id,
+        "name": res.get("name", stock_id),
+        "close": _num(dec.get("as_of_price")),
+        "change_pct": None,  # 已知缺口：引擎目前不產出個股日漲跌%，見模組尾端說明
+        "decision": {
+            "action": primary["action"],
+            "readable_reason": primary["readable_reason"],
+            "defense_price": _num(primary.get("defense_price")),
+        },
+    }
+
+
+def build_alerts_for_stock(stock_id: str, name: str, primary: Dict) -> List[Dict]:
+    """從 primary_decision 的 defense_price/entry_condition 提取，不重算。"""
+    out = []
+    dp = _num(primary.get("defense_price"))
+    if dp is not None:
+        out.append({"id": stock_id, "name": name, "type": "defense",
+                    "price": dp, "direction": "below"})
+    ec = primary.get("entry_condition")
+    if ec and ec.get("price") is not None:
+        out.append({"id": stock_id, "name": name, "type": "entry",
+                    "price": _num(ec["price"]), "direction": "above"})
+    return out
+
+
+# ---------- daily.json ----------
+def build_daily(profile: Dict, results: Dict[str, Dict], meta: Dict, market_block: Dict) -> Dict:
+    tracked, alerts = [], []
+    for sid in sorted(results):
+        res = results[sid]
+        tracked.append(build_tracked_entry(sid, res))
+        alerts.extend(build_alerts_for_stock(sid, res.get("name", sid), res["primary_decision"]))
+    return {
+        "meta": meta,
+        "market": market_block,
+        "core_holdings": build_core_holdings(profile, results),
+        "tracked": tracked,
+        # 已知缺口：目前無 watchlist 資料源（無 config 記錄「有等待條件但無完整報告」的
+        # 股票清單），保守回空陣列，不得編造清單內容，見模組尾端說明。
+        "watch": [],
+        "alerts_snapshot": alerts,
+    }
+
+
+# ---------- stocks/<id>.json ----------
+def _parse_news_date(raw: Optional[str]) -> str:
+    """把 news.py 給的 date（RFC822 或 GDELT %Y%m%dT%H%M%SZ）盡量轉 ISO；轉不了原樣回傳。"""
+    if not raw:
+        return ""
+    try:
+        dt = parsedate_to_datetime(raw)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(_TPE).isoformat(timespec="seconds")
+    except Exception:
+        pass
+    try:
+        dt = datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+        return dt.astimezone(_TPE).isoformat(timespec="seconds")
+    except Exception:
+        return raw
+
+
+def build_context(ctx: Dict) -> Dict:
+    lights = ctx.get("lights") or {}
+
+    def _light(key):
+        block = lights.get(key) or {}
+        return {"color": _COLOR_MAP.get(block.get("color")),  # 未知/na → None，不編色
+                "facts": list(block.get("facts") or [])}
+
+    val = ctx.get("valuation") or {}
+    return {
+        "timeframes": ctx.get("timeframes") or {},
+        "lights": {
+            "fundamental": _light("fundamental"),
+            "technical": _light("technical"),
+            "chips": _light("chips"),
+        },
+        "valuation": {
+            "band": val.get("band"),
+            "base": _num(val.get("base")),
+            "bull": _num(val.get("bull")),
+            "bear": _num(val.get("bear")),
+            "regime": val.get("regime"),
+            "warning": val.get("warning"),
+        },
+        "rr": _num(ctx.get("rr")),
+    }
+
+
+def build_evidence(evidence: Dict) -> Dict:
+    news = []
+    for n in (evidence.get("news") or []):
+        news.append({
+            "title": n.get("title", ""),
+            "source": n.get("source") or n.get("src") or "—",
+            "url": n.get("url", "") or "",
+            "published_at": n.get("published_at") or _parse_news_date(n.get("date")),
+        })
+    events = []
+    for e in (evidence.get("events") or []):
+        events.append({
+            "date": e.get("date", ""),
+            "label": e.get("label", ""),
+            "impact_note": e.get("impact_note", ""),
+        })
+    return {"roles": evidence.get("roles") or [], "news": news, "events": events}
+
+
+def build_track(stock_id: str, log_path: str = RECOMMENDATION_LOG) -> List[Dict]:
+    if not os.path.exists(log_path):
+        return []
+    try:
+        with open(log_path, encoding="utf-8") as f:
+            log = json.load(f)
+    except Exception:
+        return []
+    entries = [e for e in log if e.get("stock_id") == stock_id]
+    entries.sort(key=lambda e: e.get("date", ""), reverse=True)
+    out = []
+    for e in entries:
+        price = _num(e.get("price"))
+        if price is None:
+            continue  # price_at_rec 契約要求 number，缺值的舊紀錄跳過（不編數字）
+        outcome = e.get("outcome") or {}
+        status = "pending" if outcome.get("hit") is None else "done"
+        out.append({
+            "date": e.get("date", ""),
+            "action": e.get("rating", ""),
+            "price_at_rec": price,
+            "outcome": {"r5": _num(outcome.get("r5")), "r20": _num(outcome.get("r20")),
+                        "r60": _num(outcome.get("r60"))},
+            "status": status,
+        })
+    return out
+
+
+def _clean_primary(primary: Dict) -> Dict:
+    """契約 primary_decision 只收固定欄位；引擎 position 目前多帶一個 tier（人讀用途，
+    非契約欄位），這裡重建 position 只留 tier_amount/lots/odd_shares，其餘照抄。"""
+    out = dict(primary)
+    out["defense_price"] = _num(out.get("defense_price"))
+    out["confidence"] = int(out.get("confidence") or 0)
+    src_pos = out.get("position") or {}
+    out["position"] = {
+        "tier_amount": _num(src_pos.get("tier_amount")) or 0,
+        "lots": int(src_pos.get("lots") or 0),
+        "odd_shares": int(src_pos.get("odd_shares") or 0),
+    }
+    ec = out.get("entry_condition")
+    if ec:
+        out["entry_condition"] = {"price": _num(ec.get("price")), "condition": ec.get("condition", "")}
+    return out
+
+
+def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict) -> Dict:
+    t_ev = (res.get("technical") or {}).get("ev") or {}
+    dec = res.get("decision") or {}
+    is_core = stock_id in profile.get("core_holdings", [])
+    return {
+        "meta": meta,
+        "profile": {"id": stock_id, "name": res.get("name", stock_id),
+                    "market": "TWSE", "is_core_holding": is_core},
+        "price": {
+            "close": _num(dec.get("as_of_price")),
+            "change_pct": None,  # 已知缺口：見模組尾端說明
+            "ma20": _num(t_ev.get("MA20")),
+            "ma60": _num(t_ev.get("MA60")),
+        },
+        "primary_decision": _clean_primary(res["primary_decision"]),
+        "context": build_context(res["context"]),
+        "evidence": build_evidence(res.get("evidence") or {}),
+        "track": build_track(stock_id),
+    }
+
+
+# ---------- 組裝入口 ----------
+def build_all(data_dir: str = DATA_DIR,
+             market_inputs: Optional[Dict] = None) -> Tuple[Dict, Dict[str, Dict], List[Tuple[str, str]]]:
+    """回 (daily_dict, {stock_id: stock_detail_dict}, skipped)。
+    market_inputs=None → 打網路抓；測試可傳固定 dict 全離線跑。"""
+    profile = load_profile()
+    stock_files = discover_stock_files(data_dir)
+    results, skipped = load_stock_results(stock_files)
+    meta = build_meta(sources=["FinMind", "yfinance"])
+    if market_inputs is None:
+        market_inputs = fetch_market_inputs()
+    market_block = build_market_block(market_inputs)
+    daily = build_daily(profile, results, meta, market_block)
+    stock_details = {sid: build_stock_detail(sid, res, profile, meta)
+                     for sid, res in results.items()}
+    return daily, stock_details, skipped
+
+
+def main() -> None:
+    daily, stock_details, skipped = build_all()
+    write_json(os.path.join(OUT_DIR, "daily.json"), daily)
+    for sid, detail in stock_details.items():
+        write_json(os.path.join(OUT_DIR, "stocks", f"{sid}.json"), detail)
+    for sid, reason in skipped:
+        print(f"[build_snapshots] 跳過 {sid}：{reason}", file=sys.stderr)
+    print(f"[build_snapshots] 完成：daily.json ＋ {len(stock_details)} 檔個股快照", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
+
+
+# ---------- 已知缺口（契約 vs 引擎現況，非本模組能補；回報時一併說明）----------
+# 1. price.change_pct / tracked[].change_pct：引擎（analyze_tw.technical()）目前只輸出
+#    最新收盤，不含前一日收盤或日漲跌%，故本模組一律回 null（符合契約硬規則 3：缺資料
+#    給 null、不編數字）。若要補齊，需在 analyze_tw.py 補算（不在本次授權可動檔案內）。
+# 2. daily.watch：目前 repo 內無「有等待條件但無完整報告」的股票清單資料源，回空陣列。
+# 3. context.lights.color / valuation.band 為 null（na／資料不足）時：app/src/types/
+#    contract.ts 的 Zod LightSchema.color、ValuationSchema.band 目前宣告非 nullable
+#    enum；若引擎真的輸出 null（na 燈或估值樣本不足），前端會判為 schema 不符、整頁
+#    顯示「請更新 App」。本模組＋schema/stock.schema.json 都已允許 null（照契約硬規則
+#    3：缺資料給 null），這裡只能照實傳，前端 Zod 需要另行同步（不在本次授權可動 app/）。

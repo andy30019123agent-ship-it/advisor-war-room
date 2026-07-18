@@ -13,7 +13,7 @@ class TestValuationRegime(unittest.TestCase):
         self.assertEqual(valuation_band(0.50), "合理")
         self.assertEqual(valuation_band(0.80), "偏貴")
         self.assertEqual(valuation_band(0.97), "很貴")
-        self.assertEqual(valuation_band(None), "資料不足")
+        self.assertIsNone(valuation_band(None))   # 契約 v1：資料不足給 null，不回中文字串
 
     def test_sanity_warning_threshold(self):
         # Base 偏離現價 >30% → 警語；<30% → None
@@ -55,6 +55,25 @@ class TestValuationRegime(unittest.TestCase):
         self.assertIsNotNone(out["fair_value"])
         # eps_ttm = 1000/40 = 25；regime=3y p50≈40 → base 遠高於用早年低分位（≈8）算的結果
         self.assertGreater(out["fair_value"]["base"], 25 * 20)
+
+    def test_current_percentile_uses_selected_regime_not_full_series(self):
+        # 回歸 bug #6（regime 混算）：current_percentile／band 要用 select_regime() 選定的
+        # 同一段子序列，不可 fair value 用 3y、分位卻用完整週期。早年 2000 筆低 PER(10)
+        # + 近 3 年 756 筆 20~40 均勻分布；current=30 在 3y regime 內約中段（合理），
+        # 若誤用完整週期，早年全部 <30 會把分位推去接近 1.0（很貴），兩者結論明顯不同。
+        early = [10.0] * 2000
+        recent = [20.0 + (i % 21) for i in range(756)]  # 20..40 均勻循環
+        inp = {
+            "price": 900.0, "industry_category": "半導體業", "market_light": "amber",
+            "fs_df": None, "rev_df": None,
+            "per_series": early + recent, "per_current": 30.0,
+            "pbr_series": [], "pbr_current": None, "roe": None,
+        }
+        out = compute_valuation(inp)
+        self.assertEqual(out["regime"], "3y")
+        self.assertGreater(out["current_percentile"], 0.35)
+        self.assertLess(out["current_percentile"], 0.65)
+        self.assertEqual(out["band"], "合理")
 
     def test_compute_valuation_warns_when_base_far_from_price(self):
         # 全程低 PER + 高價 → Base 遠低於現價 → warning 觸發、且是字串

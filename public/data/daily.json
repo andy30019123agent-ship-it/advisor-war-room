@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "schema_version": 1,
+    "data_date": "2026-07-18",
+    "generated_at": "2026-07-18T12:00:59+08:00",
+    "sources": [
+      "FinMind",
+      "yfinance"
+    ]
+  },
+  "market": {
+    "status": "偏空防禦",
+    "risk_temp": 9,
+    "conclusion": "今天不加碼，守好停損位。",
+    "taiex": {
+      "close": 42671.3,
+      "change_pct": -6.47
+    },
+    "us": [
+      {
+        "id": "SPX",
+        "name": "S&P 500",
+        "change_pct": -1.01
+      },
+      {
+        "id": "NDX",
+        "name": "Nasdaq 100",
+        "change_pct": -1.49
+      },
+      {
+        "id": "SOX",
+        "name": "費城半導體",
+        "change_pct": -1.63
+      },
+      {
+        "id": "VIX",
+        "name": "VIX",
+        "change_pct": 12.19
+      }
+    ]
+  },
+  "core_holdings": [
+    {
+      "id": "2330",
+      "name": "台積電",
+      "action": "核心續扣",
+      "note": "波段不加碼"
+    },
+    {
+      "id": "0050",
+      "name": "元大台灣50",
+      "action": "定期定額照常",
+      "note": "不受本週訊號影響"
+    }
+  ],
+  "tracked": [
+    {
+      "id": "2330",
+      "name": "台積電",
+      "close": 2290.0,
+      "change_pct": null,
+      "decision": {
+        "action": "續抱",
+        "readable_reason": "因為趨勢仍在（站上均線），所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
+        "defense_price": 2106.8
+      }
+    }
+  ],
+  "watch": [],
+  "alerts_snapshot": [
+    {
+      "id": "2330",
+      "name": "台積電",
+      "type": "defense",
+      "price": 2106.8,
+      "direction": "below"
+    }
+  ]
+}

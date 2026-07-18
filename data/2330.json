@@ -7,57 +7,57 @@
       "最新營收月": "2026/6",
       "營收YoY": "+67.9%",
       "近3月平均YoY": "+38.5%",
-      "PER": 32.5,
-      "PER歷史分位": "97%",
-      "殖利率": "0.91%"
+      "PER": 30.8,
+      "PER歷史分位": "93%",
+      "殖利率": "0.96%"
     }
   },
   "technical": {
-    "light": "green",
+    "light": "amber",
     "ev": {
-      "收盤": 2440.0,
-      "MA20": 2429.5,
-      "MA60": 2312.3,
-      "MA120": 2083.0,
-      "RSI14": 55.0,
-      "量能": "0.8×20日均量",
-      "排列": "多頭排列",
-      "買入參考區": "MA20 2,430 · 近20日低 2,325",
-      "壓力參考位": "近20日高 2,535 · 近60日高 2,535",
-      "備註": "—"
+      "收盤": 2290.0,
+      "MA20": 2428.2,
+      "MA60": 2323.8,
+      "MA120": 2094.3,
+      "RSI14": 41.0,
+      "量能": "2.3×20日均量",
+      "排列": "均線糾結",
+      "買入參考區": "MA120 2,094",
+      "壓力參考位": "MA60 2,324 · 近20日低 2,325",
+      "備註": "爆量 2.3×均量"
     }
   },
   "chips": {
     "light": "red",
     "ev": {
-      "近5日法人淨額(張)": "-24,085",
-      "連續方向天數": "賣 4 天",
-      "最新日": "2026-07-14",
+      "近5日法人淨額(張)": "-55,026",
+      "連續方向天數": "賣 7 天",
+      "最新日": "2026-07-17",
       "備註": "新聞情緒分類待 LLM 團隊層補上"
     },
     "breakdown": {
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-17",
       "groups": {
         "外資": {
-          "net_latest": -12416209,
-          "net_5d": -31281582,
-          "streak": 4,
+          "net_latest": -44183964,
+          "net_5d": -66286992,
+          "streak": 7,
           "dir": "賣",
-          "ratio_20d_vol": 0.3188
+          "ratio_20d_vol": 1.0478
         },
         "投信": {
-          "net_latest": 1841069,
-          "net_5d": 3683146,
-          "streak": 9,
+          "net_latest": 1488520,
+          "net_5d": 3791608,
+          "streak": 2,
           "dir": "買",
-          "ratio_20d_vol": 0.0473
+          "ratio_20d_vol": 0.0353
         },
         "自營": {
-          "net_latest": 2569779,
-          "net_5d": 3513531,
-          "streak": 4,
+          "net_latest": 2759348,
+          "net_5d": 7469158,
+          "streak": 7,
           "dir": "買",
-          "ratio_20d_vol": 0.066
+          "ratio_20d_vol": 0.0654
         }
       },
       "divergence": true,
@@ -66,47 +66,48 @@
   },
   "news": [
     {
-      "title": "台積電目標價升至3800元 花旗理由全說了 - 自由財經",
-      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9Dd3VXZEJrU1doZmsyYnNaTTZWcUxJUFN1OTJPc0hReTlaRnFMeW0xLWFIM3liTzhTWUM0TXV3cFhpdWV0QVAwdUZORnc5Rm56R1ZtZlZaZ2pzTE9DbHZn0gFkQVVfeXFMUEFucVI3a0txY0N4d0kxakIzNWVmdEExWXpZRUxZTDNMallOQWVVeEkxbC1FQmRUdFhncnJZSTVCazJrN280U0FncFVubDVBX0kwYlc2Z3p0d2hWdFU0MXpRN0E0OQ?oc=5",
-      "date": "Mon, 06 Jul 2026 07:00:00 GMT",
+      "title": "台積電7月16日後股價要噴了？ 外媒 : 新一波行情將由「這利多」點燃 - 自由財經",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBWSW4yMENtODI5UDFyRVVGLVdVWjdMSk5KMDRXSWVkMGJHVnBGcW5jdVZNMXdfMWw2Vm4zdlhnR1ByVURZQ1lLTGlQVHgwRXpDZEY1ZlE1bjc2c2RKUGFF0gFkQVVfeXFMTlVJZWE1OE5rREZKMnNPcFBHZHBTa0Jhb0h1dXh6Nl80ZnVTOEczMzlfNmthN3g5QWxqcUxfSVI1R2RDT1hwWlhIeWlsc3RpOWViX1FUM0FBNmZZM0RJWDY1QnpGZw?oc=5",
+      "date": "Fri, 10 Jul 2026 04:51:32 GMT",
       "src": "Google News"
     },
     {
-      "title": "台積電法說會前夕！盤中漲40元至2460元 分析師：買黑不買紅 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMihANBVV95cUxONzFwd0x5d3ZJY2cxaVIzRGIyeGxRM1AtdDM5eVkxcHJkZjlDWDdXOG1LeGlpdXozMmlKOVJPWTZ4b0c3ZHpudWx3elV3UUJSUTJuc1NWeHRVbGptN0QxSlI2bXhYcmlvT3lURVc5QTVkQkVlYWhlYkxEMzdGaUNkTG1FWVNEbHVuQ3RBNDk2NDdic0xSNnV1MnNKdVhNYTlvMG42enQzNDBSMVMtZDlTVk04QklkbjN4enc0Rnd3TGpTcXlYT0hEX2x0SHEwN29OOHdLR1RCbllpd0FMWUFvblQtcmFWQ0QyS3J0Vkp2bTJjTVd3NThkc3B4X2J0eEU3dnRHOFAydFF4V2pYZU5abnZsa1hVRFptWjZ1a0R2WlRwNllPMGVVclJVeDIwdERLbm1sRG92NmtzNjRhNG9VdHl2QVk4ZklLSXZhalZsSS1mODVPN1d0bTRlR2MyeER0Z3p0T2hibml2UE13NC0wbGZobnFMZ19YSll0YVdrWkEtRDln?oc=5",
-      "date": "Wed, 15 Jul 2026 04:06:19 GMT",
+      "title": "台積公司2026年第二季每股盈餘新台幣27.25元|台灣積體電路製造股份有限公司 - pr.tsmc.com",
+      "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBsQ0ZseE5WbFkzTjI5aUhkdW9VS0pDUVljSUZZSEpoMjJCcVh6YUF5UHdGb2F4VnExVGk4Vm8zNThyXzZaRVh2VVVITEl3Zw?oc=5",
+      "date": "Thu, 16 Jul 2026 12:00:00 GMT",
       "src": "Google News"
     },
     {
-      "title": "台積電營收／月增6.2%、年增67.9%，上半年營收2.4兆，年增35.6，本周法說關注重點｜股市話題｜豐雲學堂2026 年 07 月 - sinotrade.com.tw",
-      "url": "https://news.google.com/rss/articles/CBMi9wNBVV95cUxOVlpEM1FtQUVvVWhVTmx5eFQ2M19vamh1czVVSGh6bGlncUZ0OXFtcTZTYlVrOTdQZE9KWVdQWkM3UDRGbzFHVS1zcm9mdHJBaG1nb25OYzktbFVDT1g5UndmMmdOa3NIYUpRUDFOV1dRNTYwQVBKQl8tLUF5RWhCWEdMZmUwZkIzUDM2dkRFTWNfOEVxZkZvaTJjSHh6ZTVqakM3VFVrQ3dmYksweFpxSGZsVVNmNUo3T1RYYXA4LWJKbV9PMVhjTE0xT3NOajVTYXRzT2lSQWZka3gwdUpVZFUxMzhrOWNmUDBJTmJNQ05BeXQzYXJ3VUk1SnVzdmQ1emdtOF9paGozMmxDZlhBdGZ1am1sLTZPcE85MzVhVGJzUGcxMjRmSE92MXQyX1RVZjc2MlVBMGZfa3VKeUV5d3NFaVdsQ0VPSDJNUXZiNVdPN3Q1VUk5OUZ0bGVtQXR1czlES3QyNEc2UjFMMTJFY19HNTgtS2NsckdvQmUwVExvVUp3X2dIcFhmbVpQMXdSZG5qTnlkdHNvbW5pWjdpSktSLWppdEFqZkZyZUNSY2VsWW1GREE1YWktOWdyd2swR0RyTDAyVzhDbnVqTHE1LVJUQTV6RG5ranhtUVdjcmxoWnBLcUUycGVxRHdLQU5GRlEzSnY5Zw?oc=5",
-      "date": "Mon, 13 Jul 2026 05:56:13 GMT",
+      "title": "法說會變「法會」？ 台積電股價暴跌110元 不敗教主曝：利空反成長線機會 - Yahoo股市",
+      "url": "https://news.google.com/rss/articles/CBMiqANBVV95cUxNMGdmOHVlZnI2WUgtei1nZ3Bpc3g1SXJLLW5rS3FyMzRKZjRuZDN2WFNtWU1hLUVIX09WSW1xUWhhZFFCdmw1MlAtcVJHRW1lSXpISWdueWZoQTZsQjEybExCRnpVd2lMSlRZRWRVcEh2VXA3VWhjbWlncXkwbEJvMFN0LWlQdEs5V1Vtc3A5T004ZGt3T3U3RU9GQ0o0QzRjOTNFU2I5MlFPRUhWSThtZm9jRmNSanRFWWVFeDlZODFnQkg5Z0FFd21GYWtVV1N5OExYQW1CQmhMUnRNeHRleDJKQzBGOXF3VHJVWHhsNGxSOUFKWmE1VENxc3VIbmVMTVdBNVRkVlU4RVFVWnhodThkRmdENDJrN3RjU2dsYnhhYjgzNkpHZEZfN2I2YzRlRnhlcFR0VG1nN0JWUFcxZTJqTU1DYWRvRU9XT2kxNzlmMzM1a2V5THlBNUo3Qy1vcWpqaGduM0h5QURXUFVFOXExcVZMODRBZlFIYTVXblphLVlTNWtVRFphVXhJSDI0NnFqZ29QUFQ1cVg2aEdpMFVKZ2EzVEdm?oc=5",
+      "date": "Fri, 17 Jul 2026 03:45:38 GMT",
       "src": "Google News"
     },
     {
-      "title": "台積電法說會在即，這次哪裡不一樣？「法說後等回檔」這招還管用嗎？ - Smart自學網",
-      "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE9YTTVyTmg2MlhJV3dLWlVyOUJLc1VSaVQ3bkh2S2lEeF92NS1FV3ViSEVqWl9heWtqUFhUWTFrX2tMejFEcEVnZHgxblVDUFRJSG82VmlJQ0w4X0NjWF9VV3lic0VKX090clJtVW1CVGdnNzA2WldBMmhfbkM?oc=5",
-      "date": "Tue, 14 Jul 2026 10:13:54 GMT",
+      "title": "財報亮眼股價卻重挫！台積電（2330）大跌引發AI泡沫疑慮 網：獲利了結 - UDN",
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5LbmhZUjZiY1dEZGRDV1dIcDlfbGxFZC1uV2JTNnNzY0VNMm83Sldtbi1YY2RnVlBQVjlfUVI1N3lJbEZ3a3NRc2Ryc09XMTFkZEHSAVdBVV95cUxNM0pIc2JTa0NUdjQwamxoMnNtdTdDcktHUEUySjBQUFp5ME1JUHcxVE0xM3RmU2QzeXlTbjc0RzB3Z3dxVG5PbnlWN2pTNlRyVWdUaTJoaTg?oc=5",
+      "date": "Fri, 17 Jul 2026 04:36:11 GMT",
       "src": "Google News"
     },
     {
-      "title": "台積電「神秘買家」！最後1分鐘砸近200億元 神山收2440元漲20元 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMiigNBVV95cUxPeFowRWVBTFhHcjlTQV9CWjlRaWVVSDl5T1JidTRRS0xpSXVFMmluY2hySDJYTzFHRGxQOWUxWnQ3UVViUXAwWm5GYkNDN1hteVNMMzlPZTBhcmFvU21BTlZHREk2anRSWUlpSXpwb0lMNTE0WmluNGtIZGQzZ0g0UFc3VDJrZnVqVURQMHE0MUQ2VVFwaVowUjRNUkZYYmFfcDBrNjhSVF9hWkFWbnFpRksyOUR2QU1SX0JCZlR6Yk14OVZMXzl2QWhXcGN1YlRuUHFPNmJFZWcybnFCZzZ0d2tBYzA3UU5aQWVOSTE4Tkt3TGpMbnJjSmFpbUJ2OU5ObHVzaTBEanlwcDJQeGFRQWJUMnpuWGIwZmFEczFHM3dNaUFyTDBQTHFQaGZDMHVDQjBMSkVTeWRNaDBndzJueDNSenR4NkJTTkdPY2pnUWgxVXY0Q3pBOTd3NFBILWhkVkdwSjVwMG9uWkpDMjhRbW9LZ2dxNlVZR0FpWm1wcFdPTVI5VFhhLVp3?oc=5",
-      "date": "Wed, 15 Jul 2026 05:43:24 GMT",
+      "title": "台積電獲利可能下降？ 外媒曝未來前景 - 自由財經",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9EQ0piRkRPN3hiLS12cGlibkRWUkdkRThsd3NyYjNNelZ3VEtYdFkwbmRYYXdqZFk5NkQ0eEh5QTVsWFhibEJOZWlBdnVMSGRpNldrX0VsQ1BXMzBJUWc00gFkQVVfeXFMTWl3Z0FTeVA3LUJ0QW9md3FjNWpvNzEtWl9mUzA3cTdjbFVuT2RtNHlLVUhsRzRVSlJzQjBiZ3pla3NiSmc4VGJvNWN6ZFZtMlh1azN4LVVtWWRkVW5SWFB3REFpcA?oc=5",
+      "date": "Tue, 07 Jul 2026 07:00:00 GMT",
       "src": "Google News"
     },
     {
-      "title": "台積電符合預期！明天股價會漲嗎？2投顧董座看法不一 - Yahoo股市",
-      "url": "https://news.google.com/rss/articles/CBMi_AJBVV95cUxPM2NheG1wbF96X0lpLXAtQm9aU1lCVzU2ZEpGd0hLM0h0NDlDc3dEQXo4OVVqWmlFREJVN0VvZUtsVjY4eHAwLXhZNEx4WFZIMlpBVmFOanZnLV9Ebkl6MHZiZ1RLUXBsTWV3elFOVlZqUW1ZQW5laVcwZklrSGNXc0FOMjBLVHp3ME1pN01BeEJXVXVHcUU0N2VLLVNtU2hqcXMwMVlZWjUxdU1WNnQwZHRhbkpPTE94eHVkblJSU0lyaVFSRE1kdDNrX2xDeFp2WHpPWnR3QjdmUGw2WTdHMHdfLWF2d1NrdDZRZlF0SXctQnJQVldBRnlySnZPSXFnaUhhQUFIZkQzRDlSU3E5LXlYMHc5bkZCcjBjVTBhcW5ZcDdwUngzZWJlRmFqdExaeDZMZ1ZQZm0zUHV2RlQyVnVOazZKZ1EtYndMTFBlRUxEZk1lSnBLa0drS2VQSFBWMXFjX1NFU0dPRHJKQXVoSTVhdWFocmVRSUtUTQ?oc=5",
-      "date": "Mon, 13 Jul 2026 07:48:27 GMT",
+      "title": "台積電尾盤爆近萬張賣單！跌180元收2290元「史上最大」 - Yahoo股市",
+      "url": "https://news.google.com/rss/articles/CBMi7AJBVV95cUxPaUhTMFpfS1ZDMEd5V24yMkJiRVBkZGNHWkdWSEtZV1BJNGE3T3VPdjUzRGhReHlGTmFwMnVTWWh1bWVUZVF0SEI2bXd0TzQ4Q3B4ZnJTSTNvZm45MVM5cEpqSXR2S2tOSVpRZGhyTHExYmxFVGxXOHQyWVlyb3E0cjl0Sll1ZHVzUXJ2Y3Y2UDZZZzRvVDZJbmNPUmh0NVlSVDZvbnhxZmotRGJLQlA2dGY0RHA5ck5wb0JFTVJwV0ctYW1lUE00RjNZaW82eGpvdVRsZjV1MW0zSXhTMV9HOHh0amIyNU1PVnU3Y2F3OU55aW5DMGxqQzZOcktSSUVQUUpENUtLN25uamVaeHEwZ1UxcWdZeE9OQm5MVXVBSXVuaUpsSG4wY18ydkVuLUE1R3dHdDhDc09neUlHcW93NkZDcndZUXhTc01uanJzT0xCSWJwamZvYXlVYVFLeGNfYUducHN0OVZhZHF2?oc=5",
+      "date": "Fri, 17 Jul 2026 06:16:44 GMT",
       "src": "Google News"
     }
   ],
   "summary": {
-    "score": 0.0,
-    "direction": "訊號分歧・建議觀望",
-    "confidence": "低",
-    "conflict": true
+    "score": -0.3,
+    "direction": "中性",
+    "confidence": "中",
+    "conflict": false,
+    "derived_from": "primary_decision"
   },
   "data_flags": {
     "fundamental": true,
@@ -160,12 +161,186 @@
     },
     "note": "7 因子各 0-2 分；缺科目標不適用不扣分；連續改善另加減分"
   },
+  "primary_decision": {
+    "action": "續抱",
+    "stance": "中性偏多",
+    "position_delta": "hold",
+    "confidence": 48,
+    "decided_by_layer": 6,
+    "reason_codes": [
+      "chips_broken",
+      "trend_ok",
+      "fundamental_ok",
+      "chips_weak",
+      "valuation_very_expensive",
+      "market_bear"
+    ],
+    "readable_reason": "因為趨勢仍在（站上均線），所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
+    "risk_note": "跌破 2106.8 防守位就先降波段部位；法人持續賣超需留意",
+    "position": {
+      "tier": "標準",
+      "tier_amount": 200000,
+      "lots": 0,
+      "odd_shares": 87
+    },
+    "defense_price": 2106.8,
+    "entry_condition": null,
+    "reeval_date": "2026-07-25",
+    "core_note": "此為波段層判斷，不影響定期定額核心部位。"
+  },
+  "context": {
+    "timeframes": {
+      "short": {
+        "label": "短線 1-4 週",
+        "stance": "中性",
+        "basis": "技術中性＋籌碼偏空"
+      },
+      "swing": {
+        "label": "波段 1-3 月（主）",
+        "stance": "中性偏多",
+        "basis": "因為趨勢仍在（站上均線），所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）"
+      },
+      "mid": {
+        "label": "中期 3-12 月",
+        "stance": "中性",
+        "basis": "基本面中性＋估值很貴"
+      }
+    },
+    "lights": {
+      "fundamental": {
+        "color": "yellow",
+        "facts": [
+          "最新營收月 2026/6",
+          "營收YoY +67.9%",
+          "近3月平均YoY +38.5%",
+          "PER 30.8"
+        ]
+      },
+      "technical": {
+        "color": "yellow",
+        "facts": [
+          "收盤 2290.0",
+          "MA20 2428.2",
+          "MA60 2323.8",
+          "MA120 2094.3"
+        ]
+      },
+      "chips": {
+        "color": "red",
+        "facts": [
+          "近5日法人淨額(張) -55,026",
+          "連續方向天數 賣 7 天",
+          "最新日 2026-07-17"
+        ]
+      }
+    },
+    "valuation": {
+      "band": "很貴",
+      "base": 2298.0,
+      "bull": 2458.1,
+      "bear": 1498.0,
+      "regime": "3y",
+      "warning": null
+    },
+    "rr": 0.04
+  },
+  "evidence": {
+    "roles": [
+      {
+        "role": "技術面分析師",
+        "support": [
+          "收盤 2290.0",
+          "MA20 2428.2",
+          "MA60 2323.8",
+          "MA120 2094.3"
+        ],
+        "oppose": [],
+        "verify": [
+          "觀察是否守住均線與防守位"
+        ]
+      },
+      {
+        "role": "基本面分析師",
+        "support": [
+          "最新營收月 2026/6",
+          "營收YoY +67.9%",
+          "近3月平均YoY +38.5%",
+          "PER 30.8"
+        ],
+        "oppose": [],
+        "verify": [
+          "追蹤下月營收 YoY 是否維持"
+        ]
+      },
+      {
+        "role": "籌碼分析師",
+        "support": [],
+        "oppose": [
+          "近5日法人淨額(張) -55,026",
+          "連續方向天數 賣 7 天",
+          "最新日 2026-07-17"
+        ],
+        "verify": [
+          "確認外資／投信是否轉買"
+        ]
+      },
+      {
+        "role": "風控／估值",
+        "support": [],
+        "oppose": [
+          "估值很貴"
+        ],
+        "verify": [
+          "確認 R/R 是否站上 2 倍再加碼"
+        ]
+      }
+    ],
+    "news": [
+      {
+        "title": "台積電7月16日後股價要噴了？ 外媒 : 新一波行情將由「這利多」點燃 - 自由財經",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBWSW4yMENtODI5UDFyRVVGLVdVWjdMSk5KMDRXSWVkMGJHVnBGcW5jdVZNMXdfMWw2Vm4zdlhnR1ByVURZQ1lLTGlQVHgwRXpDZEY1ZlE1bjc2c2RKUGFF0gFkQVVfeXFMTlVJZWE1OE5rREZKMnNPcFBHZHBTa0Jhb0h1dXh6Nl80ZnVTOEczMzlfNmthN3g5QWxqcUxfSVI1R2RDT1hwWlhIeWlsc3RpOWViX1FUM0FBNmZZM0RJWDY1QnpGZw?oc=5",
+        "published_at": "2026-07-10T04:51:32+00:00"
+      },
+      {
+        "title": "台積公司2026年第二季每股盈餘新台幣27.25元|台灣積體電路製造股份有限公司 - pr.tsmc.com",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBsQ0ZseE5WbFkzTjI5aUhkdW9VS0pDUVljSUZZSEpoMjJCcVh6YUF5UHdGb2F4VnExVGk4Vm8zNThyXzZaRVh2VVVITEl3Zw?oc=5",
+        "published_at": "2026-07-16T12:00:00+00:00"
+      },
+      {
+        "title": "法說會變「法會」？ 台積電股價暴跌110元 不敗教主曝：利空反成長線機會 - Yahoo股市",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiqANBVV95cUxNMGdmOHVlZnI2WUgtei1nZ3Bpc3g1SXJLLW5rS3FyMzRKZjRuZDN2WFNtWU1hLUVIX09WSW1xUWhhZFFCdmw1MlAtcVJHRW1lSXpISWdueWZoQTZsQjEybExCRnpVd2lMSlRZRWRVcEh2VXA3VWhjbWlncXkwbEJvMFN0LWlQdEs5V1Vtc3A5T004ZGt3T3U3RU9GQ0o0QzRjOTNFU2I5MlFPRUhWSThtZm9jRmNSanRFWWVFeDlZODFnQkg5Z0FFd21GYWtVV1N5OExYQW1CQmhMUnRNeHRleDJKQzBGOXF3VHJVWHhsNGxSOUFKWmE1VENxc3VIbmVMTVdBNVRkVlU4RVFVWnhodThkRmdENDJrN3RjU2dsYnhhYjgzNkpHZEZfN2I2YzRlRnhlcFR0VG1nN0JWUFcxZTJqTU1DYWRvRU9XT2kxNzlmMzM1a2V5THlBNUo3Qy1vcWpqaGduM0h5QURXUFVFOXExcVZMODRBZlFIYTVXblphLVlTNWtVRFphVXhJSDI0NnFqZ29QUFQ1cVg2aEdpMFVKZ2EzVEdm?oc=5",
+        "published_at": "2026-07-17T03:45:38+00:00"
+      },
+      {
+        "title": "財報亮眼股價卻重挫！台積電（2330）大跌引發AI泡沫疑慮 網：獲利了結 - UDN",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5LbmhZUjZiY1dEZGRDV1dIcDlfbGxFZC1uV2JTNnNzY0VNMm83Sldtbi1YY2RnVlBQVjlfUVI1N3lJbEZ3a3NRc2Ryc09XMTFkZEHSAVdBVV95cUxNM0pIc2JTa0NUdjQwamxoMnNtdTdDcktHUEUySjBQUFp5ME1JUHcxVE0xM3RmU2QzeXlTbjc0RzB3Z3dxVG5PbnlWN2pTNlRyVWdUaTJoaTg?oc=5",
+        "published_at": "2026-07-17T04:36:11+00:00"
+      },
+      {
+        "title": "台積電獲利可能下降？ 外媒曝未來前景 - 自由財經",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9EQ0piRkRPN3hiLS12cGlibkRWUkdkRThsd3NyYjNNelZ3VEtYdFkwbmRYYXdqZFk5NkQ0eEh5QTVsWFhibEJOZWlBdnVMSGRpNldrX0VsQ1BXMzBJUWc00gFkQVVfeXFMTWl3Z0FTeVA3LUJ0QW9md3FjNWpvNzEtWl9mUzA3cTdjbFVuT2RtNHlLVUhsRzRVSlJzQjBiZ3pla3NiSmc4VGJvNWN6ZFZtMlh1azN4LVVtWWRkVW5SWFB3REFpcA?oc=5",
+        "published_at": "2026-07-07T07:00:00+00:00"
+      },
+      {
+        "title": "台積電尾盤爆近萬張賣單！跌180元收2290元「史上最大」 - Yahoo股市",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMi7AJBVV95cUxPaUhTMFpfS1ZDMEd5V24yMkJiRVBkZGNHWkdWSEtZV1BJNGE3T3VPdjUzRGhReHlGTmFwMnVTWWh1bWVUZVF0SEI2bXd0TzQ4Q3B4ZnJTSTNvZm45MVM5cEpqSXR2S2tOSVpRZGhyTHExYmxFVGxXOHQyWVlyb3E0cjl0Sll1ZHVzUXJ2Y3Y2UDZZZzRvVDZJbmNPUmh0NVlSVDZvbnhxZmotRGJLQlA2dGY0RHA5ck5wb0JFTVJwV0ctYW1lUE00RjNZaW82eGpvdVRsZjV1MW0zSXhTMV9HOHh0amIyNU1PVnU3Y2F3OU55aW5DMGxqQzZOcktSSUVQUUpENUtLN25uamVaeHEwZ1UxcWdZeE9OQm5MVXVBSXVuaUpsSG4wY18ydkVuLUE1R3dHdDhDc09neUlHcW93NkZDcndZUXhTc01uanJzT0xCSWJwamZvYXlVYVFLeGNfYUducHN0OVZhZHF2?oc=5",
+        "published_at": "2026-07-17T06:16:44+00:00"
+      }
+    ],
+    "events": []
+  },
   "decision": {
-    "rating": "減碼",
+    "rating": "續抱",
     "fair_value": {
-      "bear": 1442.2,
-      "base": 1736.5,
-      "bull": 2480.4
+      "bear": 1498.0,
+      "base": 2298.0,
+      "bull": 2458.1
     },
     "valuation": {
       "path": "per",
@@ -174,42 +349,42 @@
       "eps_forward": 101.49,
       "growth_used": 0.3643,
       "multiples": {
-        "bear": 14.21,
-        "base": 17.11,
-        "bull": 24.44
+        "bear": 14.76,
+        "base": 22.64,
+        "bull": 24.22
       },
-      "current_multiple": 32.54,
-      "current_percentile": 0.97,
-      "disclosure": "TTM EPS 74.39（財報 TTM）、成長 g=+36.4%（clamp -20%~+40%）、Forward EPS 101.49；PER 25/50/75=17.11/24.44/28.13（現值 32.54，分位 +97.0%）；大盤紅燈倍數下修一檔",
+      "current_multiple": 30.79,
+      "current_percentile": 0.91,
+      "disclosure": "TTM EPS 74.39（財報 TTM）、成長 g=+36.4%（clamp -20%~+40%）、Forward EPS 101.49；PER 25/50/75=19.58/24.22/27.78（regime=3y，現值 30.79，分位 +91.0%）；品質股 Base 上修；大盤紅燈倍數下修一檔",
       "bvps": null,
       "roe": null
     },
-    "risk_reward": -3.6,
+    "risk_reward": 0.04,
     "stop": {
-      "price": 2244.8,
+      "price": 2106.8,
       "pct": -0.08,
-      "basis": "關鍵均線",
+      "basis": "ATR",
       "clamped": true,
       "note": "參考防守位，接回自行判斷"
     },
     "entry": {
-      "pullback": "回測型：回檔至支撐 2429.5±29.8（0.5×ATR）、隔日收盤站回不破再進",
-      "breakout": "突破型：收盤帶量突破近20日高 2535.0、且量>1.3×20日均量（約 50,628,649）"
+      "pullback": "回測型：回檔至支撐 2428.2±33.8（0.5×ATR）、隔日收盤站回不破再進",
+      "breakout": "突破型：收盤帶量突破近20日高 2535.0、且量>1.3×20日均量（約 54,818,040）"
     },
     "position": {
-      "tier": "空手",
-      "amount": 0,
-      "odd_lot": false,
-      "shares": 0,
+      "tier": "標準",
+      "amount": 200000,
+      "odd_lot": true,
+      "shares": 87,
       "lots": 0,
-      "odd_shares": 0,
+      "odd_shares": 87,
       "reason": "R/R<1.5／資料不足／訊號分歧／大盤紅燈 其一（保守）",
       "core_note": "此為核心持股，本建議僅供波段加減碼層判斷，不影響定期定額核心部位"
     },
     "confidence": {
-      "total": 30,
+      "total": 48,
       "completeness": 30,
-      "consistency": 0,
+      "consistency": 18,
       "rr": 0,
       "regime": 0,
       "valuation_penalty": 0
@@ -217,32 +392,31 @@
     "time_frames": {
       "short": {
         "label": "短線 1-4 週",
-        "stance": "中性",
-        "basis": "技術偏多＋籌碼偏空為主",
-        "ref_price": "參考 MA20 2429.5"
+        "stance": "偏空",
+        "basis": "技術中性＋籌碼偏空為主",
+        "ref_price": "參考 MA20 2428.2"
       },
       "swing": {
         "label": "波段 1-3 月（主）",
-        "stance": "中性",
-        "basis": "綜合三燈與估值：觀望",
-        "ref_price": "合理價 Base 1736.5"
+        "stance": "中性偏多",
+        "basis": "主結論：續抱",
+        "ref_price": "合理價 Base 2298.0"
       },
       "mid": {
         "label": "中期 3-12 月",
         "stance": "偏空",
         "basis": "基本面中性＋估值分位",
-        "ref_price": "樂觀目標 Bull 2480.4"
+        "ref_price": "樂觀目標 Bull 2458.1"
       }
     },
     "invalidation": {
-      "price": "價格：收盤 2440.0 vs 防守位 2244.8（未觸發）",
+      "price": "價格：收盤 2290.0 vs 防守位 2106.8（未觸發）",
       "fundamental": "基本面：最新營收 YoY 轉負且連 2 月低於 6 月均（未觸發）",
       "chips": "籌碼：法人連 3 日同向賣且賣超佔 20 日均量>15%（已觸發）",
       "any_triggered": true
     },
-    "as_of_price": 2440.0,
+    "as_of_price": 2290.0,
     "note": null,
-    "disclaimer": "本區塊為規則引擎輸出之決策輔助，非投資建議；數字依固定規則計算，最終決策與風險由使用者承擔。",
-    "event_downgrade": "事件前高估值（分位 97%）＋籌碼弱，自動由「觀望」降為「減碼」"
+    "disclaimer": "本區塊為規則引擎輸出之決策輔助，非投資建議；數字依固定規則計算，最終決策與風險由使用者承擔。"
   }
 }

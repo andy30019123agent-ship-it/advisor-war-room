@@ -9,8 +9,19 @@ export class SchemaMismatchError extends Error {
   }
 }
 
+// 查無此股票（該代號沒有 stocks/<id>.json，例如不在追蹤清單裡）。
+export class NotFoundError extends Error {
+  constructor(id: string) {
+    super(`stock not found: ${id}`)
+    this.name = 'NotFoundError'
+  }
+}
+
 async function fetchJson(path: string): Promise<unknown> {
   const res = await fetch(path)
+  if (res.status === 404) {
+    throw new NotFoundError(path)
+  }
   if (!res.ok) {
     throw new Error(`fetch failed: ${path} (${res.status})`)
   }
@@ -26,12 +37,21 @@ export async function fetchDaily(): Promise<Daily> {
   return parsed.data
 }
 
-// 查股票：目前查任何代號都回 2330 fixture；之後接真 API 只要換掉這裡的 path。
-export async function fetchStockDetail(_id: string): Promise<StockDetail> {
-  const raw = await fetchJson(`/data/stocks/2330.json`)
+// 查股票：依 id 讀 /data/stocks/<id>.json；目前僅涵蓋追蹤清單（fixture 有的檔），
+// 之後接真 API 只要換掉這裡的 path，NotFoundError／SchemaMismatchError 的處理邏輯不用動。
+export async function fetchStockDetail(id: string): Promise<StockDetail> {
+  let raw: unknown
+  try {
+    raw = await fetchJson(`/data/stocks/${id}.json`)
+  } catch (e) {
+    if (e instanceof NotFoundError) {
+      throw new NotFoundError(id)
+    }
+    throw e
+  }
   const parsed = StockDetailSchema.safeParse(raw)
   if (!parsed.success) {
-    throw new SchemaMismatchError('stocks/2330.json')
+    throw new SchemaMismatchError(`stocks/${id}.json`)
   }
   return parsed.data
 }

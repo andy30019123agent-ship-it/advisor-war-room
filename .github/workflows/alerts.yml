@@ -1,0 +1,40 @@
+name: 到價提醒（TG）
+
+on:
+  schedule:
+    # 台北平日 09:00-13:30，每 15 分（UTC 01:00-05:59, Mon-Fri）；
+    # 程式內 is_trading_window() 再精準過濾到 09:00-13:30。
+    - cron: "*/15 1-5 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 執行到價提醒
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+        run: python3 -m warroom.alerts
+
+      - name: 提交去重狀態檔（避免重複發送）
+        run: |
+          if [ -n "$(git status --porcelain data/alerts_state.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/alerts_state.json
+            git commit -m "chore: 更新到價提醒去重狀態"
+            git push
+          else
+            echo "state 無變化，略過 commit。"
+          fi

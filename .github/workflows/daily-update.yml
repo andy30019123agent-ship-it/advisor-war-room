@@ -1,0 +1,48 @@
+name: 每日戰情室資料更新
+
+on:
+  schedule:
+    - cron: "30 6 * * 1-5"  # UTC 06:30 = 台北 14:30，平日盤中後段
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安裝依賴
+        run: pip install pandas FinMind yfinance
+
+      - name: 更新引擎資料（data/<id>.json）
+        env:
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+        run: python -m warroom.update
+
+      - name: 產出前端快照（public/data/daily.json ＋ stocks/<id>.json）
+        env:
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+        run: python -m warroom.build_snapshots
+
+      - name: 有變動才 commit push（觸發 Pages/Vercel 部署）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ public/data/
+          if git diff --cached --quiet; then
+            echo "資料無變動，略過 commit。"
+          else
+            git commit -m "chore: 每日戰情室資料更新 [skip ci]"
+            git push origin HEAD:main
+          fi

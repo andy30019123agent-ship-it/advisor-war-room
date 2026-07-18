@@ -4,11 +4,15 @@ import { z } from 'zod'
 // 前端 fetch 回來的 json 一律先過這層驗證；驗不過顯示「請更新 App」而非白屏。
 
 export const MetaSchema = z.object({
-  schema_version: z.number(),
+  schema_version: z.literal(1),
   data_date: z.string(),
   generated_at: z.string(),
   sources: z.array(z.string()),
 })
+
+// 六檔決策動作／五檔多空傾向：兩端共用同一組詞彙，前端 UI 文案（顏色、標籤）也是照這個 enum 分類。
+export const ActionSchema = z.enum(['加碼', '續抱', '試單', '觀望', '減碼', '出場'])
+export const StanceSchema = z.enum(['偏多', '中性偏多', '中性', '中性偏空', '偏空'])
 
 // ---------- daily.json ----------
 
@@ -34,7 +38,7 @@ export const CoreHoldingSchema = z.object({
 })
 
 export const TrackedDecisionSchema = z.object({
-  action: z.string(),
+  action: ActionSchema,
   readable_reason: z.string(),
   defense_price: z.number().nullable(),
 })
@@ -77,8 +81,8 @@ export type WatchItem = z.infer<typeof WatchItemSchema>
 // ---------- stocks/<id>.json ----------
 
 export const PrimaryDecisionSchema = z.object({
-  action: z.string(),
-  stance: z.string(),
+  action: ActionSchema,
+  stance: StanceSchema,
   position_delta: z.enum(['increase', 'hold', 'small_entry', 'wait', 'reduce', 'exit']),
   confidence: z.number().min(0).max(100),
   decided_by_layer: z.number(),
@@ -100,21 +104,21 @@ export const PrimaryDecisionSchema = z.object({
 
 export const TimeframeSchema = z.object({
   label: z.string(),
-  stance: z.string(),
+  stance: StanceSchema,
   basis: z.string(),
 })
 
 export const LightSchema = z.object({
-  color: z.enum(['green', 'yellow', 'red']),
+  color: z.enum(['green', 'yellow', 'red']).nullable(),
   facts: z.array(z.string()),
 })
 
 export const ValuationSchema = z.object({
-  band: z.enum(['便宜', '合理', '偏貴', '很貴']),
+  band: z.enum(['便宜', '合理', '偏貴', '很貴']).nullable(),
   base: z.number().nullable(),
   bull: z.number().nullable(),
   bear: z.number().nullable(),
-  regime: z.string(),
+  regime: z.string().nullable(),
   warning: z.string().nullable(),
 })
 
@@ -161,7 +165,7 @@ export const EvidenceSchema = z.object({
 
 export const TrackEntrySchema = z.object({
   date: z.string(),
-  action: z.string(),
+  action: ActionSchema,
   price_at_rec: z.number(),
   outcome: z.object({
     r5: z.number().nullable(),

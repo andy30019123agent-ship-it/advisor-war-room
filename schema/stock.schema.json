@@ -1,0 +1,225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://advisor-war-room/schema/stock.schema.json",
+  "title": "stocks/<id>.json（單股完整分析）",
+  "description": "對應 docs/contracts/data-contract-v1.md 的 stocks/<id>.json 區塊。",
+  "type": "object",
+  "required": ["meta", "profile", "price", "primary_decision", "context", "evidence", "track"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["schema_version", "data_date", "generated_at", "sources"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "type": "integer" },
+        "data_date": { "type": "string" },
+        "generated_at": { "type": "string" },
+        "sources": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["id", "name", "market", "is_core_holding"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "market": { "type": "string" },
+        "is_core_holding": { "type": "boolean" }
+      }
+    },
+    "price": {
+      "type": "object",
+      "required": ["close", "change_pct", "ma20", "ma60"],
+      "additionalProperties": false,
+      "properties": {
+        "close": { "type": ["number", "null"] },
+        "change_pct": { "type": ["number", "null"] },
+        "ma20": { "type": ["number", "null"] },
+        "ma60": { "type": ["number", "null"] }
+      }
+    },
+    "primary_decision": {
+      "type": "object",
+      "required": [
+        "action", "stance", "position_delta", "confidence", "decided_by_layer",
+        "reason_codes", "readable_reason", "risk_note", "position",
+        "defense_price", "entry_condition", "reeval_date"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action": { "type": "string" },
+        "stance": { "type": "string" },
+        "position_delta": {
+          "type": "string",
+          "enum": ["increase", "hold", "small_entry", "wait", "reduce", "exit"]
+        },
+        "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "decided_by_layer": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "reason_codes": { "type": "array", "items": { "type": "string" } },
+        "readable_reason": { "type": "string" },
+        "risk_note": { "type": "string" },
+        "position": {
+          "type": "object",
+          "required": ["tier_amount", "lots", "odd_shares"],
+          "additionalProperties": false,
+          "properties": {
+            "tier_amount": { "type": "number" },
+            "lots": { "type": "integer" },
+            "odd_shares": { "type": "integer" }
+          }
+        },
+        "defense_price": { "type": ["number", "null"] },
+        "entry_condition": {
+          "type": ["object", "null"],
+          "required": ["price", "condition"],
+          "additionalProperties": false,
+          "properties": {
+            "price": { "type": ["number", "null"] },
+            "condition": { "type": "string" }
+          }
+        },
+        "reeval_date": { "type": "string" },
+        "core_note": { "type": "string" }
+      }
+    },
+    "context": {
+      "type": "object",
+      "required": ["timeframes", "lights", "valuation", "rr"],
+      "additionalProperties": false,
+      "properties": {
+        "timeframes": {
+          "type": "object",
+          "required": ["short", "swing", "mid"],
+          "additionalProperties": false,
+          "properties": {
+            "short": { "$ref": "#/definitions/timeframe" },
+            "swing": { "$ref": "#/definitions/timeframe" },
+            "mid": { "$ref": "#/definitions/timeframe" }
+          }
+        },
+        "lights": {
+          "type": "object",
+          "required": ["fundamental", "technical", "chips"],
+          "additionalProperties": false,
+          "properties": {
+            "fundamental": { "$ref": "#/definitions/light" },
+            "technical": { "$ref": "#/definitions/light" },
+            "chips": { "$ref": "#/definitions/light" }
+          }
+        },
+        "valuation": {
+          "type": "object",
+          "required": ["band", "base", "bull", "bear", "regime", "warning"],
+          "additionalProperties": false,
+          "properties": {
+            "band": {
+              "type": ["string", "null"],
+              "enum": ["便宜", "合理", "偏貴", "很貴", null]
+            },
+            "base": { "type": ["number", "null"] },
+            "bull": { "type": ["number", "null"] },
+            "bear": { "type": ["number", "null"] },
+            "regime": { "type": ["string", "null"] },
+            "warning": { "type": ["string", "null"] }
+          }
+        },
+        "rr": { "type": ["number", "null"] }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["roles", "news", "events"],
+      "additionalProperties": false,
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "support", "oppose", "verify"],
+            "additionalProperties": false,
+            "properties": {
+              "role": { "type": "string" },
+              "support": { "type": "array", "items": { "type": "string" } },
+              "oppose": { "type": "array", "items": { "type": "string" } },
+              "verify": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "news": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title", "source", "url", "published_at"],
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string" },
+              "source": { "type": "string" },
+              "url": { "type": "string" },
+              "published_at": { "type": "string" }
+            }
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["date", "label", "impact_note"],
+            "additionalProperties": false,
+            "properties": {
+              "date": { "type": "string" },
+              "label": { "type": "string" },
+              "impact_note": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "track": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "action", "price_at_rec", "outcome", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "date": { "type": "string" },
+          "action": { "type": "string" },
+          "price_at_rec": { "type": "number" },
+          "outcome": {
+            "type": "object",
+            "required": ["r5", "r20", "r60"],
+            "additionalProperties": false,
+            "properties": {
+              "r5": { "type": ["number", "null"] },
+              "r20": { "type": ["number", "null"] },
+              "r60": { "type": ["number", "null"] }
+            }
+          },
+          "status": { "type": "string", "enum": ["pending", "done"] }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "timeframe": {
+      "type": "object",
+      "required": ["label", "stance", "basis"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "stance": { "type": "string" },
+        "basis": { "type": "string" }
+      }
+    },
+    "light": {
+      "type": "object",
+      "required": ["color", "facts"],
+      "additionalProperties": false,
+      "properties": {
+        "color": { "type": ["string", "null"], "enum": ["green", "yellow", "red", null] },
+        "facts": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -16,6 +16,7 @@ from warroom.fundamentals import compute_fundamentals
 from warroom.events import (build_ex_div_map, has_upcoming_event,
                             event_risk_downgrade, build_event_calendar)
 from datetime import datetime, timezone, timedelta
+import email.utils as _eut
 import json as _json
 import os as _os
 
@@ -369,6 +370,40 @@ def _facts_list(ev):
     return out[:4]
 
 
+def _parse_news_date(raw):
+    """news.py 兩個來源日期格式不同：GDELT seendate＝YYYYMMDDTHHMMSSZ；
+    Google RSS pubDate＝RFC822（Thu, 16 Jul 2026 04:00:00 GMT）。統一轉 ISO；解析不出給 None
+    （契約規則：缺資料給 null，不得編字串、不得讓整檔 build 失敗）。"""
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc).isoformat()
+    except (ValueError, TypeError):
+        pass
+    try:
+        dt = _eut.parsedate_to_datetime(raw)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
+    except (ValueError, TypeError, IndexError, OverflowError):
+        return None
+
+
+def _normalize_news(items):
+    """news.py 回傳 {title,url,date,src} → 契約 evidence.news 的 {title,source,url,published_at}
+    （規格：evidence.news 欄位正規化）。只動 evidence 輸出，legacy res["news"]（report_stock.py
+    等舊渲染仍讀 src/date）維持原格式不變。"""
+    out = []
+    for a in (items or []):
+        out.append({
+            "title": a.get("title") or "",
+            "source": a.get("src") or a.get("source") or None,
+            "url": a.get("url") or None,
+            "published_at": _parse_news_date(a.get("date") or a.get("published_at")),
+        })
+    return out
+
+
 def _attach_primary(res, dec, valuation, price, market_light, rev_sig, chip_sig,
                     defense_price, high20):
     """建 primary_decision + context + evidence，並把 legacy summary/rating/timeframes
@@ -399,7 +434,7 @@ def _attach_primary(res, dec, valuation, price, market_light, rev_sig, chip_sig,
 
     res["primary_decision"] = primary
     res["context"] = context
-    res["evidence"] = {"roles": roles, "news": res.get("news", []), "events": []}
+    res["evidence"] = {"roles": roles, "news": _normalize_news(res.get("news", [])), "events": []}
     res["decision"] = dec
     apply_derivations(res, primary, context)
 

@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://advisor-war-room/schema/daily.schema.json",
+  "title": "daily.json（今日戰術台）",
+  "description": "對應 docs/contracts/data-contract-v1.md 的 daily.json 區塊。",
+  "type": "object",
+  "required": ["meta", "market", "core_holdings", "tracked", "watch", "alerts_snapshot"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": { "$ref": "#/definitions/meta" },
+    "market": {
+      "type": "object",
+      "required": ["status", "risk_temp", "conclusion", "taiex", "us"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": "string", "enum": ["偏多進攻", "中性", "偏空防禦"] },
+        "risk_temp": { "type": "number", "minimum": 1, "maximum": 10 },
+        "conclusion": { "type": "string", "minLength": 1 },
+        "taiex": {
+          "type": "object",
+          "required": ["close", "change_pct"],
+          "additionalProperties": false,
+          "properties": {
+            "close": { "type": ["number", "null"] },
+            "change_pct": { "type": ["number", "null"] }
+          }
+        },
+        "us": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "change_pct"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "change_pct": { "type": ["number", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "core_holdings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "action", "note"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "action": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "tracked": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "close", "change_pct", "decision"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "close": { "type": ["number", "null"] },
+          "change_pct": { "type": ["number", "null"] },
+          "decision": {
+            "type": "object",
+            "required": ["action", "readable_reason", "defense_price"],
+            "additionalProperties": false,
+            "properties": {
+              "action": { "type": "string" },
+              "readable_reason": { "type": "string" },
+              "defense_price": { "type": ["number", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "watch": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "wait_condition"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "wait_condition": { "type": "string" }
+        }
+      }
+    },
+    "alerts_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type", "price", "direction"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["defense", "entry"] },
+          "price": { "type": "number" },
+          "direction": { "type": "string", "enum": ["below", "above"] }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "meta": {
+      "type": "object",
+      "required": ["schema_version", "data_date", "generated_at", "sources"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "type": "integer" },
+        "data_date": { "type": "string" },
+        "generated_at": { "type": "string" },
+        "sources": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

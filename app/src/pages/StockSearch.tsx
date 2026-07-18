@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchStockDetail, SchemaMismatchError } from '../lib/api'
+import { fetchStockDetail, NotFoundError, SchemaMismatchError } from '../lib/api'
 import { IconSearch } from '../components/icons'
 import type { StockDetail } from '../types/contract'
 
@@ -55,7 +55,15 @@ export function StockSearch() {
 
       {queryId !== null && isLoading && <LoadingSkeleton />}
 
-      {queryId !== null && isError && (
+      {queryId !== null && isError && error instanceof NotFoundError && (
+        <div className="empty-state">
+          <IconSearch size={40} />
+          <div className="title">查無此股票的分析資料</div>
+          <div className="desc">目前僅涵蓋追蹤清單。</div>
+        </div>
+      )}
+
+      {queryId !== null && isError && !(error instanceof NotFoundError) && (
         <div className="error-banner">
           {error instanceof SchemaMismatchError ? '請更新 App' : '分析失敗，請稍後再試'}
         </div>
@@ -148,12 +156,19 @@ function StockDetailView({ detail }: { detail: StockDetail }) {
               <ChevronGlyph />
             </summary>
             <div className="disclosure-body">
-              <p>目前落在「{context.valuation.band}」區間。</p>
-              <p>
-                base {formatNumber(context.valuation.base)} ／ bull {formatNumber(context.valuation.bull)} ／ bear{' '}
-                {formatNumber(context.valuation.bear)}（{context.valuation.regime} 分位）
-              </p>
-              {context.valuation.warning && <p>{context.valuation.warning}</p>}
+              {context.valuation.band == null ? (
+                <p>估值資料不足</p>
+              ) : (
+                <>
+                  <p>目前落在「{context.valuation.band}」區間。</p>
+                  <p>
+                    base {formatNumber(context.valuation.base)} ／ bull {formatNumber(context.valuation.bull)} ／ bear{' '}
+                    {formatNumber(context.valuation.bear)}
+                    {context.valuation.regime ? `（${context.valuation.regime} 分位）` : ''}
+                  </p>
+                  {context.valuation.warning && <p>{context.valuation.warning}</p>}
+                </>
+              )}
             </div>
           </details>
 
@@ -207,15 +222,13 @@ function StockDetailView({ detail }: { detail: StockDetail }) {
   )
 }
 
-function LightRow({ label, light }: { label: string; light: { color: 'green' | 'yellow' | 'red'; facts: string[] } }) {
+function LightRow({ label, light }: { label: string; light: { color: 'green' | 'yellow' | 'red' | null; facts: string[] } }) {
   return (
     <div className="light-row">
-      <span className={`light-dot ${light.color}`} />
+      <span className={`light-dot ${light.color ?? 'na'}`} />
       <div>
         <strong>{label}</strong>
-        {light.facts.map((f, i) => (
-          <p key={i}>{f}</p>
-        ))}
+        {light.color == null ? <p>無資料</p> : light.facts.map((f, i) => <p key={i}>{f}</p>)}
       </div>
     </div>
   )

@@ -1,0 +1,220 @@
+{
+  "meta": {
+    "schema_version": 1,
+    "data_date": "2026-07-18",
+    "generated_at": "2026-07-18T12:00:59+08:00",
+    "sources": [
+      "FinMind",
+      "yfinance"
+    ]
+  },
+  "profile": {
+    "id": "2330",
+    "name": "台積電",
+    "market": "TWSE",
+    "is_core_holding": true
+  },
+  "price": {
+    "close": 2290.0,
+    "change_pct": null,
+    "ma20": 2428.2,
+    "ma60": 2323.8
+  },
+  "primary_decision": {
+    "action": "續抱",
+    "stance": "中性偏多",
+    "position_delta": "hold",
+    "confidence": 48,
+    "decided_by_layer": 6,
+    "reason_codes": [
+      "chips_broken",
+      "trend_ok",
+      "fundamental_ok",
+      "chips_weak",
+      "valuation_very_expensive",
+      "market_bear"
+    ],
+    "readable_reason": "因為趨勢仍在（站上均線），所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
+    "risk_note": "跌破 2106.8 防守位就先降波段部位；法人持續賣超需留意",
+    "position": {
+      "tier_amount": 200000.0,
+      "lots": 0,
+      "odd_shares": 87
+    },
+    "defense_price": 2106.8,
+    "entry_condition": null,
+    "reeval_date": "2026-07-25",
+    "core_note": "此為波段層判斷，不影響定期定額核心部位。"
+  },
+  "context": {
+    "timeframes": {
+      "short": {
+        "label": "短線 1-4 週",
+        "stance": "中性",
+        "basis": "技術中性＋籌碼偏空"
+      },
+      "swing": {
+        "label": "波段 1-3 月（主）",
+        "stance": "中性偏多",
+        "basis": "因為趨勢仍在（站上均線），所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）"
+      },
+      "mid": {
+        "label": "中期 3-12 月",
+        "stance": "中性",
+        "basis": "基本面中性＋估值很貴"
+      }
+    },
+    "lights": {
+      "fundamental": {
+        "color": "yellow",
+        "facts": [
+          "最新營收月 2026/6",
+          "營收YoY +67.9%",
+          "近3月平均YoY +38.5%",
+          "PER 30.8"
+        ]
+      },
+      "technical": {
+        "color": "yellow",
+        "facts": [
+          "收盤 2290.0",
+          "MA20 2428.2",
+          "MA60 2323.8",
+          "MA120 2094.3"
+        ]
+      },
+      "chips": {
+        "color": "red",
+        "facts": [
+          "近5日法人淨額(張) -55,026",
+          "連續方向天數 賣 7 天",
+          "最新日 2026-07-17"
+        ]
+      }
+    },
+    "valuation": {
+      "band": "很貴",
+      "base": 2298.0,
+      "bull": 2458.1,
+      "bear": 1498.0,
+      "regime": "3y",
+      "warning": null
+    },
+    "rr": 0.04
+  },
+  "evidence": {
+    "roles": [
+      {
+        "role": "技術面分析師",
+        "support": [
+          "收盤 2290.0",
+          "MA20 2428.2",
+          "MA60 2323.8",
+          "MA120 2094.3"
+        ],
+        "oppose": [],
+        "verify": [
+          "觀察是否守住均線與防守位"
+        ]
+      },
+      {
+        "role": "基本面分析師",
+        "support": [
+          "最新營收月 2026/6",
+          "營收YoY +67.9%",
+          "近3月平均YoY +38.5%",
+          "PER 30.8"
+        ],
+        "oppose": [],
+        "verify": [
+          "追蹤下月營收 YoY 是否維持"
+        ]
+      },
+      {
+        "role": "籌碼分析師",
+        "support": [],
+        "oppose": [
+          "近5日法人淨額(張) -55,026",
+          "連續方向天數 賣 7 天",
+          "最新日 2026-07-17"
+        ],
+        "verify": [
+          "確認外資／投信是否轉買"
+        ]
+      },
+      {
+        "role": "風控／估值",
+        "support": [],
+        "oppose": [
+          "估值很貴"
+        ],
+        "verify": [
+          "確認 R/R 是否站上 2 倍再加碼"
+        ]
+      }
+    ],
+    "news": [
+      {
+        "title": "台積電7月16日後股價要噴了？ 外媒 : 新一波行情將由「這利多」點燃 - 自由財經",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBWSW4yMENtODI5UDFyRVVGLVdVWjdMSk5KMDRXSWVkMGJHVnBGcW5jdVZNMXdfMWw2Vm4zdlhnR1ByVURZQ1lLTGlQVHgwRXpDZEY1ZlE1bjc2c2RKUGFF0gFkQVVfeXFMTlVJZWE1OE5rREZKMnNPcFBHZHBTa0Jhb0h1dXh6Nl80ZnVTOEczMzlfNmthN3g5QWxqcUxfSVI1R2RDT1hwWlhIeWlsc3RpOWViX1FUM0FBNmZZM0RJWDY1QnpGZw?oc=5",
+        "published_at": "2026-07-10T04:51:32+00:00"
+      },
+      {
+        "title": "台積公司2026年第二季每股盈餘新台幣27.25元|台灣積體電路製造股份有限公司 - pr.tsmc.com",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBsQ0ZseE5WbFkzTjI5aUhkdW9VS0pDUVljSUZZSEpoMjJCcVh6YUF5UHdGb2F4VnExVGk4Vm8zNThyXzZaRVh2VVVITEl3Zw?oc=5",
+        "published_at": "2026-07-16T12:00:00+00:00"
+      },
+      {
+        "title": "法說會變「法會」？ 台積電股價暴跌110元 不敗教主曝：利空反成長線機會 - Yahoo股市",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiqANBVV95cUxNMGdmOHVlZnI2WUgtei1nZ3Bpc3g1SXJLLW5rS3FyMzRKZjRuZDN2WFNtWU1hLUVIX09WSW1xUWhhZFFCdmw1MlAtcVJHRW1lSXpISWdueWZoQTZsQjEybExCRnpVd2lMSlRZRWRVcEh2VXA3VWhjbWlncXkwbEJvMFN0LWlQdEs5V1Vtc3A5T004ZGt3T3U3RU9GQ0o0QzRjOTNFU2I5MlFPRUhWSThtZm9jRmNSanRFWWVFeDlZODFnQkg5Z0FFd21GYWtVV1N5OExYQW1CQmhMUnRNeHRleDJKQzBGOXF3VHJVWHhsNGxSOUFKWmE1VENxc3VIbmVMTVdBNVRkVlU4RVFVWnhodThkRmdENDJrN3RjU2dsYnhhYjgzNkpHZEZfN2I2YzRlRnhlcFR0VG1nN0JWUFcxZTJqTU1DYWRvRU9XT2kxNzlmMzM1a2V5THlBNUo3Qy1vcWpqaGduM0h5QURXUFVFOXExcVZMODRBZlFIYTVXblphLVlTNWtVRFphVXhJSDI0NnFqZ29QUFQ1cVg2aEdpMFVKZ2EzVEdm?oc=5",
+        "published_at": "2026-07-17T03:45:38+00:00"
+      },
+      {
+        "title": "財報亮眼股價卻重挫！台積電（2330）大跌引發AI泡沫疑慮 網：獲利了結 - UDN",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5LbmhZUjZiY1dEZGRDV1dIcDlfbGxFZC1uV2JTNnNzY0VNMm83Sldtbi1YY2RnVlBQVjlfUVI1N3lJbEZ3a3NRc2Ryc09XMTFkZEHSAVdBVV95cUxNM0pIc2JTa0NUdjQwamxoMnNtdTdDcktHUEUySjBQUFp5ME1JUHcxVE0xM3RmU2QzeXlTbjc0RzB3Z3dxVG5PbnlWN2pTNlRyVWdUaTJoaTg?oc=5",
+        "published_at": "2026-07-17T04:36:11+00:00"
+      },
+      {
+        "title": "台積電獲利可能下降？ 外媒曝未來前景 - 自由財經",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9EQ0piRkRPN3hiLS12cGlibkRWUkdkRThsd3NyYjNNelZ3VEtYdFkwbmRYYXdqZFk5NkQ0eEh5QTVsWFhibEJOZWlBdnVMSGRpNldrX0VsQ1BXMzBJUWc00gFkQVVfeXFMTWl3Z0FTeVA3LUJ0QW9md3FjNWpvNzEtWl9mUzA3cTdjbFVuT2RtNHlLVUhsRzRVSlJzQjBiZ3pla3NiSmc4VGJvNWN6ZFZtMlh1azN4LVVtWWRkVW5SWFB3REFpcA?oc=5",
+        "published_at": "2026-07-07T07:00:00+00:00"
+      },
+      {
+        "title": "台積電尾盤爆近萬張賣單！跌180元收2290元「史上最大」 - Yahoo股市",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMi7AJBVV95cUxPaUhTMFpfS1ZDMEd5V24yMkJiRVBkZGNHWkdWSEtZV1BJNGE3T3VPdjUzRGhReHlGTmFwMnVTWWh1bWVUZVF0SEI2bXd0TzQ4Q3B4ZnJTSTNvZm45MVM5cEpqSXR2S2tOSVpRZGhyTHExYmxFVGxXOHQyWVlyb3E0cjl0Sll1ZHVzUXJ2Y3Y2UDZZZzRvVDZJbmNPUmh0NVlSVDZvbnhxZmotRGJLQlA2dGY0RHA5ck5wb0JFTVJwV0ctYW1lUE00RjNZaW82eGpvdVRsZjV1MW0zSXhTMV9HOHh0amIyNU1PVnU3Y2F3OU55aW5DMGxqQzZOcktSSUVQUUpENUtLN25uamVaeHEwZ1UxcWdZeE9OQm5MVXVBSXVuaUpsSG4wY18ydkVuLUE1R3dHdDhDc09neUlHcW93NkZDcndZUXhTc01uanJzT0xCSWJwamZvYXlVYVFLeGNfYUducHN0OVZhZHF2?oc=5",
+        "published_at": "2026-07-17T06:16:44+00:00"
+      }
+    ],
+    "events": []
+  },
+  "track": [
+    {
+      "date": "2026-07-18",
+      "action": "續抱",
+      "price_at_rec": 2290.0,
+      "outcome": {
+        "r5": null,
+        "r20": null,
+        "r60": null
+      },
+      "status": "pending"
+    },
+    {
+      "date": "2026-07-15",
+      "action": "減碼",
+      "price_at_rec": 2440.0,
+      "outcome": {
+        "r5": null,
+        "r20": null,
+        "r60": null
+      },
+      "status": "pending"
+    }
+  ]
+}

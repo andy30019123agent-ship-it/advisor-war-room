@@ -24,10 +24,11 @@ def is_pbr_industry(industry_category: Optional[str]) -> bool:
     return industry_category in PBR_INDUSTRIES
 
 
-def valuation_band(percentile: Optional[float]) -> str:
-    """對外估值文案改區間語言（規格 §3.3）：便宜/合理/偏貴/很貴。"""
+def valuation_band(percentile: Optional[float]) -> Optional[str]:
+    """對外估值文案改區間語言（規格 §3.3）：便宜/合理/偏貴/很貴｜null（資料契約 v1：
+    band 只允許這四檔或 null，不得回「資料不足」字串）。"""
     if percentile is None:
-        return "資料不足"
+        return None
     if percentile < 0.35:
         return "便宜"
     if percentile < 0.65:
@@ -71,6 +72,14 @@ def select_regime(regimes: Dict[str, Dict]):
         if label in regimes:
             return label, regimes[label]
     return None, None
+
+
+def regime_subseries(series: List[float], label: Optional[str]) -> List[float]:
+    """取 select_regime() 選定 regime 對應的子序列 —— current_percentile／band 必須用
+    同一段序列計算，不可 fair value 用 3y 分位、分位卻用完整週期（規格 §3.3，避免 regime 混算）。"""
+    windows = dict(_REGIME_WINDOWS)
+    n = windows.get(label)
+    return series[-n:] if n else series
 
 
 def quality_base_bump(roe: Optional[float]) -> float:
@@ -187,11 +196,14 @@ def multiple_percentiles(series: List[float]) -> Optional[Dict]:
 
 
 def current_percentile(series: List[float], current: Optional[float]) -> Optional[float]:
-    """現值落在歷史的分位（低於現值的比例）。"""
+    """現值落在歷史的分位。改 mid-rank：(小於現值筆數 + 0.5×等於現值筆數) / n，
+    避免大量同值（例如長期停牌、資料重複）把分位誤判偏向極端。"""
     vals = [v for v in series if v is not None and v > 0]
     if not vals or current is None:
         return None
-    return round(sum(1 for v in vals if v < current) / len(vals), 2)
+    less = sum(1 for v in vals if v < current)
+    equal = sum(1 for v in vals if v == current)
+    return round((less + 0.5 * equal) / len(vals), 2)
 
 
 def _trio(pcts: Dict, market_light: str):
@@ -244,13 +256,15 @@ def _pct(x) -> str:
 
 
 def _insufficient(path: str, penalty: int, note: str) -> Dict:
-    """估值資料不足時的統一回傳（fair_value=None，並回報信心扣分）。"""
+    """估值資料不足時的統一回傳（fair_value=None，並回報信心扣分）。
+    資料契約 v1：樣本不足時 band/base/bull/bear/regime 全給 null，不得編「資料不足」字串
+    （warning 仍可用 disclosure 說明原因）。"""
     return {
         "path": path, "eps_ttm": None, "eps_source": None, "eps_forward": None,
         "growth_used": None, "fair_value": None, "multiples": None,
         "current_multiple": None, "current_percentile": None, "bvps": None, "roe": None,
         "confidence_penalty": penalty, "disclosure": note,
-        "band": "資料不足", "regime": None, "warning": None,
+        "band": None, "regime": None, "warning": None,
     }
 
 
@@ -312,7 +326,11 @@ def compute_valuation(inp: Dict) -> Dict:
         return _insufficient("per", 30, "虧損/零盈餘，不適用相對估值（PER）")
     base_bump = quality_base_bump(inp.get("roe"))
     fv = fair_value_per_path(fwd, per_pcts, market_light, base_bump=base_bump)
-    band = valuation_band(current_percentile(per_series, per_cur))
+    # current_percentile／band 要用「跟 fair value 同一個 regime」的子序列，不可 fair value
+    # 用 3y 分位、現值分位卻拿完整週期算（規格 §3.3，避免 regime 混算誤導 band）。
+    per_regime_series = regime_subseries(per_series, regime_label)
+    cur_pct = current_percentile(per_regime_series, per_cur)
+    band = valuation_band(cur_pct)
     warning = sanity_warning(fv["base"], price)
     src_zh = "財報 TTM" if eps_source == "financial_statement" else "現價/PER 反推（降信心）"
     g_used = max(-0.20, min(0.40, g)) if g is not None else 0.0
@@ -324,7 +342,7 @@ def compute_valuation(inp: Dict) -> Dict:
     disclosure = (
         f"TTM EPS {eps_ttm}（{src_zh}）、{growth_note}、"
         f"Forward EPS {fwd}；PER 25/50/75={per_pcts['p25']}/{per_pcts['p50']}/{per_pcts['p75']}"
-        f"（regime={regime_label}，現值 {per_cur}，分位 {_pct(current_percentile(per_series, per_cur))}）"
+        f"（regime={regime_label}，現值 {per_cur}，分位 {_pct(cur_pct)}）"
         + bump_note
         + ("；大盤紅燈倍數下修一檔" if market_light == "red" else ""))
     return {
@@ -332,7 +350,7 @@ def compute_valuation(inp: Dict) -> Dict:
         "growth_used": g_used,
         "fair_value": {"bear": fv["bear"], "base": fv["base"], "bull": fv["bull"]},
         "multiples": fv["multiples"], "current_multiple": per_cur,
-        "current_percentile": current_percentile(per_series, per_cur),
+        "current_percentile": cur_pct,
         "bvps": None, "roe": None,
         "confidence_penalty": penalty, "disclosure": disclosure,
         "band": band, "regime": regime_label, "warning": warning,

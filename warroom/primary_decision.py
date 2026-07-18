@@ -61,18 +61,29 @@ def _light_codes(f: str, t: str, c: str) -> List[str]:
     return out
 
 
-def _rr_ceiling(rr: Optional[float], warning: Optional[str]) -> str:
+_CEILING_ORDER = {"none": 0, "small": 1, "standard": 2, "add": 3}
+# 估值天花板（§3.3/§3.4）：偏貴封在 standard（不得加碼）；很貴封在 none（不得加碼／不得新進場）。
+_VALUATION_CEILING = {"偏貴": "standard", "很貴": "none"}
+
+
+def _rr_ceiling(rr: Optional[float], warning: Optional[str], band: Optional[str] = None) -> str:
     """R/R 天花板（§3.2 層 4）：<1.5 不新增｜1.5-2 最多試單｜>2 標準｜>3 才可加碼。
-    有 valuation_warning 時 base 不可信 → rr 不可信 → 不放到可加碼（保守封在 standard）。"""
+    有 valuation_warning 時 base 不可信 → rr 不可信 → 不放到可加碼（保守封在 standard）。
+    valuation band=偏貴/很貴 另外封頂（§3.3 估值天花板），兩者取更嚴格者。"""
     if rr is None:
-        return "standard"          # 缺 R/R：允許續抱/標準，但不加碼
-    if rr < 1.5:
-        return "none"
-    if rr < 2:
-        return "small"
-    if rr <= 3 or warning:
-        return "standard"
-    return "add"
+        base = "standard"          # 缺 R/R：允許續抱/標準，但不加碼
+    elif rr < 1.5:
+        base = "none"
+    elif rr < 2:
+        base = "small"
+    elif rr <= 3 or warning:
+        base = "standard"
+    else:
+        base = "add"
+    cap = _VALUATION_CEILING.get(band)
+    if cap is not None and _CEILING_ORDER[base] > _CEILING_ORDER[cap]:
+        return cap
+    return base
 
 
 def _direction_bucket(lights: List[str], per_pct, market_light) -> str:
@@ -88,10 +99,11 @@ def _direction_bucket(lights: List[str], per_pct, market_light) -> str:
     return "neutral"
 
 
-def _normal_zone(lights, per_pct, market_light, rr, warning, holding, confidence):
-    """層 3-6：非硬風控區。持股→續抱/加碼；空手→試單/觀望。杜絕『觀望＋減碼』並存。"""
+def _normal_zone(lights, per_pct, market_light, rr, warning, holding, confidence, band=None):
+    """層 3-6：非硬風控區。持股→續抱/加碼；空手→試單/觀望。杜絕『觀望＋減碼』並存。
+    band=偏貴/很貴 時 ceiling 已被 _rr_ceiling 封頂，天然擋掉加碼／很貴時也擋掉新進場（§3.3）。"""
     bucket = _direction_bucket(lights, per_pct, market_light)
-    ceiling = _rr_ceiling(rr, warning)
+    ceiling = _rr_ceiling(rr, warning, band)
     if holding:
         if bucket == "strong_bull" and ceiling == "add" and confidence > 75:
             return "加碼", 4, "rr_ok"
@@ -152,9 +164,15 @@ def decide_action(*, lights, valuation, rr, defense_broken, fundamental_broken,
 
     # 層 3-6：正常區
     action, layer, primary = _normal_zone(lights, per_pct, market_light, rr,
-                                          warning, holding, confidence)
-    if hard:                         # 核心被保護但仍有硬風險 → 記錄、不改方向
+                                          warning, holding, confidence, band)
+    if hard:
         codes = _dedup(hard + codes)
+        # 核心被保護（例如 defense_broken/chips_broken 但基本面未失效）：不砍核心部位，
+        # 但波段層仍受硬風控天花板約束 → action 上限續抱（持股）／觀望（空手），不得加碼/試單。
+        if action in ("加碼", "試單"):
+            action = "續抱" if holding else "觀望"
+            layer = 2
+            primary = hard[0]
     return action, layer, _dedup(codes), primary
 
 
@@ -230,6 +248,14 @@ def _risk_note(codes, defense_price):
 def _facts_of(lights_facts, key):
     v = (lights_facts or {}).get(key)
     return list(v) if v else []
+
+
+# 契約 v1：context.lights.color 只允許 green/yellow/red/null；引擎內部 amber/na 要在輸出前正規化。
+_LIGHT_COLOR_OUT = {"green": "green", "amber": "yellow", "red": "red"}
+
+
+def _normalize_light_color(x):
+    return _LIGHT_COLOR_OUT.get(x)   # na／缺資料／其他 → None
 
 
 def generate_roles(codes, lights_facts, action):
@@ -313,12 +339,12 @@ def build_primary_and_context(*, price, lights, lights_facts, valuation, rr,
                       "basis": primary["readable_reason"]},
             "mid": {"label": "中期 3-12 月",
                     "stance": _zh.get(f, "中性"),
-                    "basis": f"基本面{_zh.get(f)}＋估值{(valuation or {}).get('band', '—')}"},
+                    "basis": f"基本面{_zh.get(f)}＋估值{(valuation or {}).get('band') or '—'}"},
         },
         "lights": {
-            "fundamental": {"color": f, "facts": _facts_of(lights_facts, "fundamental")},
-            "technical": {"color": t, "facts": _facts_of(lights_facts, "technical")},
-            "chips": {"color": c, "facts": _facts_of(lights_facts, "chips")},
+            "fundamental": {"color": _normalize_light_color(f), "facts": _facts_of(lights_facts, "fundamental")},
+            "technical": {"color": _normalize_light_color(t), "facts": _facts_of(lights_facts, "technical")},
+            "chips": {"color": _normalize_light_color(c), "facts": _facts_of(lights_facts, "chips")},
         },
         "valuation": {
             "band": (valuation or {}).get("band"),
@@ -353,3 +379,14 @@ def apply_derivations(res: Dict, primary: Dict, context: Dict) -> None:
         if isinstance(tf, dict) and "swing" in tf:
             tf["swing"]["stance"] = context["timeframes"]["swing"]["stance"]
             tf["swing"]["basis"] = f"主結論：{primary['action']}"
+        # legacy decision.position 同步主結論部位，避免舊渲染顯示與 primary_decision 矛盾的金額
+        ppos = primary.get("position")
+        pos = dec.get("position")
+        if isinstance(pos, dict) and isinstance(ppos, dict):
+            pos["tier"] = ppos.get("tier")
+            pos["amount"] = ppos.get("tier_amount")
+            pos["lots"] = ppos.get("lots")
+            pos["odd_shares"] = ppos.get("odd_shares")
+            lots, odd = ppos.get("lots") or 0, ppos.get("odd_shares") or 0
+            pos["shares"] = lots * 1000 + odd
+            pos["odd_lot"] = odd != 0

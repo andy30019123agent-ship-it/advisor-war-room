@@ -72,6 +72,12 @@ class TestValuation(unittest.TestCase):
         self.assertAlmostEqual(current_percentile([10, 20, 30, 40], 35), 0.75)
         self.assertIsNone(current_percentile([], 10))
 
+    def test_current_percentile_mid_rank_tie(self):
+        # 大量同值時改 mid-rank：(less + 0.5*equal)/n，避免 tie 被誤判成全部小於/大於現值
+        self.assertAlmostEqual(current_percentile([10] * 5 + [20] * 5, 10), 0.25)  # (0+2.5)/10
+        self.assertAlmostEqual(current_percentile([10] * 10, 10), 0.5)             # 全同值→中位
+        self.assertAlmostEqual(current_percentile([10] * 8 + [30] * 2, 10), 0.4)   # (0+4)/10
+
     def test_fair_value_per_path_red_market_downgrades(self):
         pcts = {"p10": 20.0, "p25": 25.0, "p50": 30.0, "p75": 35.0}
         normal = fair_value_per_path(100.0, pcts, "amber")
@@ -147,6 +153,20 @@ class TestValuation(unittest.TestCase):
         out = compute_valuation(inp)
         self.assertIsNone(out["fair_value"])
         self.assertIn("虧損", out["disclosure"])
+
+    def test_insufficient_sample_gives_null_band_not_string(self):
+        # 契約 v1：樣本不足時 band/base/bull/bear/regime 全給 null，不得回「資料不足」字串
+        inp = {
+            "price": 500.0, "industry_category": "半導體業", "market_light": "amber",
+            "fs_df": None, "rev_df": None,
+            "per_series": [10.0, 11.0, 12.0], "per_current": None,  # 樣本<8 且無反推 PER
+            "pbr_series": [], "pbr_current": None, "roe": None,
+        }
+        out = compute_valuation(inp)
+        self.assertIsNone(out["band"])
+        self.assertIsNone(out["fair_value"])
+        self.assertIsNone(out["regime"])
+        self.assertIsInstance(out["disclosure"], str)   # warning/說明仍可給字串
 
     def test_disclosure_shows_clamped_growth_not_raw(self):
         # 8299 型案例：加權YoY遠超 +40% 上限 → disclosure 要顯示封頂後 g，並附註原始值

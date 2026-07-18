@@ -54,6 +54,24 @@ class TestSixLayers(unittest.TestCase):
         self.assertNotEqual(layer, 2)
         self.assertIn("chips_broken", codes)       # 風險仍記錄
 
+    def test_core_holding_hard_risk_still_caps_action_no_add(self):
+        # 核心持股「不砍核心部位」不等於「硬風控失效」：defense_broken/chips_broken 時
+        # 波段層 action 上限仍是續抱，不得被 _normal_zone 判成加碼/試單（回歸 bug #1）。
+        act, layer, codes, code0 = _decide(
+            chips_broken=True, is_core_holding=True, holding=True,
+            confidence=90, rr=3.5)   # 若無天花板，正常區會判「加碼」
+        self.assertEqual(act, "續抱")
+        self.assertNotIn(act, ("加碼", "試單"))
+        self.assertIn("chips_broken", codes)
+        self.assertIn("chips_weak" if "chips_weak" in codes else "chips_broken", codes)
+
+        act2, layer2, codes2, _ = _decide(
+            defense_broken=True, is_core_holding=True, holding=True,
+            confidence=95, rr=4.0)
+        self.assertEqual(act2, "續抱")
+        self.assertNotIn(act2, ("加碼", "試單"))
+        self.assertIn("defense_broken", codes2)
+
     # ---- 層 3：持股狀態決定用詞 ----
     def test_layer3_vocabulary_split(self):
         # 空手偏多 → 試單（不會是續抱）；有持股中性 → 續抱（不會是觀望）
@@ -89,6 +107,26 @@ class TestSixLayers(unittest.TestCase):
         self.assertEqual(act, "續抱")              # 過熱＋warning → 不加碼
         self.assertNotEqual(act, "減碼")           # warning 不得直接觸發減碼
         self.assertIn("valuation_warning", codes)
+
+    def test_layer6_very_expensive_no_warning_still_no_add(self):
+        # 回歸 bug #2（估值無天花板）：很貴＋全綠燈＋高 R/R，即使沒有 warning 字串，
+        # 仍不得判「加碼」；空手則不得判「試單」，只能觀望。
+        very_hot = {"band": "很貴", "warning": None, "current_percentile": 0.97,
+                    "fair_value": {"bear": 1400.0, "base": 1700.0, "bull": 2400.0}, "regime": "3y"}
+        act_hold, _, _, _ = _decide(valuation=very_hot, rr=5.0, confidence=95, holding=True)
+        self.assertEqual(act_hold, "續抱")
+        self.assertNotEqual(act_hold, "加碼")
+        act_flat, _, _, _ = _decide(valuation=very_hot, rr=5.0, confidence=95, holding=False)
+        self.assertEqual(act_flat, "觀望")
+        self.assertNotEqual(act_flat, "試單")
+
+    def test_layer6_expensive_caps_add_but_allows_hold(self):
+        # 偏貴：上限續抱（不得加碼），但仍可續抱（非強制觀望/減碼）。
+        pricey = {"band": "偏貴", "warning": None, "current_percentile": 0.80,
+                  "fair_value": {"bear": 90.0, "base": 120.0, "bull": 150.0}, "regime": "3y"}
+        act, _, _, _ = _decide(valuation=pricey, rr=5.0, confidence=95, holding=True)
+        self.assertEqual(act, "續抱")
+        self.assertNotEqual(act, "加碼")
 
 
 class TestPositionLayering(unittest.TestCase):
@@ -171,6 +209,46 @@ class TestDerivationConsistency(unittest.TestCase):
         rating = res["decision"]["rating"]
         direction = res["summary"]["direction"]
         self.assertFalse(rating == "觀望" and "偏空" == direction)
+
+    def test_legacy_position_synced_to_primary(self):
+        # 回歸 bug #3：legacy decision.position 要映射自 primary["position"]，
+        # 否則舊渲染會顯示跟 primary_decision 矛盾的金額/檔位。
+        primary, context, roles = build_primary_and_context(
+            price=2440.0, lights=["green", "green", "green"], lights_facts={},
+            valuation=VAL_OK, rr=3.5, defense_price=2245.0, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="amber",
+            confidence=90, profile=PROFILE, is_core_holding=False, holding=True)
+        self.assertEqual(primary["action"], "加碼")
+        res = {"stock_id": "2330", "summary": {}, "primary_decision": primary,
+               "context": context,
+               "decision": {"rating": "觀望",
+                            "position": {"tier": "空手", "amount": 0, "odd_lot": False,
+                                        "shares": 0, "reason": "舊值", "core_note": ""},
+                            "time_frames": {"swing": {"stance": "中性"}}}}
+        apply_derivations(res, primary, context)
+        pos = res["decision"]["position"]
+        self.assertEqual(pos["tier"], primary["position"]["tier"])
+        self.assertEqual(pos["amount"], primary["position"]["tier_amount"])
+        self.assertEqual(pos["lots"], primary["position"]["lots"])
+        self.assertEqual(pos["odd_shares"], primary["position"]["odd_shares"])
+        self.assertEqual(pos["shares"],
+                         primary["position"]["lots"] * 1000 + primary["position"]["odd_shares"])
+
+
+class TestLightsColorNormalization(unittest.TestCase):
+    def test_context_lights_only_allows_contract_colors(self):
+        # 規格條 4：輸出前 amber→yellow、na/缺資料→null；只允許 green/yellow/red/null。
+        primary, context, roles = build_primary_and_context(
+            price=100.0, lights=["amber", "na", "red"], lights_facts={},
+            valuation=VAL_OK, rr=2.0, defense_price=90.0, defense_broken=False,
+            fundamental_broken=False, chips_broken=False, market_light="amber",
+            confidence=50, profile=PROFILE, is_core_holding=False, holding=True)
+        colors = {k: v["color"] for k, v in context["lights"].items()}
+        self.assertEqual(colors["fundamental"], "yellow")   # amber → yellow
+        self.assertIsNone(colors["technical"])              # na → null
+        self.assertEqual(colors["chips"], "red")
+        for c in colors.values():
+            self.assertIn(c, ("green", "yellow", "red", None))
 
 
 if __name__ == "__main__":

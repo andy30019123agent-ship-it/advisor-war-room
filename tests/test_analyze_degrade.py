@@ -5,6 +5,7 @@ import pandas as pd
 
 from warroom.analyze_tw import (
     technical, rev_signals_from_df, chip_signals_from_df, fundamental, prior_n_high_low,
+    _normalize_news, _parse_news_date,
 )
 
 
@@ -131,6 +132,38 @@ class TestDegrade(unittest.TestCase):
         sig = chip_signals_from_df(chip, vol20=None)
         self.assertTrue(sig["sell_streak_ge3"])
         self.assertFalse(sig["ratio_gt_15pct"])
+
+
+class TestNewsNormalization(unittest.TestCase):
+    """规格條 8：evidence.news 要正規化成契約 {title, source, url, published_at}（ISO 日期）。"""
+
+    def test_normalize_gdelt_shape(self):
+        raw = [{"title": "台積電法說會展望佳", "url": "https://x.example/a",
+               "date": "20260716T083000Z", "src": "example.com"}]
+        out = _normalize_news(raw)
+        self.assertEqual(out, [{"title": "台積電法說會展望佳", "source": "example.com",
+                                "url": "https://x.example/a",
+                                "published_at": "2026-07-16T08:30:00+00:00"}])
+
+    def test_normalize_google_rss_shape(self):
+        raw = [{"title": "外資調升目標價", "url": "https://x.example/b",
+               "date": "Thu, 16 Jul 2026 04:00:00 GMT", "src": "Google News"}]
+        out = _normalize_news(raw)
+        self.assertEqual(out[0]["source"], "Google News")
+        self.assertEqual(out[0]["published_at"], "2026-07-16T04:00:00+00:00")
+
+    def test_normalize_unparseable_date_gives_null_not_string(self):
+        raw = [{"title": "某新聞", "url": "u", "date": "不是日期", "src": "s"}]
+        out = _normalize_news(raw)
+        self.assertIsNone(out[0]["published_at"])
+
+    def test_normalize_empty_safe(self):
+        self.assertEqual(_normalize_news([]), [])
+        self.assertEqual(_normalize_news(None), [])
+
+    def test_parse_news_date_none_on_empty(self):
+        self.assertIsNone(_parse_news_date(None))
+        self.assertIsNone(_parse_news_date(""))
 
 
 if __name__ == "__main__":

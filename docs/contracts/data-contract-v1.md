@@ -88,15 +88,15 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
       "swing": { "label": "波段 1-3 月（主）", "stance": "中性偏多", "basis": "..." },
       "mid":   { "label": "中期 3-12 月", "stance": "中性", "basis": "..." }
     },
-    "lights": {
+    "lights": {                    // color 只允許 green｜yellow｜red｜null（缺資料）；引擎內部的 amber/na 必須先正規化
       "fundamental": { "color": "yellow", "facts": ["營收 YoY +67.9%", "PER 32.8 落在近3年 82% 分位"] },
       "technical":   { "color": "green",  "facts": ["站上 MA20/60，多頭排列"] },
       "chips":       { "color": "red",    "facts": ["外資連 3 日賣超 1.6 萬張"] }
     },
     "valuation": {
-      "band": "偏貴",               // 便宜｜合理｜偏貴｜很貴
-      "base": 2150, "bull": 2600, "bear": 1900,
-      "regime": "3y",               // 用了哪個 regime 分位
+      "band": "偏貴",               // 便宜｜合理｜偏貴｜很貴｜null（資料不足時整組欄位給 null，前端顯示「估值資料不足」）
+      "base": 2150, "bull": 2600, "bear": 1900,   // 可為 null
+      "regime": "3y",               // 用了哪個 regime 分位；可為 null
       "warning": null               // Base 偏離現價 >25-35% 時給說明字串
     },
     "rr": 1.8

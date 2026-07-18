@@ -104,3 +104,8 @@
 ## 8. 明確不做（v1）
 
 多用戶/登入/雲端同步、使用者自訂到價提醒、美股個股引擎（仍是下一波優先，但不混進本案）、盤中即時全清單刷新（首頁只讀每日 snapshot）。
+
+## 9. Backlog（Codex 07-18 審查提出、判定不擋 v1）
+
+1. 引擎 layer 3 的持股狀態只認核心持股；使用者 localStorage 實際持股應能覆寫（前端對已持有的非核心股把「試單/觀望」語意換成持有視角，或 API 帶持股參數）。
+2. 舊靜態報告 report_stock.py 仍強制讀手寫 narration.json；若要保留舊站活著，應 fallback 用 primary_decision.readable_reason＋evidence.roles 自動生成（目前舊站定位＝唯讀存檔，故延後）。
