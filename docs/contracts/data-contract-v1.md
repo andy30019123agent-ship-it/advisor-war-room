@@ -289,3 +289,50 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 - **`data/forecast_log.json`** 讀壞檔改 fail-closed（警告＋跳過本次寫入、不覆寫歷史），與 recommendation_log／scenario_log 三支 log 行為一致。
 - **`data/recommendation_log.json`** 的 `backfill_outcomes` 已接進 `build_snapshots.main()`（先回填再組 track_stats）；命中率口徑：看多建議報酬為正、防禦（減碼）建議報酬不為正即算命中，**觀望（無方向主張）一律排除**在統計之外。
 - **交易資料日**：行情日缺時退所有個股 `as_of_date` 最大值；兩者皆無 → 跳過 forecast/scenario log 寫入（不記非交易日樣本）。複評日 `reeval_date`＝+7 曆日後「下一交易日對齊」（週六→+2、週日→+1；近似，不接國定假日行事曆）。
+
+---
+
+## v1.5 增補（2026-07-19，Andy 拍板 ABCD 四包全做）
+
+### daily.json 新增
+
+```jsonc
+"today_command": {                  // D 包・今日指令中心（首頁主角，全部由引擎規則生成）
+  "headline": "風險 9/10：今天不開新倉，只守防守價。",   // 一句話 ≤25 字
+  "action": { "text": "若台積電收盤跌破 2,107，波段部位減半。", "stock_id": "2330" },  // 最多一個；無動作日給 null
+  "todos": [                        // 0-3 條，急迫排序；來源：距防守 <3%、複評日到期、曝險超標、事件明日
+    { "text": "聯發科距防守價只剩 2.1%，今天留意收盤", "stock_id": "2454", "kind": "defense_near" }
+  ]
+},
+"delta": {                          // 昨→今變了什麼（與上一份 snapshot 比；首日/缺前檔給 null）
+  "since": "2026-07-17",
+  "items": ["台積電 續抱→減碼（跌破防守）", "風險溫度 7→9", "新增監控：長榮"]   // 只列有變的，≤5 條
+},
+"picks": {                          // B 包・主動選股（候選池→三準則評分→風控閘門）
+  "generated_from": "tw-stock-screener opportunities + FinMind",
+  "gate": "禁止新增部位",           // 引 exposure_guidance.new_position
+  "note": "大盤禁新倉：短線/波段今日不推新倉，長線名單僅供研究等解禁。",  // gate 觸發時的誠實說明
+  "short": [],                      // 禁新倉時空陣列
+  "swing": [],
+  "long": [                         // 每檔＝操作卡（欄位同 pick 結構）
+    { "id": "2308", "name": "台達電", "close": 305.0, "score": 78, "confidence": 65,
+      "action_summary": "分批佈局區 290-300，跌破 275 停損",
+      "entry_zone": [290, 300], "defense_price": 275,
+      "invalidation": "跌破 275 或營收連 2 月轉負",
+      "reasons": ["營收 YoY 連 6 月正成長", "PER 落在 3 年 35% 分位", "外資連 5 日買超"] }
+  ]
+}
+```
+
+規則：short ≤1、swing ≤3、long ≤5；被選標的當日會跑完整 analyze（有 stocks/<id>.json 可點進去）；score/評分準則寫死可揭露（短線=動能+量+籌碼轉向；波段=均線結構+RS+法人連續+R/R≥1.8；長線=營收/獲利品質+估值分位+安全邊際）；文案全條件式禁明牌語言。
+
+### stocks/<id>.json
+
+`price.change_pct` 從 null 改為真值（引擎由日線倒數兩根計算）。
+
+### App 行為（不進 JSON 契約）
+
+- deeplink：`/?stock=2330` 開啟即進查股票並載入該股（TG 警報訊息附此連結）。
+- 核心持股（is_core_holding）在持股頁顯示核心語言（「定期定額照常」），不套波段防守模板。
+- C 包・交易日誌全存 localStorage（`journal` key：{date, stock_id, action, price, qty, followed_advice, note}）；連敗保護＝前端規則（journal 連續 2 筆停損 → 部位建議顯示減半＋警示；3 筆 → 建議只觀察）；週五覆盤卡與分層戰績由前端從 journal＋track 計算。
+- track_stats 擴充（引擎）：per timeframe 分層（short/swing/long 各自 n 與 hit_rate，樣本 <5 null）。
