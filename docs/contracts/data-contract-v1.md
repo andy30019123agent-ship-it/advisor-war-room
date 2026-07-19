@@ -373,3 +373,34 @@ pick 新增欄位：`tenure_days`（連續入榜天數）、`sector`（族群名
 
 - **picks 進場監控**：picks 各池標的的 entry 錨點當日直接寫進 `alerts_snapshot`（type=entry、source="picks"），不必等加入 tracked——到價即 TG 提醒。alerts_snapshot entry 加 `source` 欄位（"tracked"|"picks"）。
 - **前端**：精選卡「＋監控」按鈕（POST /api/track，同查股頁）；查股頁分析結果加「記一筆」按鈕（預填代號/名稱/現價 開 journal 表單）；連敗冷靜期作用於下單建議顯示——streak≥2 時 StockSearch/精選卡的部位/試單金額顯示減半並標「冷靜期」、≥3 顯示「暫停新倉」。
+
+---
+
+## v1.7 增補（2026-07-19 下午二，Andy 拍板：K 線疊層/中長線方向判讀/盤中現價）
+
+### stocks/<id>.json 新增
+
+```jsonc
+"ohlc": [                           // 過去 60 交易日日 K（K 線圖用；缺資料 null 整組）
+  { "d": "2026-07-17", "o": 2300, "h": 2320, "l": 2280, "c": 2290, "v": 45123 }
+],
+"mid_long_reads": {                 // 中長線方向判讀（取代「只會變寬的區間」的操作價值空缺）
+  "swing": {                        // 波段 1-3 月
+    "bias": "中性偏空",             // 五檔 stance 同 primary
+    "path_text": "可能先回測 MA120 2,094，不破且法人止賣才有波段反轉條件",
+    "flip_condition": "站回 MA60 2,324 且連 2 日買超 → 轉中性偏多",
+    "basis": ["月線結構空方", "估值偏貴", "外資連賣"]   // 2-3 條含數字更好
+  },
+  "mid": { ... }                    // 中期 3-12 月（估值/基本面趨勢為主）
+}
+```
+
+規則：bias 派生自 primary_decision 的 timeframes stance（禁另算）；path_text/flip_condition 錨點沿用 ≤15%/已有關鍵位規則、與劇本語言一致；mid 的 basis 以估值 band＋營收趨勢＋產業結構為主。K 線疊層線＝defense_price/entry 錨/劇本價位（前端從既有欄位取，不新增）。
+
+### 新 API：GET /api/quote?ids=2330,2454
+
+serverless 代理 TWSE MIS 即時報價（純 stdlib；瀏覽器直打 MIS 有 CORS 擋所以走代理）。回 `{ "2330": {"price": 2295, "change_pct": 0.2, "at": "10:32", "stale": false} }`；上限 12 檔/次；per-instance 60 秒快取；非交易時段回 `{stale: true, price: null}`（前端 fallback 收盤價）。限流同 analyze 模式。
+
+### App 行為
+
+開啟/切前景時對「持股＋監控＋當前查詢股」抓 /api/quote 刷新現價與距防守 %；顯示「盤中 HH:MM」徽章與收盤價區別；盤外自動退回快照收盤（徽章維持「MM-DD 收盤」）。分析結論不因盤中價重算（收盤級決策設計不變）。K 線漲跌用色**沿用全站綠漲紅跌**（與台股看盤軟體紅漲相反——為 App 內一致性，圖上加一次性小註「綠漲紅跌」）。
