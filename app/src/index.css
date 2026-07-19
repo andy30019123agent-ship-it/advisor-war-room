@@ -1633,3 +1633,305 @@ header.page-header {
 }
 
 .pill.down { background: rgba(193, 51, 40, 0.1); color: var(--red); }
+
+/* ---------- 今日精選（PicksSection，B 包） ---------- */
+
+.picks-gate-banner {
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.picks-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+}
+
+.picks-tab {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(118, 118, 128, 0.12);
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.picks-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.picks-tab .n {
+  font-weight: 500;
+  opacity: 0.85;
+  margin-left: 2px;
+}
+
+.picks-empty {
+  padding: 22px 16px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.picks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pick-card {
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pick-card summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 14px;
+  min-height: 44px;
+}
+
+.pick-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.pick-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pick-name {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pick-code {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-soft);
+  margin-left: 4px;
+}
+
+.pick-close {
+  font-size: 15px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.pick-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.pick-conf {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.pick-conf-bar-track {
+  width: 34px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(74, 85, 199, 0.16);
+  overflow: hidden;
+}
+
+.pick-conf-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.pick-conf-num {
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+.pick-summary {
+  font-size: 13.5px;
+  color: var(--text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.pick-card[open] summary .chevron {
+  transform: rotate(90deg);
+}
+
+.pick-card summary .chevron {
+  transition: transform 200ms ease;
+  flex-shrink: 0;
+}
+
+.pick-card summary .pick-summary-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pick-card summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pick-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--hairline);
+}
+
+.pick-entry-zone {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(74, 85, 199, 0.1);
+  color: var(--accent);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pick-meta-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 13.5px;
+  border-top: 1px solid var(--hairline);
+}
+
+.pick-meta-row .k {
+  color: var(--text-soft);
+}
+
+.pick-meta-row .v {
+  color: var(--red);
+  font-weight: 600;
+  text-align: right;
+}
+
+.pick-reasons {
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--hairline);
+}
+
+.pick-reasons p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-soft);
+}
+
+.pick-detail-btn {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(74, 85, 199, 0.1);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.picks-disclaimer {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+  padding: 10px 4px 0;
+}
+
+.picks-collapsed-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--card);
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.picks-collapsed-entry .picks-collapsed-sub {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-soft);
+  margin-left: 6px;
+}
+
+/* ---------- C 包・交易日誌／連敗保護／本週覆盤（data-contract-v1.md v1.5「App 行為」節） ---------- */
+
+.streak-alert {
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.streak-alert.amber {
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+.streak-alert.red {
+  background: rgba(193, 51, 40, 0.1);
+  color: var(--red);
+}
+
+.weekly-comment {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.weekly-comment.good { color: var(--green); }
+.weekly-comment.bad { color: var(--red); }
+
+/* 交易日誌表單裡「買賣別」「是否照建議操作」是按鈕群組（unit-toggle），不是單一 input，
+   跟 .field label 用同樣文字樣式，但不用 <label for> 綁不存在的 id（a11y lint 會噴
+   「Incorrect use of <label for>」）。 */
+.field-label-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.journal-entry-btn {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(74, 85, 199, 0.1);
+  border: none;
+  border-radius: 8px;
+  /* 持股清單裡的「記一筆」常落在螢幕下緣，滾動對齊（scrollIntoView／鍵盤 focus）容易讓
+     它剛好卡在固定 tabbar 底下（tabbar 半透明模糊、視覺上還看得到一點，容易誤觸到 tabbar
+     而不是這顆按鈕）。留出跟 tabbar 同高的滾動邊界，逼捲動多留一點空間閃開它。 */
+  scroll-margin-bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
+}

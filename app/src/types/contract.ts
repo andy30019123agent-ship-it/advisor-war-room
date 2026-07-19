@@ -84,6 +84,11 @@ export const DailyEventSchema = z.object({
   label: z.string(),
 })
 
+export const TrackStatsByTimeframeEntrySchema = z.object({
+  n: z.number(),
+  hit_rate: z.number().nullable(),
+})
+
 export const TrackStatsSchema = z.object({
   n: z.number(),
   closed: z.number(),
@@ -91,6 +96,16 @@ export const TrackStatsSchema = z.object({
   hit_rate_20d: z.number().nullable(),
   hit_rate_60d: z.number().nullable(),
   note: z.string(),
+  // C 包・戰績分層（v1.5 增補）：short/swing/long 各自 n 與 hit_rate，樣本 <5 時引擎給
+  // hit_rate=null。整組 optional：舊 daily.json（引擎尚未補上這欄位）時前端不顯示分層列
+  // （契約硬規則 3，graceful degrade）。
+  by_timeframe: z
+    .object({
+      short: TrackStatsByTimeframeEntrySchema,
+      swing: TrackStatsByTimeframeEntrySchema,
+      long: TrackStatsByTimeframeEntrySchema,
+    })
+    .optional(),
 })
 
 // ---------- v1.5 增補（docs/contracts/data-contract-v1.md「v1.5 增補」節）----------
@@ -124,6 +139,35 @@ export type TodayCommandAction = z.infer<typeof TodayCommandActionSchema>
 export type TodayCommand = z.infer<typeof TodayCommandSchema>
 export type Delta = z.infer<typeof DeltaSchema>
 
+// B 包・今日精選（docs/contracts/data-contract-v1.md「v1.5 增補」節 daily.picks）：
+// 主動選股候選池，經三準則評分＋風控閘門後產出，禁新倉時 short/swing 給空陣列＋note。
+// 整組 optional/nullable：舊資料（引擎尚未補上這欄位）時前端整區隱藏（契約硬規則 3）。
+
+export const PickSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  close: z.number().nullable(),
+  score: z.number(),
+  confidence: z.number().min(0).max(100),
+  action_summary: z.string(),
+  entry_zone: z.tuple([z.number(), z.number()]).nullable(),
+  defense_price: z.number().nullable(),
+  invalidation: z.string(),
+  reasons: z.array(z.string()),
+})
+
+export const PicksSchema = z.object({
+  generated_from: z.string(),
+  gate: z.string(),
+  note: z.string(),
+  short: z.array(PickSchema),
+  swing: z.array(PickSchema),
+  long: z.array(PickSchema),
+})
+
+export type Pick = z.infer<typeof PickSchema>
+export type Picks = z.infer<typeof PicksSchema>
+
 export const DailySchema = z.object({
   meta: MetaSchema,
   market: MarketSchema,
@@ -136,6 +180,7 @@ export const DailySchema = z.object({
   track_stats: TrackStatsSchema.optional().nullable(),
   today_command: TodayCommandSchema.optional().nullable(),
   delta: DeltaSchema.optional().nullable(),
+  picks: PicksSchema.optional().nullable(),
 })
 
 export type Daily = z.infer<typeof DailySchema>
@@ -144,6 +189,8 @@ export type WatchItem = z.infer<typeof WatchItemSchema>
 export type ExposureGuidance = z.infer<typeof ExposureGuidanceSchema>
 export type DailyEvent = z.infer<typeof DailyEventSchema>
 export type TrackStats = z.infer<typeof TrackStatsSchema>
+export type TrackStatsByTimeframeEntry = z.infer<typeof TrackStatsByTimeframeEntrySchema>
+export type TrackTimeframeKey = 'short' | 'swing' | 'long'
 
 // ---------- stocks/<id>.json ----------
 

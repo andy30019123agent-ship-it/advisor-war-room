@@ -5,9 +5,17 @@ import { loadHoldings, saveHolding, deleteHolding, type Holding } from '../lib/h
 import { loadTotalCapital, saveTotalCapital } from '../lib/settings'
 import { formatShares, SHARES_PER_LOT } from '../lib/shares'
 import { fmtPct, pctClass } from '../lib/format'
+import { loadJournal, type JournalEntry } from '../lib/journal'
 import { FreshnessBadge } from '../components/FreshnessBadge'
+import { StreakAlertBanner } from '../components/StreakAlertBanner'
+import { JournalEntryFormModal } from '../components/JournalEntryFormModal'
+import { JournalListModal } from '../components/JournalListModal'
 import { IconEmptyBriefcase, IconPlus, IconTrash, IconClose, IconChevron } from '../components/icons'
 import type { Daily, StockDetail } from '../types/contract'
+
+// 單檔集中度紅線（規格 4.）：單檔市值超過總資金這個比例就提醒集中風險，跟
+// exposure_guidance.max_equity_pct（整體曝險上限）是兩件事，各自獨立判定。
+const CONCENTRATION_LIMIT_PCT = 40
 
 // 自加持股若不在追蹤清單（daily.tracked）裡，daily.json 沒有它的現價/決策，
 // 改即時打 fetchStockDetail（fallback /api/analyze 現算）補上。staleTime 拉到
@@ -29,6 +37,12 @@ export function Holdings() {
   const [editing, setEditing] = useState<Holding | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [totalCapital, setTotalCapital] = useState<number>(() => loadTotalCapital())
+
+  // C 包・交易日誌（規格 1.）：quickJournalSeed＝從某檔持股卡按「記一筆」帶入的預填；
+  // showJournalList＝頂部「交易日誌」入口開的全列表。
+  const [journal, setJournal] = useState<JournalEntry[]>(() => loadJournal())
+  const [quickJournalSeed, setQuickJournalSeed] = useState<{ stock_id: string; name: string } | null>(null)
+  const [showJournalList, setShowJournalList] = useState(false)
 
   const { data: daily } = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
 
@@ -195,6 +209,14 @@ export function Holdings() {
   const maxEquityPct = daily?.exposure_guidance?.max_equity_pct ?? null
   const overExposed = maxEquityPct != null && exposurePct != null && exposurePct > maxEquityPct
 
+  // 單檔集中度（規格 4.）：跟整體曝險超標是兩件事，各自獨立判定、獨立顯示。
+  const concentrationWarnings =
+    totalCapital > 0
+      ? enriched
+          .map((e) => ({ name: e.holding.name || e.holding.id, id: e.holding.id, pct: (e.marketValue / totalCapital) * 100 }))
+          .filter((c) => c.pct > CONCENTRATION_LIMIT_PCT)
+      : []
+
   return (
     <main className="screen">
       <header className="page-header">
@@ -203,6 +225,14 @@ export function Holdings() {
         </div>
         <div className="large-title">持股</div>
       </header>
+
+      <StreakAlertBanner entries={journal} />
+
+      <div className="group" style={{ padding: '0 16px 8px', display: 'flex', justifyContent: 'flex-end' }}>
+        <button type="button" className="journal-entry-btn" onClick={() => setShowJournalList(true)}>
+          交易日誌
+        </button>
+      </div>
 
       {holdings.length === 0 ? (
         <div className="empty-state">
@@ -256,6 +286,16 @@ export function Holdings() {
                 <>
                   <div className="hairline" />
                   <div className="exposure-warn">超過建議上限 {maxEquityPct}%</div>
+                </>
+              )}
+              {concentrationWarnings.length > 0 && (
+                <>
+                  <div className="hairline" />
+                  {concentrationWarnings.map((c) => (
+                    <div className="exposure-warn" key={c.id}>
+                      {c.name} 佔比 {c.pct.toFixed(1)}%，超過 {CONCENTRATION_LIMIT_PCT}% 集中風險
+                    </div>
+                  ))}
                 </>
               )}
             </div>
@@ -356,6 +396,15 @@ export function Holdings() {
                         )
                       )}
                     </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                      <button
+                        type="button"
+                        className="journal-entry-btn"
+                        onClick={() => setQuickJournalSeed({ stock_id: h.id, name: h.name || h.id })}
+                      >
+                        記一筆
+                      </button>
+                    </div>
                     {!e.isPureCore && e.plan.length > 0 && (
                       <details className="plan-disclosure">
                         <summary>
@@ -392,6 +441,19 @@ export function Holdings() {
           onSave={handleSave}
           onDelete={holdings.some((h) => h.id === editing.id) ? () => handleDelete(editing.id) : undefined}
         />
+      )}
+
+      {quickJournalSeed && (
+        <JournalEntryFormModal
+          seed={quickJournalSeed}
+          onClose={() => setQuickJournalSeed(null)}
+          onSaved={setJournal}
+          onDeleted={setJournal}
+        />
+      )}
+
+      {showJournalList && (
+        <JournalListModal entries={journal} onClose={() => setShowJournalList(false)} onChange={setJournal} />
       )}
     </main>
   )

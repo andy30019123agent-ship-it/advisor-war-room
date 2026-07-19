@@ -10,6 +10,7 @@ import { IconSearch } from '../components/icons'
 import { ForecastFan } from '../components/ForecastFan'
 import { ShortScenarios } from '../components/ShortScenarios'
 import { GlossaryCard } from '../components/GlossaryCard'
+import { PicksSection } from '../components/PicksSection'
 import type { Daily, StockDetail } from '../types/contract'
 
 export function StockSearch() {
@@ -51,6 +52,7 @@ export function StockSearch() {
   function searchAgain(id: string) {
     setInputValue(id)
     setQueryId(id)
+    window.scrollTo({ top: 0 })
   }
 
   return (
@@ -90,6 +92,8 @@ export function StockSearch() {
           </div>
         </div>
       )}
+
+      <PicksSection daily={daily} collapsed={queryId !== null} onSelectStock={searchAgain} />
 
       {queryId === null && (
         <>

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-07-17",
-    "generated_at": "2026-07-19T10:40:27+08:00",
+    "generated_at": "2026-07-19T11:01:55+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -110,7 +110,7 @@
   },
   "events": [],
   "track_stats": {
-    "n": 6,
+    "n": 11,
     "closed": 0,
     "hit_rate_5d": null,
     "hit_rate_20d": null,
@@ -122,7 +122,7 @@
         "hit_rate": null
       },
       "swing": {
-        "n": 6,
+        "n": 11,
         "hit_rate": null
       },
       "long": {
@@ -136,5 +136,109 @@
     "action": null,
     "todos": []
   },
-  "delta": null
+  "delta": null,
+  "picks": {
+    "generated_from": "tw-stock-screener opportunities + FinMind",
+    "gate": "禁止新增部位",
+    "note": "大盤禁新倉：短線/波段今日不推新倉，長線名單僅供研究、等解禁再佈局。",
+    "short": [],
+    "swing": [],
+    "long": [
+      {
+        "id": "2207",
+        "name": "和泰車",
+        "close": 486.0,
+        "score": 81.8,
+        "confidence": 67,
+        "action_summary": "大盤禁新倉，觀察區 468.0-481.1，等大盤解禁再佈局",
+        "entry_zone": [
+          468.0,
+          481.1
+        ],
+        "defense_price": 452.8,
+        "invalidation": "跌破 452.8 或營收連 2 月轉負或估值回到高分位",
+        "reasons": [
+          "營收 YoY +51.2%，近 3 月均 +32.8%",
+          "PER 落在歷史 5% 分位",
+          "殖利率 4.1%"
+        ]
+      },
+      {
+        "id": "3045",
+        "name": "台灣大",
+        "close": 111.0,
+        "score": 73.3,
+        "confidence": 61,
+        "action_summary": "大盤禁新倉，觀察區 108.8-111.0，等大盤解禁再佈局",
+        "entry_zone": [
+          108.8,
+          111.0
+        ],
+        "defense_price": 108.5,
+        "invalidation": "跌破 108.5 或營收連 2 月轉負或估值回到高分位",
+        "reasons": [
+          "營收 YoY +6.6%，近 3 月均 +4.1%",
+          "PER 落在歷史 6% 分位",
+          "殖利率 4.3%"
+        ]
+      },
+      {
+        "id": "2884",
+        "name": "玉山金",
+        "close": 35.1,
+        "score": 67.0,
+        "confidence": 57,
+        "action_summary": "大盤禁新倉，觀察區 34.0-34.7，等大盤解禁再佈局",
+        "entry_zone": [
+          34.0,
+          34.7
+        ],
+        "defense_price": 31.5,
+        "invalidation": "跌破 31.5 或營收連 2 月轉負或估值回到高分位",
+        "reasons": [
+          "營收 YoY +25.3%，近 3 月均 +32.6%",
+          "PER 落在歷史 8% 分位",
+          "殖利率 4.0%"
+        ]
+      },
+      {
+        "id": "2912",
+        "name": "統一超",
+        "close": 243.0,
+        "score": 67.0,
+        "confidence": 57,
+        "action_summary": "大盤禁新倉，觀察區 227.9-240.6，等大盤解禁再佈局",
+        "entry_zone": [
+          227.9,
+          240.6
+        ],
+        "defense_price": 216.6,
+        "invalidation": "跌破 216.6 或營收連 2 月轉負或估值回到高分位",
+        "reasons": [
+          "營收 YoY +6.3%，近 3 月均 +5.5%",
+          "PER 落在歷史 12% 分位",
+          "殖利率 3.7%"
+        ]
+      },
+      {
+        "id": "1101",
+        "name": "台泥",
+        "close": 23.5,
+        "score": 63.1,
+        "confidence": 54,
+        "action_summary": "大盤禁新倉，觀察區 23.0-23.5，等大盤解禁再佈局",
+        "entry_zone": [
+          23.0,
+          23.5
+        ],
+        "defense_price": 21.4,
+        "invalidation": "跌破 21.4 或營收連 2 月轉負或估值回到高分位",
+        "reasons": [
+          "營收 YoY +32.4%，近 3 月均 +9.5%",
+          "PER 落在歷史 28% 分位",
+          "殖利率 3.4%"
+        ]
+      }
+    ]
+  }
 }

@@ -1,9 +1,13 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail, SchemaMismatchError } from '../lib/api'
 import { FreshnessBadge } from '../components/FreshnessBadge'
+import { StreakAlertBanner } from '../components/StreakAlertBanner'
 import { IconChevron } from '../components/icons'
 import { GlossaryCard } from '../components/GlossaryCard'
-import type { TrackEntry, TrackStats } from '../types/contract'
+import { loadJournal, getWeeklyReview } from '../lib/journal'
+import type { TrackEntry, TrackStats, TrackTimeframeKey } from '../types/contract'
+
+const TIMEFRAME_LABEL: Record<TrackTimeframeKey, string> = { short: '短線', swing: '波段', long: '長線' }
 
 // hit_rate_* 與 outcome.r5/r20/r60 在契約裡都是 ratio（0.8＝80%、0.0567＝5.67%），
 // 顯示要乘 100，直接接 % 會把 0.8 顯示成「1%」（07-18 覆核 #4）。
@@ -45,8 +49,86 @@ function TrackStatsCard({ stats }: { stats: TrackStats }) {
             </div>
           </div>
         </div>
+        {stats.by_timeframe && (
+          <>
+            <div className="hairline" />
+            <div className="portfolio-grid" style={{ padding: '14px 16px' }}>
+              {(Object.keys(TIMEFRAME_LABEL) as TrackTimeframeKey[]).map((tf) => {
+                const entry = stats.by_timeframe![tf]
+                return (
+                  <div className="stat" key={tf}>
+                    <span className="stat-label">
+                      {TIMEFRAME_LABEL[tf]}（{entry.n} 筆）
+                    </span>
+                    <span className={`stat-value mono${entry.hit_rate == null ? ' muted' : ''}`}>
+                      {fmtHitRate(entry.hit_rate)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
         <div className="hairline" />
         <p className="stat-note">{stats.note}</p>
+      </div>
+    </div>
+  )
+}
+
+// C 包・週五覆盤卡（規格 2.）：每天都顯示、標題帶本週區間；無日誌時顯示引導文案，
+// 不編假數字。統計邏輯在 lib/journal.ts 的 getWeeklyReview（可測）。
+function WeeklyReviewCard() {
+  const journal = loadJournal()
+  const review = getWeeklyReview(journal)
+
+  return (
+    <div className="group">
+      <div className="summary-card">
+        <div className="summary-inner">
+          <div className="row-top" style={{ marginBottom: review.count > 0 ? 14 : 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>本週覆盤</span>
+            <span style={{ fontSize: 13, color: 'var(--text-soft)' }}>{review.week.label}</span>
+          </div>
+
+          {review.count === 0 ? (
+            <p className="stat-note" style={{ padding: 0 }}>
+              這週還沒有交易紀錄。持股頁「記一筆」記下每次買賣，週覆盤才能看出是模型錯還是自己沒照計畫。
+            </p>
+          ) : (
+            <>
+              <div className="portfolio-grid">
+                <div className="stat">
+                  <span className="stat-label">本週筆數</span>
+                  <span className="stat-value mono">{review.count}</span>
+                </div>
+                <div className="stat">
+                  <span className="stat-label">照建議比例</span>
+                  <span className="stat-value mono">
+                    {review.followedRatio != null ? `${Math.round(review.followedRatio * 100)}%` : '—'}
+                  </span>
+                </div>
+                <div className="stat">
+                  <span className="stat-label">本週實現損益</span>
+                  {review.realizedPnl != null ? (
+                    <span className={`stat-value mono ${review.realizedPnl > 0 ? 'up' : review.realizedPnl < 0 ? 'down' : ''}`}>
+                      {review.realizedPnl > 0 ? '+' : ''}
+                      {Math.round(review.realizedPnl).toLocaleString()}
+                    </span>
+                  ) : (
+                    <span className="stat-value mono muted">
+                      {review.buyCount} 買 / {review.sellCount} 賣（算不出損益）
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="hairline" style={{ margin: '14px 0' }} />
+              <p className={`weekly-comment${review.followedRatio != null && review.followedRatio >= 0.8 ? ' good' : review.followedRatio != null && review.followedRatio < 0.5 ? ' bad' : ''}`}>
+                {review.comment}
+              </p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -87,6 +169,8 @@ function daysSince(dateStr: string): number {
 export function Track() {
   // 戰績頁＝聚合追蹤清單裡每一檔的 track 歷史（來源：daily.json 的 tracked[]，逐檔讀 stocks/<id>.json）。
   const dailyQuery = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
+  // C 包・連敗保護（規格 3.）：Track 頁跟 Holdings 共用同一份 localStorage 日誌與同一套判定。
+  const journal = loadJournal()
   const trackedIds = dailyQuery.data?.tracked.map((t) => t.id) ?? []
   const trackedIdSet = new Set(trackedIds)
 
@@ -129,6 +213,8 @@ export function Track() {
         <div className="large-title">戰績</div>
       </header>
 
+      <StreakAlertBanner entries={journal} />
+
       {isLoading && (
         <div className="group">
           <div className="list-card" style={{ padding: 16 }}>
@@ -147,6 +233,8 @@ export function Track() {
       {!isLoading && !dailyQuery.isError && dailyQuery.data?.track_stats && (
         <TrackStatsCard stats={dailyQuery.data.track_stats} />
       )}
+
+      {!isLoading && !dailyQuery.isError && <WeeklyReviewCard />}
 
       {!isLoading && !dailyQuery.isError && <MethodExplainer />}
 

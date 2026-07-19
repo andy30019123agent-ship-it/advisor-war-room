@@ -4,37 +4,92 @@
   "title": "daily.json（今日戰術台）",
   "description": "對應 docs/contracts/data-contract-v1.md 的 daily.json 區塊。",
   "type": "object",
-  "required": ["meta", "market", "core_holdings", "tracked", "watch", "alerts_snapshot"],
+  "required": [
+    "meta",
+    "market",
+    "core_holdings",
+    "tracked",
+    "watch",
+    "alerts_snapshot"
+  ],
   "additionalProperties": false,
   "properties": {
-    "meta": { "$ref": "#/definitions/meta" },
+    "meta": {
+      "$ref": "#/definitions/meta"
+    },
     "market": {
       "type": "object",
-      "required": ["status", "risk_temp", "conclusion", "taiex", "us"],
+      "required": [
+        "status",
+        "risk_temp",
+        "conclusion",
+        "taiex",
+        "us"
+      ],
       "additionalProperties": false,
       "properties": {
-        "status": { "type": "string", "enum": ["偏多進攻", "中性", "偏空防禦"] },
-        "risk_temp": { "type": "number", "minimum": 1, "maximum": 10 },
-        "conclusion": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "偏多進攻",
+            "中性",
+            "偏空防禦"
+          ]
+        },
+        "risk_temp": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "conclusion": {
+          "type": "string",
+          "minLength": 1
+        },
         "taiex": {
           "type": "object",
-          "required": ["close", "change_pct"],
+          "required": [
+            "close",
+            "change_pct"
+          ],
           "additionalProperties": false,
           "properties": {
-            "close": { "type": ["number", "null"] },
-            "change_pct": { "type": ["number", "null"] }
+            "close": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "change_pct": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
           }
         },
         "us": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["id", "name", "change_pct"],
+            "required": [
+              "id",
+              "name",
+              "change_pct"
+            ],
             "additionalProperties": false,
             "properties": {
-              "id": { "type": "string" },
-              "name": { "type": "string" },
-              "change_pct": { "type": ["number", "null"] }
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "change_pct": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
             }
           }
         }
@@ -44,13 +99,26 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "name", "action", "note"],
+        "required": [
+          "id",
+          "name",
+          "action",
+          "note"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "action": { "type": "string" },
-          "note": { "type": "string" }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
         }
       }
     },
@@ -58,21 +126,54 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "name", "close", "change_pct", "decision"],
+        "required": [
+          "id",
+          "name",
+          "close",
+          "change_pct",
+          "decision"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "close": { "type": ["number", "null"] },
-          "change_pct": { "type": ["number", "null"] },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "close": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "change_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "decision": {
             "type": "object",
-            "required": ["action", "readable_reason", "defense_price"],
+            "required": [
+              "action",
+              "readable_reason",
+              "defense_price"
+            ],
             "additionalProperties": false,
             "properties": {
-              "action": { "type": "string" },
-              "readable_reason": { "type": "string" },
-              "defense_price": { "type": ["number", "null"] }
+              "action": {
+                "type": "string"
+              },
+              "readable_reason": {
+                "type": "string"
+              },
+              "defense_price": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
             }
           }
         }
@@ -82,12 +183,22 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "name", "wait_condition"],
+        "required": [
+          "id",
+          "name",
+          "wait_condition"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "wait_condition": { "type": "string" }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "wait_condition": {
+            "type": "string"
+          }
         }
       }
     },
@@ -95,61 +206,170 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "name", "type", "price", "direction"],
+        "required": [
+          "id",
+          "name",
+          "type",
+          "price",
+          "direction"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "type": { "type": "string", "enum": ["defense", "entry"] },
-          "price": { "type": "number" },
-          "direction": { "type": "string", "enum": ["below", "above"] }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "defense",
+              "entry"
+            ]
+          },
+          "price": {
+            "type": "number"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "below",
+              "above"
+            ]
+          }
         }
       }
     },
     "exposure_guidance": {
       "type": "object",
-      "required": ["risk_temp", "max_equity_pct", "min_cash_pct", "new_position", "note"],
+      "required": [
+        "risk_temp",
+        "max_equity_pct",
+        "min_cash_pct",
+        "new_position",
+        "note"
+      ],
       "additionalProperties": false,
       "properties": {
-        "risk_temp": { "type": "integer", "minimum": 1, "maximum": 10 },
-        "max_equity_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "min_cash_pct": { "type": "number", "minimum": 0, "maximum": 100 },
-        "new_position": { "type": "string", "enum": ["禁止新增部位", "僅限試單", "可正常布局"] },
-        "note": { "type": "string" }
+        "risk_temp": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "max_equity_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "min_cash_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "new_position": {
+          "type": "string",
+          "enum": [
+            "禁止新增部位",
+            "僅限試單",
+            "可正常布局"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
       }
     },
     "events": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["date", "id", "name", "type", "label"],
+        "required": [
+          "date",
+          "id",
+          "name",
+          "type",
+          "label"
+        ],
         "additionalProperties": false,
         "properties": {
-          "date": { "type": "string" },
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "type": { "type": "string", "enum": ["earnings", "ex_dividend", "revenue", "event"] },
-          "label": { "type": "string" }
+          "date": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "earnings",
+              "ex_dividend",
+              "revenue",
+              "event"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
         }
       }
     },
     "track_stats": {
       "type": "object",
-      "required": ["n", "closed", "hit_rate_5d", "hit_rate_20d", "hit_rate_60d", "note"],
+      "required": [
+        "n",
+        "closed",
+        "hit_rate_5d",
+        "hit_rate_20d",
+        "hit_rate_60d",
+        "note"
+      ],
       "additionalProperties": false,
       "properties": {
-        "n": { "type": "integer", "minimum": 0 },
-        "closed": { "type": "integer", "minimum": 0 },
-        "hit_rate_5d": { "type": ["number", "null"] },
-        "hit_rate_20d": { "type": ["number", "null"] },
-        "hit_rate_60d": { "type": ["number", "null"] },
-        "note": { "type": "string" },
+        "n": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hit_rate_5d": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "hit_rate_20d": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "hit_rate_60d": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "note": {
+          "type": "string"
+        },
         "by_timeframe": {
           "type": "object",
           "properties": {
-            "short": { "$ref": "#/definitions/timeframe_stat" },
-            "swing": { "$ref": "#/definitions/timeframe_stat" },
-            "long": { "$ref": "#/definitions/timeframe_stat" }
+            "short": {
+              "$ref": "#/definitions/timeframe_stat"
+            },
+            "swing": {
+              "$ref": "#/definitions/timeframe_stat"
+            },
+            "long": {
+              "$ref": "#/definitions/timeframe_stat"
+            }
           },
           "additionalProperties": false
         }
@@ -157,20 +377,36 @@
     },
     "today_command": {
       "type": "object",
-      "required": ["headline", "action", "todos"],
+      "required": [
+        "headline",
+        "action",
+        "todos"
+      ],
       "additionalProperties": false,
       "properties": {
-        "headline": { "type": "string", "maxLength": 25 },
+        "headline": {
+          "type": "string",
+          "maxLength": 25
+        },
         "action": {
           "oneOf": [
-            { "type": "null" },
+            {
+              "type": "null"
+            },
             {
               "type": "object",
-              "required": ["text", "stock_id"],
+              "required": [
+                "text",
+                "stock_id"
+              ],
               "additionalProperties": false,
               "properties": {
-                "text": { "type": "string" },
-                "stock_id": { "type": "string" }
+                "text": {
+                  "type": "string"
+                },
+                "stock_id": {
+                  "type": "string"
+                }
               }
             }
           ]
@@ -180,12 +416,22 @@
           "maxItems": 3,
           "items": {
             "type": "object",
-            "required": ["text", "stock_id", "kind"],
+            "required": [
+              "text",
+              "stock_id",
+              "kind"
+            ],
             "additionalProperties": false,
             "properties": {
-              "text": { "type": "string" },
-              "stock_id": { "type": "string" },
-              "kind": { "type": "string" }
+              "text": {
+                "type": "string"
+              },
+              "stock_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              }
             }
           }
         }
@@ -193,73 +439,186 @@
     },
     "delta": {
       "oneOf": [
-        { "type": "null" },
+        {
+          "type": "null"
+        },
         {
           "type": "object",
-          "required": ["since", "items"],
+          "required": [
+            "since",
+            "items"
+          ],
           "additionalProperties": false,
           "properties": {
-            "since": { "type": "string" },
-            "items": { "type": "array", "maxItems": 5, "items": { "type": "string" } }
+            "since": {
+              "type": "string"
+            },
+            "items": {
+              "type": "array",
+              "maxItems": 5,
+              "items": {
+                "type": "string"
+              }
+            }
           }
         }
       ]
     },
     "picks": {
       "type": "object",
-      "required": ["generated_from", "gate", "note", "short", "swing", "long"],
+      "required": [
+        "generated_from",
+        "gate",
+        "note",
+        "short",
+        "swing",
+        "long"
+      ],
       "additionalProperties": false,
       "properties": {
-        "generated_from": { "type": "string" },
-        "gate": { "type": "string" },
-        "note": { "type": "string" },
-        "short": { "type": "array", "maxItems": 1, "items": { "$ref": "#/definitions/pick" } },
-        "swing": { "type": "array", "maxItems": 3, "items": { "$ref": "#/definitions/pick" } },
-        "long": { "type": "array", "maxItems": 5, "items": { "$ref": "#/definitions/pick" } }
+        "generated_from": {
+          "type": "string"
+        },
+        "gate": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "short": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/definitions/pick"
+          }
+        },
+        "swing": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/definitions/pick"
+          }
+        },
+        "long": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/definitions/pick"
+          }
+        }
       }
     }
   },
   "definitions": {
     "meta": {
       "type": "object",
-      "required": ["schema_version", "data_date", "generated_at", "sources"],
+      "required": [
+        "schema_version",
+        "data_date",
+        "generated_at",
+        "sources"
+      ],
       "additionalProperties": false,
       "properties": {
-        "schema_version": { "type": "integer" },
-        "data_date": { "type": "string" },
-        "generated_at": { "type": "string" },
-        "sources": { "type": "array", "items": { "type": "string" } }
+        "schema_version": {
+          "type": "integer"
+        },
+        "data_date": {
+          "type": "string"
+        },
+        "generated_at": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "timeframe_stat": {
       "type": "object",
-      "required": ["n", "hit_rate"],
+      "required": [
+        "n",
+        "hit_rate"
+      ],
       "additionalProperties": false,
       "properties": {
-        "n": { "type": "integer", "minimum": 0 },
-        "hit_rate": { "type": ["number", "null"] }
+        "n": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hit_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
       }
     },
     "pick": {
       "type": "object",
       "required": [
-        "id", "name", "close", "score", "confidence", "action_summary",
-        "entry_zone", "defense_price", "invalidation", "reasons"
+        "id",
+        "name",
+        "close",
+        "score",
+        "confidence",
+        "action_summary",
+        "entry_zone",
+        "defense_price",
+        "invalidation",
+        "reasons"
       ],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "close": { "type": ["number", "null"] },
-        "score": { "type": "number" },
-        "confidence": { "type": "number" },
-        "action_summary": { "type": "string" },
-        "entry_zone": {
-          "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2
+        "id": {
+          "type": "string"
         },
-        "defense_price": { "type": ["number", "null"] },
-        "invalidation": { "type": "string" },
-        "reasons": { "type": "array", "items": { "type": "string" } }
+        "name": {
+          "type": "string"
+        },
+        "close": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "score": {
+          "type": "number"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "action_summary": {
+          "type": "string"
+        },
+        "entry_zone": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "defense_price": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "invalidation": {
+          "type": "string"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
       }
     }
   }
