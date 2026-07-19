@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchDaily, fetchStockDetail, postTrack, NotFoundError, SchemaMismatchError } from '../lib/api'
+import { fetchDaily, fetchStockDetail, NotFoundError, SchemaMismatchError } from '../lib/api'
 import { loadHoldings } from '../lib/holdings'
-import { loadWatchlist, addToWatchlist } from '../lib/watchlist'
 import { formatShares, SHARES_PER_LOT } from '../lib/shares'
 import { fmtPct, pctClass } from '../lib/format'
 import { loadRecentSearches, addRecentSearch, type RecentSearch } from '../lib/recentSearches'
+import { loadJournal, getLossStreak, type JournalEntry } from '../lib/journal'
+import { applyCooldown } from '../lib/cooldown'
 import { IconSearch } from '../components/icons'
 import { ForecastFan } from '../components/ForecastFan'
 import { ShortScenarios } from '../components/ShortScenarios'
 import { GlossaryCard } from '../components/GlossaryCard'
 import { PicksSection } from '../components/PicksSection'
+import { TrackButton } from '../components/TrackButton'
+import { JournalEntryFormModal } from '../components/JournalEntryFormModal'
 import type { Daily, StockDetail } from '../types/contract'
 
 export function StockSearch() {
@@ -18,6 +21,9 @@ export function StockSearch() {
   const [inputValue, setInputValue] = useState('')
   // 最近查過（速修 4.）：查到新的一筆就記下來，chips 顯示在搜尋框下方可點重查。
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => loadRecentSearches())
+  // C 包・冷靜期落地（契約 v1.6 執行鏈路節）：載入 journal 算連敗 streak，決策卡部位金額
+  // 據此減半／暫停顯示；「記一筆」存檔後要重算，所以用 state 存、onSaved 時更新。
+  const [journal, setJournal] = useState<JournalEntry[]>(() => loadJournal())
 
   // daily.json 反正各分頁都會載、有共用快取；先知道追蹤清單再決定要不要試靜態檔，
   // 省一次注定 404 的請求（聯測 2026-07-18 #3/#8）。
@@ -93,7 +99,7 @@ export function StockSearch() {
         </div>
       )}
 
-      <PicksSection daily={daily} collapsed={queryId !== null} onSelectStock={searchAgain} />
+      <PicksSection daily={daily} collapsed={queryId !== null} onSelectStock={searchAgain} journal={journal} />
 
       {queryId === null && (
         <>
@@ -125,7 +131,7 @@ export function StockSearch() {
         </div>
       )}
 
-      {data && <StockDetailView detail={data} daily={daily} />}
+      {data && <StockDetailView detail={data} daily={daily} journal={journal} onJournalChange={setJournal} />}
     </main>
   )
 }
@@ -155,56 +161,6 @@ function rrWarnText(rr: number): string | null {
   if (rr < 0) return '⚠ 上檔空間已用盡，不宜追價'
   if (rr < 0.5) return '⚠ 上檔空間有限，划不來，先觀望較穩'
   return null
-}
-
-// 加入監控（契約 v1.1 POST /api/track）：已在 daily.tracked（正式追蹤清單）或本機
-// watchlist（剛加入、次一交易日才會併進 daily.tracked）都算「監控中」，不可再點。
-function TrackButton({ stockId, daily }: { stockId: string; daily: Daily | undefined }) {
-  const [watchlist, setWatchlist] = useState<string[]>(() => loadWatchlist())
-  const [status, setStatus] = useState<'idle' | 'loading' | 'added' | 'already' | 'full' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
-
-  const alreadyMonitored = (daily?.tracked.some((t) => t.id === stockId) ?? false) || watchlist.includes(stockId)
-
-  async function handleClick() {
-    setStatus('loading')
-    const result = await postTrack(stockId)
-    if (result.kind === 'added' || result.kind === 'already') {
-      setWatchlist(addToWatchlist(stockId))
-      setStatus(result.kind)
-    } else if (result.kind === 'full') {
-      setStatus('full')
-    } else {
-      setErrorMsg(result.message)
-      setStatus('error')
-    }
-  }
-
-  if (alreadyMonitored || status === 'added' || status === 'already') {
-    return (
-      <div className="group">
-        <div className="track-msg success">
-          {status === 'added' ? '✓ 已加入監控（明日 14:30 起生效）' : '監控中'}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="group">
-      {status === 'full' && <div className="track-msg warn">監控清單已滿（20 檔）</div>}
-      {status === 'error' && <div className="track-msg warn">{errorMsg}</div>}
-      <button
-        type="button"
-        className="btn-secondary"
-        style={{ width: '100%' }}
-        onClick={handleClick}
-        disabled={status === 'loading'}
-      >
-        {status === 'loading' ? '加入中…' : '＋ 加入監控'}
-      </button>
-    </div>
-  )
 }
 
 // 持有／空手雙版建議（契約 v1.1 primary_decision.advice）：預設依 localStorage 持股清單
@@ -273,7 +229,17 @@ function TermRow({ label, value, explain, valueClass }: { label: string; value: 
   )
 }
 
-function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily | undefined }) {
+function StockDetailView({
+  detail,
+  daily,
+  journal,
+  onJournalChange,
+}: {
+  detail: StockDetail
+  daily: Daily | undefined
+  journal: JournalEntry[]
+  onJournalChange: (entries: JournalEntry[]) => void
+}) {
   const { profile, price, primary_decision: pd, context, evidence } = detail
   // 禁新倉時不對空手者秀部位金額（實戰走查任務 4）：大盤禁新倉＋使用者沒持有這檔＝這時秀
   // 「20 萬部位」會誘導在該空手時進場，改顯示「—（禁新倉）」。資料保留，只在顯示層處理；
@@ -281,6 +247,15 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
   const gateBanned = daily?.exposure_guidance?.new_position === '禁止新增部位'
   const isHolder = loadHoldings().some((h) => h.id === profile.id)
   const suppressPosition = gateBanned && !isHolder
+
+  // C 包・冷靜期落地（契約 v1.6 執行鏈路節）：連續停損 streak≥2 部位金額減半＋「冷靜期」
+  // amber badge；≥3 用「暫停新倉」red badge 取代金額。只在真的有部位金額可顯示時才套用
+  // （suppressPosition／空手時本來就沒有金額，套冷靜期沒有意義）。
+  const streak = getLossStreak(journal)
+  const cooldown =
+    !suppressPosition && pd.position.tier_amount > 0 ? applyCooldown(pd.position.tier_amount, streak) : null
+
+  const [journalSeed, setJournalSeed] = useState<{ stock_id: string; name: string; price?: number } | null>(null)
 
   return (
     <>
@@ -301,15 +276,32 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
 
           <AdviceSection detail={detail} />
 
+          <div style={{ padding: '0 16px 14px' }}>
+            <button
+              type="button"
+              className="journal-entry-btn"
+              onClick={() => setJournalSeed({ stock_id: profile.id, name: profile.name, price: price.close ?? undefined })}
+            >
+              記一筆
+            </button>
+          </div>
+
           <div className="hairline" />
           <div className="decision-meta-row">
             <span className="k">部位</span>
-            <span className="v">
+            <span className="v" style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
               {suppressPosition
                 ? '—（禁新倉）'
                 : pd.position.tier_amount > 0
-                  ? `${(pd.position.tier_amount / 10000).toFixed(0)} 萬（${formatShares(pd.position.lots * SHARES_PER_LOT + pd.position.odd_shares)}）`
+                  ? cooldown && cooldown.level === 'red'
+                    ? '暫停新倉'
+                    : cooldown && cooldown.level === 'amber'
+                      ? `${(cooldown.amount! / 10000).toFixed(0)} 萬（冷靜期減半）`
+                      : `${(pd.position.tier_amount / 10000).toFixed(0)} 萬（${formatShares(pd.position.lots * SHARES_PER_LOT + pd.position.odd_shares)}）`
                   : '空手'}
+              {cooldown?.badgeText && (
+                <span className={`badge ${cooldown.level === 'red' ? 'block' : 'amber'}`}>{cooldown.badgeText}</span>
+              )}
             </span>
           </div>
 
@@ -464,6 +456,15 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
           </details>
         </div>
       </div>
+
+      {journalSeed && (
+        <JournalEntryFormModal
+          seed={journalSeed}
+          onClose={() => setJournalSeed(null)}
+          onSaved={onJournalChange}
+          onDeleted={onJournalChange}
+        />
+      )}
     </>
   )
 }

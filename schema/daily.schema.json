@@ -237,6 +237,13 @@
               "below",
               "above"
             ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "tracked",
+              "picks"
+            ]
           }
         }
       }
@@ -470,9 +477,8 @@
         "generated_from",
         "gate",
         "note",
-        "short",
-        "swing",
-        "long"
+        "pools",
+        "roster_changes"
       ],
       "additionalProperties": false,
       "properties": {
@@ -485,25 +491,65 @@
         "note": {
           "type": "string"
         },
-        "short": {
-          "type": "array",
-          "maxItems": 1,
-          "items": {
-            "$ref": "#/definitions/pick"
+        "pools": {
+          "type": "object",
+          "required": [
+            "actionable",
+            "on_deck",
+            "research"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "actionable": {
+              "type": "array",
+              "maxItems": 4,
+              "items": {
+                "$ref": "#/definitions/pick"
+              }
+            },
+            "on_deck": {
+              "type": "array",
+              "maxItems": 4,
+              "items": {
+                "$ref": "#/definitions/pick"
+              }
+            },
+            "research": {
+              "type": "array",
+              "maxItems": 5,
+              "items": {
+                "$ref": "#/definitions/pick"
+              }
+            }
           }
         },
-        "swing": {
-          "type": "array",
-          "maxItems": 3,
-          "items": {
-            "$ref": "#/definitions/pick"
-          }
-        },
-        "long": {
-          "type": "array",
-          "maxItems": 5,
-          "items": {
-            "$ref": "#/definitions/pick"
+        "roster_changes": {
+          "type": "object",
+          "required": [
+            "new",
+            "dropped",
+            "stay_note"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "new": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dropped": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "stay_note": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
           }
         }
       }
@@ -569,7 +615,10 @@
         "entry_zone",
         "defense_price",
         "invalidation",
-        "reasons"
+        "reasons",
+        "sector",
+        "tenure_days",
+        "rank_move"
       ],
       "additionalProperties": false,
       "properties": {
@@ -618,6 +667,27 @@
           },
           "minItems": 3,
           "maxItems": 3
+        },
+        "sector": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tenure_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rank_move": {
+          "type": "string",
+          "enum": [
+            "↑",
+            "↓",
+            "−"
+          ]
+        },
+        "status_note": {
+          "type": "string"
         }
       }
     }

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-07-17",
-    "generated_at": "2026-07-19T11:01:55+08:00",
+    "generated_at": "2026-07-19T14:46:18+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -55,6 +55,17 @@
   ],
   "tracked": [
     {
+      "id": "2207",
+      "name": "和泰車",
+      "close": 486.0,
+      "change_pct": -1.42,
+      "decision": {
+        "action": "試單",
+        "readable_reason": "因為基本面沒惡化，所以小量試單；但均線轉弱／糾結，僅守長期均線是風險。",
+        "defense_price": 447.1
+      }
+    },
+    {
       "id": "2330",
       "name": "台積電",
       "close": 2290.0,
@@ -80,25 +91,92 @@
   "watch": [],
   "alerts_snapshot": [
     {
+      "id": "2207",
+      "name": "和泰車",
+      "type": "defense",
+      "price": 447.1,
+      "direction": "below",
+      "source": "tracked"
+    },
+    {
+      "id": "2207",
+      "name": "和泰車",
+      "type": "entry",
+      "price": 493.0,
+      "direction": "above",
+      "source": "tracked"
+    },
+    {
       "id": "2330",
       "name": "台積電",
       "type": "defense",
       "price": 2106.8,
-      "direction": "below"
+      "direction": "below",
+      "source": "tracked"
     },
     {
       "id": "2454",
       "name": "聯發科",
       "type": "defense",
       "price": 2875.8,
-      "direction": "below"
+      "direction": "below",
+      "source": "tracked"
     },
     {
       "id": "2454",
       "name": "聯發科",
       "type": "entry",
       "price": 3809.4,
-      "direction": "above"
+      "direction": "above",
+      "source": "tracked"
+    },
+    {
+      "id": "2395",
+      "name": "研華",
+      "type": "entry",
+      "price": 538.6,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
+      "id": "2303",
+      "name": "聯電",
+      "type": "entry",
+      "price": 162.2,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
+      "id": "2382",
+      "name": "廣達",
+      "type": "entry",
+      "price": 370.0,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
+      "id": "3034",
+      "name": "聯詠",
+      "type": "entry",
+      "price": 520.5,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
+      "id": "2880",
+      "name": "華南金",
+      "type": "entry",
+      "price": 39.9,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
+      "id": "2317",
+      "name": "鴻海",
+      "type": "entry",
+      "price": 246.2,
+      "direction": "above",
+      "source": "picks"
     }
   ],
   "exposure_guidance": {
@@ -110,7 +188,7 @@
   },
   "events": [],
   "track_stats": {
-    "n": 11,
+    "n": 18,
     "closed": 0,
     "hit_rate_5d": null,
     "hit_rate_20d": null,
@@ -122,7 +200,7 @@
         "hit_rate": null
       },
       "swing": {
-        "n": 11,
+        "n": 18,
         "hit_rate": null
       },
       "long": {
@@ -141,104 +219,196 @@
     "generated_from": "tw-stock-screener opportunities + FinMind",
     "gate": "禁止新增部位",
     "note": "大盤禁新倉：短線/波段今日不推新倉，長線名單僅供研究、等解禁再佈局。",
-    "short": [],
-    "swing": [],
-    "long": [
-      {
-        "id": "2207",
-        "name": "和泰車",
-        "close": 486.0,
-        "score": 81.8,
-        "confidence": 67,
-        "action_summary": "大盤禁新倉，觀察區 486.0-498.0，等大盤解禁再佈局",
-        "entry_zone": [
-          486.0,
-          498.0
-        ],
-        "defense_price": 447.1,
-        "invalidation": "跌破 447.1 或營收連 2 月轉負或估值回到高分位",
-        "reasons": [
-          "營收 YoY +51.2%，近 3 月均 +32.8%",
-          "PER 落在歷史 5% 分位",
-          "殖利率 4.1%"
-        ]
-      },
-      {
-        "id": "3045",
-        "name": "台灣大",
-        "close": 111.0,
-        "score": 73.3,
-        "confidence": 61,
-        "action_summary": "大盤禁新倉，觀察區 111.0-111.2，等大盤解禁再佈局",
-        "entry_zone": [
-          111.0,
-          111.2
-        ],
-        "defense_price": 102.1,
-        "invalidation": "跌破 102.1 或營收連 2 月轉負或估值回到高分位",
-        "reasons": [
-          "營收 YoY +6.6%，近 3 月均 +4.1%",
-          "PER 落在歷史 6% 分位",
-          "殖利率 4.3%"
-        ]
-      },
-      {
-        "id": "2884",
-        "name": "玉山金",
-        "close": 35.1,
-        "score": 67.0,
-        "confidence": 57,
-        "action_summary": "大盤禁新倉，觀察區 34.7-35.1，等大盤解禁再佈局",
-        "entry_zone": [
-          34.7,
-          35.1
-        ],
-        "defense_price": 32.3,
-        "invalidation": "跌破 32.3 或營收連 2 月轉負或估值回到高分位",
-        "reasons": [
-          "營收 YoY +25.3%，近 3 月均 +32.6%",
-          "PER 落在歷史 8% 分位",
-          "殖利率 4.0%"
-        ]
-      },
-      {
-        "id": "2912",
-        "name": "統一超",
-        "close": 243.0,
-        "score": 67.0,
-        "confidence": 57,
-        "action_summary": "大盤禁新倉，觀察區 232.6-243.0，等大盤解禁再佈局",
-        "entry_zone": [
-          232.6,
-          243.0
-        ],
-        "defense_price": 223.6,
-        "invalidation": "跌破 223.6 或營收連 2 月轉負或估值回到高分位",
-        "reasons": [
-          "營收 YoY +6.3%，近 3 月均 +5.5%",
-          "PER 落在歷史 12% 分位",
-          "殖利率 3.7%"
-        ]
-      },
-      {
-        "id": "1101",
-        "name": "台泥",
-        "close": 23.5,
-        "score": 63.1,
-        "confidence": 54,
-        "action_summary": "大盤禁新倉，觀察區 23.5-23.7，等大盤解禁再佈局",
-        "entry_zone": [
-          23.5,
-          23.7
-        ],
-        "defense_price": 21.6,
-        "invalidation": "跌破 21.6 或營收連 2 月轉負或估值回到高分位",
-        "reasons": [
-          "營收 YoY +32.4%，近 3 月均 +9.5%",
-          "PER 落在歷史 28% 分位",
-          "殖利率 3.4%"
-        ]
-      }
-    ]
+    "pools": {
+      "actionable": [],
+      "on_deck": [
+        {
+          "id": "2395",
+          "name": "研華",
+          "close": 513.0,
+          "score": 85.0,
+          "confidence": 70,
+          "action_summary": "拉回布局區 506.4-513.0，跌破 472.0 停損",
+          "entry_zone": [
+            506.4,
+            513.0
+          ],
+          "defense_price": 472.0,
+          "invalidation": "跌破 472.0 或營收 YoY 連 2 月轉負",
+          "reasons": [
+            "均線多頭排列（MA20 506 > MA60 472）",
+            "60 日 RS +40.7%",
+            "R/R 約 3.0（目標 593／防守 486.1）"
+          ],
+          "sector": "工業電腦",
+          "tenure_days": 3,
+          "rank_move": "−",
+          "status_note": "等大盤解禁再佈局"
+        },
+        {
+          "id": "2454",
+          "name": "聯發科",
+          "close": 3370.0,
+          "score": 75.0,
+          "confidence": 62,
+          "action_summary": "拉回布局區 3370.0-3809.4，跌破 2875.8 停損",
+          "entry_zone": [
+            3370.0,
+            3809.4
+          ],
+          "defense_price": 2875.8,
+          "invalidation": "跌破 2875.8 或營收 YoY 連 2 月轉負",
+          "reasons": [
+            "均線多頭排列（MA20 4063 > MA60 3809）",
+            "60 日 RS +61.2%",
+            "R/R 約 10.5（目標 4785／防守 3235.2）"
+          ],
+          "sector": "AI/半導體",
+          "tenure_days": 3,
+          "rank_move": "−",
+          "status_note": "等大盤解禁再佈局"
+        },
+        {
+          "id": "2303",
+          "name": "聯電",
+          "close": 144.0,
+          "score": 75.0,
+          "confidence": 62,
+          "action_summary": "拉回布局區 144.0-162.2，跌破 132.5 停損",
+          "entry_zone": [
+            144.0,
+            162.2
+          ],
+          "defense_price": 132.5,
+          "invalidation": "跌破 132.5 或營收 YoY 連 2 月轉負",
+          "reasons": [
+            "均線多頭排列（MA20 162 > MA60 128）",
+            "60 日 RS +89.0%",
+            "R/R 約 7.2（目標 186／防守 138.2）"
+          ],
+          "sector": "AI/半導體",
+          "tenure_days": 3,
+          "rank_move": "−",
+          "status_note": "等大盤解禁再佈局"
+        }
+      ],
+      "research": [
+        {
+          "id": "2382",
+          "name": "廣達",
+          "close": 325.5,
+          "score": 75.0,
+          "confidence": 62,
+          "action_summary": "大盤禁新倉，觀察區 325.5-351.0，等大盤解禁再佈局",
+          "entry_zone": [
+            325.5,
+            351.0
+          ],
+          "defense_price": 298.2,
+          "invalidation": "跌破 298.2 或營收連 2 月轉負或估值回到高分位",
+          "reasons": [
+            "營收 YoY +102.9%，近 3 月均 +106.0%",
+            "PER 落在歷史 60% 分位",
+            "殖利率 4.8%"
+          ],
+          "sector": "電子代工",
+          "tenure_days": 3,
+          "rank_move": "−"
+        },
+        {
+          "id": "3034",
+          "name": "聯詠",
+          "close": 460.5,
+          "score": 70.9,
+          "confidence": 60,
+          "action_summary": "大盤禁新倉，觀察區 460.5-486.4，等大盤解禁再佈局",
+          "entry_zone": [
+            460.5,
+            486.4
+          ],
+          "defense_price": 423.7,
+          "invalidation": "跌破 423.7 或營收連 2 月轉負或估值回到高分位",
+          "reasons": [
+            "營收 YoY +19.0%，近 3 月均 +9.8%",
+            "PER 落在歷史 87% 分位",
+            "殖利率 5.0%"
+          ],
+          "sector": "AI/半導體",
+          "tenure_days": 3,
+          "rank_move": "−"
+        },
+        {
+          "id": "2207",
+          "name": "和泰車",
+          "close": 486.0,
+          "score": 70.0,
+          "confidence": 59,
+          "action_summary": "大盤禁新倉，觀察區 486.0-498.0，等大盤解禁再佈局",
+          "entry_zone": [
+            486.0,
+            498.0
+          ],
+          "defense_price": 447.1,
+          "invalidation": "跌破 447.1 或營收連 2 月轉負或估值回到高分位",
+          "reasons": [
+            "營收 YoY +51.2%，近 3 月均 +32.8%",
+            "PER 落在歷史 5% 分位",
+            "殖利率 4.1%"
+          ],
+          "sector": "汽車",
+          "tenure_days": 3,
+          "rank_move": "−"
+        },
+        {
+          "id": "2880",
+          "name": "華南金",
+          "close": 40.15,
+          "score": 70.0,
+          "confidence": 59,
+          "action_summary": "大盤禁新倉，觀察區 38.2-40.1，等大盤解禁再佈局",
+          "entry_zone": [
+            38.2,
+            40.1
+          ],
+          "defense_price": 36.9,
+          "invalidation": "跌破 36.9 或營收連 2 月轉負或估值回到高分位",
+          "reasons": [
+            "營收 YoY +21.6%，近 3 月均 +42.3%",
+            "PER 落在歷史 92% 分位",
+            "殖利率 3.6%"
+          ],
+          "sector": "金融",
+          "tenure_days": 3,
+          "rank_move": "−"
+        },
+        {
+          "id": "2317",
+          "name": "鴻海",
+          "close": 234.0,
+          "score": 69.4,
+          "confidence": 59,
+          "action_summary": "大盤禁新倉，觀察區 234.0-246.2，等大盤解禁再佈局",
+          "entry_zone": [
+            234.0,
+            246.2
+          ],
+          "defense_price": 215.3,
+          "invalidation": "跌破 215.3 或營收連 2 月轉負或估值回到高分位",
+          "reasons": [
+            "營收 YoY +52.1%，近 3 月均 +40.5%",
+            "PER 落在歷史 83% 分位",
+            "殖利率 3.1%"
+          ],
+          "sector": "電子代工",
+          "tenure_days": 2,
+          "rank_move": "−"
+        }
+      ]
+    },
+    "roster_changes": {
+      "new": [],
+      "dropped": [],
+      "stay_note": "2395 連續 3 日留任（波段結構未變）"
+    }
   }
 }

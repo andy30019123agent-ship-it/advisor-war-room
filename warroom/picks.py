@@ -1,7 +1,8 @@
 """B 包・主動選股引擎（候選池 → 三準則評分 → 風控閘門 → 操作卡）。
 
-設計原則（Codex 顧問版）：候選池→三準則評分→風控閘門→操作卡；誠實不明牌。
-契約：docs/contracts/data-contract-v1.md v1.5 的 `daily.picks`（schema/daily.schema.json 的 pick / picks 定義）。
+設計原則（Codex 顧問版）：候選池→三準則評分→風控閘門→分艙操作卡；誠實不明牌。
+契約：docs/contracts/data-contract-v1.md v1.6 的 `daily.picks`（分艙 pools＝actionable/on_deck/
+research＋roster_changes；schema/daily.schema.json 的 pick / picks 定義）。
 
 流程分兩層（與 build_snapshots 同款「純函式 vs main() 打網路」）：
 - 打網路的組裝（fetch opportunities、FinMind 抓輕量資料、跑被選檔 analyze）集中在 generate_picks()。
@@ -32,15 +33,11 @@ scoring 這裡命中快取＝0 次新呼叫。被選新股才另跑完整 analyz
   + 營收 YoY 為正（revenue_yoy>0）：          +15
   → 取分 ≥65、前 3 檔。
 
-長線 long_score（營收動能 + 估值分位 + 殖利率 + 風險扣分；不含 EPS/ROE——本引擎未抓財報三表，
-  勿與 warroom/valuation.py 的估值模型或 warroom/fundamentals.py 的財報品質分混為一談）：
-  + 營收 YoY 為正：             +15
-  + 近 3 月均 YoY 為正：        +15；且 avg3_yoy 幅度 clamp(avg3,0,20)/20*10 額外最高 +10
-  + PER 歷史分位 <50%：clamp(0.5-per_pctile,0,0.5)/0.5*20（越低越加分，最高 +20）
-  + PBR 歷史分位 <50%：clamp(0.5-pbr_pctile,0,0.5)/0.5*10（最高 +10）
-  + 殖利率：≥4% +15、≥2.5% +10、>0 +5
-  - 每個 risk_flag：           -10
-  → 取分 ≥60、前 5 檔。
+長線 long_score v2（品質/成長為主、估值殖利率合計權重上限 40%；Codex 評審修正版）：
+  完整公式與權重見 score_long() docstring（品質因子＝營收加速度＋ROE/毛利率趨勢；金融走 PBR
+  分位路徑；技術紅燈扣分；估值 warning 時 cap 70）。ROE/毛利率趨勢僅 tracked 個股（跑過完整
+  analyze，有財報三表）才計，候選新股無資料不給分不虛高。
+  → 取分 ≥60、research 池前 5 檔。
 
 confidence（信心度）＝ round(score*0.7 + 10)，clamp [0, 80]
   （對照契約範例：score 78 → confidence 65）。
@@ -48,10 +45,12 @@ confidence（信心度）＝ round(score*0.7 + 10)，clamp [0, 80]
 選檔去重：一檔只出現在它「有達標的框架中分數最高」那一個（同股不跨框架重複）。
 核心持股（profile.core_holdings，如 2330/0050）永不進 picks（已持有）。
 
-風控閘門（gate＝daily.exposure_guidance.new_position）：
-  禁止新增部位 → short/swing 清空；long 仍列但操作卡改「等大盤解禁再佈局」語言。
-  僅限試單     → 三框架照列，每檔 action_summary 註明「試單上限 10 萬」。
-  可正常布局   → 正常。
+風控閘門 × 分艙（gate＝daily.exposure_guidance.new_position；詳見 build_pools_block）：
+  actionable＝gate 允許時的短線/波段入選；on_deck＝gate 禁止時的強勢候選（標 status_note
+  「等大盤解禁」）＋領先族群輪動席；research＝長線研究名單。名額：actionable+on_deck 合計 ≤4、
+  research ≤5。輪動（tw_sectors）：領先族群保 1-2 席 on_deck、落後族群非深度價值降權 10%。
+  新面孔：roster_changes（new/dropped/stay_note）＋每檔 tenure_days／rank_move（滾動記錄
+  data/picks_roster.json）。執行鏈路：picks 各池進場錨點寫進 alerts_snapshot（source='picks'）。
 """
 from __future__ import annotations
 
@@ -126,10 +125,15 @@ def build_candidate_pool(opportunities: List[Dict], universe: List[Dict],
         seen.add(sid)
         pool.append({"id": sid, "name": name or sid, "opp": opp})
 
+    # tracked 只有代號沒名字：先從 universe/opportunities 建名字表補上，
+    # 否則排在 universe 前面的 tracked 檔會以代號當名字顯示（2026-07-19 實戰抓到 2207）。
+    name_map = {str(u.get("id") or ""): u.get("name") or "" for u in universe}
+    name_map.update({str(o.get("id") or ""): o.get("name") or "" for o in opportunities
+                     if o.get("name")})
     for o in opportunities:
         _add(str(o.get("id") or ""), o.get("name") or "", o)
     for sid in tracked_ids:
-        _add(str(sid), "", None)
+        _add(str(sid), name_map.get(str(sid), ""), None)
     for u in universe:
         _add(str(u.get("id") or ""), u.get("name") or "", None)
     return pool
@@ -178,8 +182,9 @@ def metrics_from_daily(df: "pd.DataFrame") -> Dict:
 
 
 def metrics_from_revenue(df: "pd.DataFrame") -> Dict:
-    """從月營收 DataFrame 算 YoY 與近 3 月均 YoY（同 analyze_tw.fundamental 口徑）。"""
-    out = {"revenue_yoy": None, "avg3_yoy": None}
+    """從月營收 DataFrame 算 YoY、近 3 月均 YoY 與近 12 月均 YoY（同 analyze_tw.fundamental 口徑）。
+    近 12 月均 YoY 供評分 v2 的「營收加速度＝近3月YoY−近12月YoY」使用（成長股辨識關鍵）。"""
+    out = {"revenue_yoy": None, "avg3_yoy": None, "avg12_yoy": None}
     if df is None or len(df) == 0:
         return out
     r = df.copy()
@@ -196,11 +201,16 @@ def metrics_from_revenue(df: "pd.DataFrame") -> Dict:
         base = lookup.get((y - 1, m))
         return (rev / base - 1) * 100 if base and base > 0 else None
 
+    def _avg_yoy(tail_n):
+        vals = [v for _, row in r.tail(tail_n).iterrows()
+                for v in [_yoy(int(row["y"]), int(row["m"]), float(row["revenue"]))]
+                if v is not None]
+        return sum(vals) / len(vals) if vals else None
+
     last = r.iloc[-1]
     out["revenue_yoy"] = _yoy(int(last["y"]), int(last["m"]), float(last["revenue"]))
-    yoys = [v for _, row in r.tail(3).iterrows()
-            for v in [_yoy(int(row["y"]), int(row["m"]), float(row["revenue"]))] if v is not None]
-    out["avg3_yoy"] = sum(yoys) / len(yoys) if yoys else None
+    out["avg3_yoy"] = _avg_yoy(3)
+    out["avg12_yoy"] = _avg_yoy(12)
     return out
 
 
@@ -232,11 +242,62 @@ def _chip_from_opp_reasons(opp: Optional[Dict]) -> bool:
     return any(k in reasons for k in _CHIP_BUY_KEYWORDS)
 
 
+_FINANCIAL_SECTORS = ("金融", "金融保險")
+
+
+def _fund_quality_from_tracked(tracked_res: Optional[Dict]) -> Dict:
+    """從 tracked 既有 analyze 結果的 fundamentals_quality 取 ROE／毛利率趨勢／整體品質分位。
+    僅 tracked 個股（跑過完整 analyze）才有財報三表資料；候選新股一律 None（無資料不虛高）。
+    回 {roe, margin_improving, quality_pct}；缺任一給 None/False。"""
+    out = {"roe": None, "margin_improving": False, "quality_pct": None}
+    fq = (tracked_res or {}).get("fundamentals_quality") or {}
+    if not fq:
+        return out
+    out["roe"] = _num(fq.get("roe_value"))
+    out["quality_pct"] = _num(fq.get("pct"))
+    factors = fq.get("factors") or {}
+    gm = (factors.get("gross_margin") or {}).get("score")
+    om = (factors.get("operating_margin") or {}).get("score")
+    out["margin_improving"] = (gm == 2) or (om == 2)  # 因子分 2＝TTM 毛利/營益率較前年改善
+    return out
+
+
+def _valuation_warning(tracked_res: Optional[Dict], per_pctile, pbr_pctile,
+                       is_financial: bool) -> bool:
+    """估值 warning 旗標（→ 長線分數 cap 70）。三個來源取聯集（Codex 評審：和泰車型不可因
+    不可信估值衝高分）：
+    (a) tracked 完整分析 decision.valuation.warning 非 null；
+    (b) Base 公允價偏離現價 >30%（估值模型可能失真、不可信）——由 decision.valuation 的
+        multiples.base × eps（forward 優先）重建 base_fv 與 as_of_price 比對，對齊 valuation.py
+        「偏離 25-35% 給 warning」的口徑（和泰車 Base 656.9 vs 現價 486＝35% 觸發）；
+    (c) 輕量代理：估值分位極端偏高（≥0.9）＝落在歷史很貴區，價值面不可信賴。"""
+    dec = (tracked_res or {}).get("decision") or {}
+    val = dec.get("valuation") or {}
+    if val.get("warning"):
+        return True
+    price = _num(dec.get("as_of_price"))
+    base_mult = _num((val.get("multiples") or {}).get("base"))
+    eps = _num(val.get("eps_forward")) or _num(val.get("eps_ttm"))
+    if price and base_mult and eps and price > 0:
+        base_fv = base_mult * eps
+        if abs(base_fv - price) / price > 0.30:
+            return True
+    pct = pbr_pctile if is_financial else per_pctile
+    return pct is not None and pct >= 0.9
+
+
 def assemble_metrics(cand: Dict, daily_m: Dict, rev_m: Dict, val_m: Dict,
-                     tracked_res: Optional[Dict]) -> Dict:
+                     tracked_res: Optional[Dict],
+                     sector_info: Optional[Dict] = None) -> Dict:
     """把各來源指標合成單一 metrics dict。opportunities 有提供的欄位優先當錨點；
-    籌碼訊號來自 tracked 既有 analyze 結果（綠燈＝連買）或 opportunities reasons 關鍵詞。"""
+    籌碼訊號來自 tracked 既有 analyze 結果（綠燈＝連買）或 opportunities reasons 關鍵詞。
+    sector_info＝{"sector": 族群名, "tier": lead|mid|lag|None}（來自 tw_sectors 對應，供評分 v2
+    的金融 PBR 路徑、輪動降權判斷）。"""
     opp = cand.get("opp") or {}
+    sector_info = sector_info or {}
+    sector = sector_info.get("sector")
+    is_financial = sector in _FINANCIAL_SECTORS
+    fund = _fund_quality_from_tracked(tracked_res)
     close = daily_m.get("close") or _num(opp.get("close"))
     high20 = daily_m.get("high20") or _num(opp.get("recent_high20"))
     support = _num(opp.get("support_ma20")) or daily_m.get("ma20")
@@ -266,12 +327,19 @@ def assemble_metrics(cand: Dict, daily_m: Dict, rev_m: Dict, val_m: Dict,
         "vol_ratio": daily_m.get("vol_ratio"),
         "support": support, "recent_high": high20,
         "revenue_yoy": revenue_yoy, "avg3_yoy": rev_m.get("avg3_yoy"),
+        "avg12_yoy": rev_m.get("avg12_yoy"),
         "per": val_m.get("per"), "per_pctile": val_m.get("per_pctile"),
         "pbr_pctile": val_m.get("pbr_pctile"), "div_yield": val_m.get("div_yield"),
         "chip_turn_buy": chip_turn_buy, "chip_buy_streak_ge3": chip_buy_streak,
         "dist_high20_pct": dist_high20,
         "earnings_within7": _earnings_within7(earnings),
         "risk_flags": list(opp.get("risk_flags") or []),
+        "sector": sector, "sector_tier": sector_info.get("tier"),
+        "is_financial": is_financial,
+        "roe": fund["roe"], "margin_improving": fund["margin_improving"],
+        "quality_pct": fund["quality_pct"],
+        "valuation_warning": _valuation_warning(
+            tracked_res, val_m.get("per_pctile"), val_m.get("pbr_pctile"), is_financial),
     }
 
 
@@ -343,24 +411,95 @@ def score_swing(m: Dict) -> float:
     return round(_clamp(s, 0, 100), 1)
 
 
+def _tech_red(m: Dict) -> bool:
+    """技術紅燈＝跌破全部均線（收盤同時低於 MA20/60/120，空頭破線）。四個值任一缺→False
+    （資料不足不當紅燈）。"""
+    c, ma20, ma60, ma120 = m.get("close"), m.get("ma20"), m.get("ma60"), m.get("ma120")
+    if not (c and ma20 and ma60 and ma120):
+        return False
+    return c < ma20 and c < ma60 and c < ma120
+
+
+def _below_ma120(m: Dict) -> bool:
+    """價低於 MA120（長期趨勢未收復）；close/ma120 任一缺→False。"""
+    c, ma120 = m.get("close"), m.get("ma120")
+    return bool(c and ma120 and c < ma120)
+
+
 def score_long(m: Dict) -> float:
+    """長線評分 v2（品質/成長為主、估值殖利率權重上限 40%；Codex 評審修正版）。
+
+    修正 v1.5 的價值面偏誤（估值+殖利率合計權重曾達 45，成長股如研華永遠進不了長線）：
+
+    品質／成長因子（主，最高 60）——
+      + 營收 YoY > 0：                                     +15
+      + 近 3 月均 YoY > 0：+15，且幅度 clamp(avg3,0,20)/20*12 額外最高 +12
+      + 營收加速度（accel=avg3_yoy−avg12_yoy）> 0：clamp(accel,0,15)/15*18 最高 +18
+        （成長股辨識關鍵：近期成長比一年均值還快＝加速中）
+      ＋ ROE／毛利率趨勢（僅 tracked 完整分析有財報三表時計，無資料不給分不虛高）：
+        ROE≥15% +6／≥8% +3；毛利或營益率 TTM 較前年改善 +4
+
+    估值＋殖利率（合計硬上限 40%，先加總再 clamp[0,40]）——
+      + 估值分位：金融保險業走 PBR 分位路徑（PER 對金融股不可比、易矛盾，Codex 玉山金案例）：
+          金融：PBR 分位 <50% → clamp(0.5-pbr,0,0.5)/0.5*25
+          非金融：PER 分位 <50% → clamp(0.5-per,0,0.5)/0.5*25；PBR 分位 <50% 另加最高 +5
+      + 殖利率：≥4% +15、≥2.5% +10、>0 +5
+
+    風險扣分——
+      - 每個 risk_flag：              -10
+      - 技術紅燈（跌破全部均線）：    -15（台泥型破線股不因帳面估值進榜）
+      - 或僅價低於 MA120（長期趨勢未收復）：-8（和泰車型長期均線未站回；與紅燈擇一不疊加）
+
+    估值 warning（Base 偏離現價過大或估值分位極端偏高＝價值面不可信）時，最終分數 cap ≤70
+    （和泰車型「技術僅黃燈、價低於 MA120」不靠不可信估值衝高分）。
+    """
     s = 0.0
+    # --- 品質／成長因子（主）---
     if (m.get("revenue_yoy") or 0) > 0:
         s += 15
     avg3 = m.get("avg3_yoy")
     if (avg3 or 0) > 0:
-        s += 15 + _clamp(avg3, 0, 20) / 20 * 10
-    pp = m.get("per_pctile")
-    if pp is not None:
-        s += _clamp(0.5 - pp, 0, 0.5) / 0.5 * 20
-    pb = m.get("pbr_pctile")
-    if pb is not None:
-        s += _clamp(0.5 - pb, 0, 0.5) / 0.5 * 10
+        s += 15 + _clamp(avg3, 0, 20) / 20 * 12
+    avg12 = m.get("avg12_yoy")
+    if avg3 is not None and avg12 is not None:
+        accel = avg3 - avg12
+        if accel > 0:
+            s += _clamp(accel, 0, 15) / 15 * 18
+    roe = m.get("roe")
+    if roe is not None:
+        s += 6 if roe >= 0.15 else 3 if roe >= 0.08 else 0
+    if m.get("margin_improving"):
+        s += 4
+
+    # --- 估值＋殖利率（合計上限 40）---
+    vy = 0.0
+    if m.get("is_financial"):
+        pb = m.get("pbr_pctile")
+        if pb is not None:
+            vy += _clamp(0.5 - pb, 0, 0.5) / 0.5 * 25
+    else:
+        pp = m.get("per_pctile")
+        if pp is not None:
+            vy += _clamp(0.5 - pp, 0, 0.5) / 0.5 * 25
+        pb = m.get("pbr_pctile")
+        if pb is not None:
+            vy += _clamp(0.5 - pb, 0, 0.5) / 0.5 * 5
     dy = m.get("div_yield")
     if dy is not None:
-        s += 15 if dy >= 4 else 10 if dy >= 2.5 else 5 if dy > 0 else 0
+        vy += 15 if dy >= 4 else 10 if dy >= 2.5 else 5 if dy > 0 else 0
+    s += _clamp(vy, 0, 40)
+
+    # --- 風險扣分 ---
     s -= 10 * len(m.get("risk_flags") or [])
-    return round(_clamp(s, 0, 100), 1)
+    if _tech_red(m):
+        s -= 15   # 跌破全部均線（空頭破線）
+    elif _below_ma120(m):
+        s -= 8    # 長線僅價低於 MA120（長期趨勢未收復，Codex 和泰車盲點）
+
+    s = _clamp(s, 0, 100)
+    if m.get("valuation_warning"):
+        s = min(s, 70.0)
+    return round(s, 1)
 
 
 def confidence_from_score(score: float) -> int:
@@ -391,8 +530,11 @@ def _entry_zone(m: Dict) -> Tuple[Optional[float], Optional[float]]:
 
 
 def build_pick_card(m: Dict, framework: str, score: float,
-                    new_position: str) -> Dict:
-    """組單檔操作卡（符合 schema pick 定義）。reasons 恰 3 條、每條含數字。"""
+                    new_position: str, tenure_days: int = 1,
+                    rank_move: str = "−", status_note: Optional[str] = None) -> Dict:
+    """組單檔操作卡（符合 schema pick 定義）。reasons 恰 3 條、每條含數字。
+    tenure_days＝連續入榜天數、rank_move＝名次變化（↑↓−）、sector＝族群（來自 metrics）、
+    status_note＝分艙備註（on_deck 才有，如「等大盤解禁」）——v1.6 新面孔／輪動機制。"""
     close = m.get("close")
     low, high = _entry_zone(m)
     if framework == "long":
@@ -410,7 +552,7 @@ def build_pick_card(m: Dict, framework: str, score: float,
     banned = (new_position == "禁止新增部位")
     action = _action_summary(framework, low, high, defense, new_position, banned)
     invalidation = _invalidation(framework, defense)
-    return {
+    card = {
         "id": m["id"], "name": m.get("name") or m["id"],
         "close": _num(close), "score": round(score, 1),
         "confidence": confidence_from_score(score),
@@ -420,7 +562,13 @@ def build_pick_card(m: Dict, framework: str, score: float,
         "defense_price": _num(defense),
         "invalidation": invalidation,
         "reasons": reasons,
+        "sector": m.get("sector"),
+        "tenure_days": int(tenure_days),
+        "rank_move": rank_move,
     }
+    if status_note is not None:
+        card["status_note"] = status_note
+    return card
 
 
 # 失效條件的基本面語言（各框架固定），對外顯示與精選卡自算防守數字組合成一句話。
@@ -512,31 +660,238 @@ def select_frameworks(scored: List[Dict]) -> Dict[str, List[Dict]]:
     return buckets
 
 
-def build_picks_block(scored: List[Dict], new_position: str,
-                      generated_from: str, max_new_ids: Optional[List[str]] = None
-                      ) -> Tuple[Dict, List[str]]:
-    """組 daily.picks 區塊 + 回傳「需要跑完整 analyze 的被選 id 清單」。
-    max_new_ids：允許的新股 id 白名單（可點入保證）；不在白名單的新股會被移出清單。
-    這裡不打網路——白名單由呼叫端依 tracked/6 檔上限先算好傳入。"""
+# ======================= 輪動降權（純函式）=======================
+POOL_TACTICAL_CAP = 4   # actionable + on_deck 合計上限（v1.6）
+POOL_RESEARCH_CAP = 5   # research 上限
+ROTATION_ONDECK_SEATS = 2  # 領先族群保留的 on_deck 輪動席
+
+
+def _is_deep_value(m: Dict) -> bool:
+    """深度價值＝估值分位 <30%（金融看 PBR、其餘看 PER 或 PBR 任一 <30%）。"""
+    pb = m.get("pbr_pctile")
+    if m.get("is_financial"):
+        return pb is not None and pb < 0.30
+    pp = m.get("per_pctile")
+    return (pp is not None and pp < 0.30) or (pb is not None and pb < 0.30)
+
+
+def apply_rotation(scored: List[Dict]) -> List[Dict]:
+    """輪動降權（v1.6）：落後族群（sector_tier=='lag'）且「非深度價值」的標的，三框架分數 ×0.9。
+    領先族群不加分（避免追高），只在 on_deck 保席（見 build_pools_block）。就地不動 metrics 本身，
+    回新 scored 清單（分數已調整、metrics 標記 _rotation_downweighted 供揭露）。"""
+    out = []
+    for it in scored:
+        m = it["metrics"]
+        if m.get("sector_tier") == "lag" and not _is_deep_value(m):
+            m["_rotation_downweighted"] = True
+            out.append({"metrics": m,
+                        "short": round(it["short"] * 0.9, 1),
+                        "swing": round(it["swing"] * 0.9, 1),
+                        "long": round(it["long"] * 0.9, 1)})
+        else:
+            out.append(it)
+    return out
+
+
+def _rank_move(sid: str, cur_rank: int, roster: Optional[Dict]) -> str:
+    """名次變化：與上一份 roster 同池名次比。升→↑、降→↓、持平或新進→−。"""
+    prev = ((roster or {}).get("picks") or {}).get(sid) or {}
+    prev_rank = prev.get("rank")
+    if prev_rank is None:
+        return "−"
+    if cur_rank < prev_rank:
+        return "↑"
+    if cur_rank > prev_rank:
+        return "↓"
+    return "−"
+
+
+def _tenure_of(sid: str, roster: Optional[Dict]) -> int:
+    """連續入榜天數：上一份 roster 有此 sid → 前值+1，否則 1（今日新進）。"""
+    prev = ((roster or {}).get("picks") or {}).get(sid) or {}
+    return int(prev.get("tenure_days", 0)) + 1
+
+
+def build_pools_block(scored: List[Dict], new_position: str, generated_from: str,
+                      max_new_ids: Optional[set] = None,
+                      roster: Optional[Dict] = None) -> Tuple[Dict, List[str], Dict]:
+    """組 v1.6 daily.picks 分艙區塊（actionable/on_deck/research）＋新面孔機制。
+    回 (picks_block, selected_ids, new_roster)。
+
+    分艙規則：
+    - research＝長線 home 名單（≤5）。
+    - actionable/on_deck＝短線+波段 home 名單（合計 ≤4）：
+        gate 允許（可正常布局/僅限試單）→ 依分數進 actionable；領先族群（tier==lead）保留
+          最多 2 席移到 on_deck（輪動席，標「等下一輪」），surface 給使用者當下一輪候補。
+        gate 禁止（禁止新增部位）→ actionable 清空，全數落 on_deck 標「等大盤解禁」。
+    新面孔：與上一份 roster 比 new/dropped；每檔帶 tenure_days（連續入榜）與 rank_move（同池名次變化）。
+    max_new_ids＝可點入白名單（stocks/<id>.json 保證存在）；不在白名單者剔除。
+    """
+    scored = apply_rotation(scored)
     buckets = select_frameworks(scored)
     banned = (new_position == "禁止新增部位")
 
-    block = {"short": [], "swing": [], "long": []}
-    selected_ids = []
-    for fw in ("short", "swing", "long"):
-        if banned and fw in ("short", "swing"):
-            continue  # 禁新倉：短線/波段清空
-        for metrics, score in buckets[fw]:
-            sid = metrics["id"]
-            if max_new_ids is not None and sid not in max_new_ids:
-                continue  # 無法保證 stocks/<id>.json 存在 → 不列（可點入保證）
-            block[fw].append(build_pick_card(metrics, fw, score, new_position))
-            selected_ids.append(sid)
+    def _ok(sid):
+        return max_new_ids is None or sid in max_new_ids
 
-    note = _gate_note(new_position, bool(block["long"]))
+    # research（長線）
+    research_src = [(m, s) for m, s in buckets["long"] if _ok(m["id"])][:POOL_RESEARCH_CAP]
+    # tactical（短線+波段）合併、依分數降冪
+    tactical = [(m, s, fw) for fw in ("short", "swing")
+                for m, s in buckets[fw] if _ok(m["id"])]
+    tactical.sort(key=lambda x: x[1], reverse=True)
+    tactical = tactical[:POOL_TACTICAL_CAP]
+
+    # 分艙指派：actionable / on_deck
+    actionable_src, ondeck_src = [], []  # 元素 (m, s, fw, status_note)
+    if banned:
+        for m, s, fw in tactical:
+            lead = m.get("sector_tier") == "lead"
+            ondeck_src.append((m, s, fw,
+                               "領先族群，等大盤解禁再佈局" if lead else "等大盤解禁再佈局"))
+    else:
+        leading_ids = [m["id"] for m, _s, _fw in tactical
+                       if m.get("sector_tier") == "lead"][:ROTATION_ONDECK_SEATS]
+        reserved = set(leading_ids)
+        for m, s, fw in tactical:
+            if m["id"] in reserved:
+                ondeck_src.append((m, s, fw, "領先族群輪動席（等下一輪）"))
+            else:
+                actionable_src.append((m, s, fw, None))
+
+    # 組卡（帶 tenure/rank_move；rank 為各池內名次）
+    selected_ids, new_roster_picks = [], {}
+
+    def _cards(src, pool_name):
+        cards = []
+        for rank, item in enumerate(src, start=1):
+            if pool_name == "research":
+                m, s = item
+                fw, note = "long", None
+            else:
+                m, s, fw, note = item
+            sid = m["id"]
+            card = build_pick_card(m, fw, s, new_position,
+                                   tenure_days=_tenure_of(sid, roster),
+                                   rank_move=_rank_move(sid, rank, roster),
+                                   status_note=note)
+            cards.append(card)
+            selected_ids.append(sid)
+            new_roster_picks[sid] = {"tenure_days": card["tenure_days"],
+                                     "rank": rank, "pool": pool_name}
+        return cards
+
+    actionable = _cards(actionable_src, "actionable")
+    on_deck = _cards(ondeck_src, "on_deck")
+    research = _cards(research_src, "research")
+
+    roster_changes = _build_roster_changes(new_roster_picks, roster)
+    note = _gate_note(new_position, bool(research))
     picks = {"generated_from": generated_from, "gate": new_position, "note": note,
-             "short": block["short"], "swing": block["swing"], "long": block["long"]}
-    return picks, selected_ids
+             "pools": {"actionable": actionable, "on_deck": on_deck, "research": research},
+             "roster_changes": roster_changes}
+    new_roster = {"picks": new_roster_picks}
+    return picks, selected_ids, new_roster
+
+
+def _build_roster_changes(cur_picks: Dict[str, Dict], roster: Optional[Dict]) -> Dict:
+    """新面孔機制：與上一份 roster 比 new（今日新進）／dropped（昨在今掉）；連任 ≥3 日者給
+    一句 stay_note（取連任最久者），無留任者 stay_note=null。"""
+    prev_ids = set(((roster or {}).get("picks") or {}).keys())
+    cur_ids = set(cur_picks.keys())
+    new = sorted(cur_ids - prev_ids)
+    dropped = sorted(prev_ids - cur_ids)
+    stayers = [(sid, e["tenure_days"]) for sid, e in cur_picks.items()
+               if e["tenure_days"] >= 3]
+    stay_note = None
+    if stayers:
+        sid, days = max(stayers, key=lambda x: x[1])
+        stay_note = f"{sid} 連續 {days} 日留任（波段結構未變）"
+    return {"new": new, "dropped": dropped, "stay_note": stay_note}
+
+
+# ======================= 執行鏈路：picks 進場監控 =======================
+def picks_entry_alerts(picks_block: Optional[Dict], stock_details: Dict[str, Dict],
+                       skip_ids: Optional[set] = None) -> List[Dict]:
+    """v1.6 執行鏈路（P1）：picks 各池標的的進場錨點寫進 alerts_snapshot（type=entry、
+    source='picks'），到價即 TG 提醒、不必等加入 tracked。錨點取該股 stocks/<id>.json 的
+    primary_decision.entry_condition.price（單一事實源，同 build_alerts_for_stock）。
+    skip_ids（通常＝tracked ids）已由 build_daily 產生 tracked 來源警報 → 這裡跳過避免重複。
+    無 entry_condition（如已站上、無明確進場價）的標的不產警報。"""
+    skip = skip_ids or set()
+    out, seen = [], set()
+    for pool in ("actionable", "on_deck", "research"):
+        for card in ((picks_block or {}).get("pools") or {}).get(pool) or []:
+            sid = card.get("id")
+            if sid in skip or sid in seen:
+                continue
+            detail = stock_details.get(sid) or {}
+            ec = (detail.get("primary_decision") or {}).get("entry_condition")
+            price = _num(ec.get("price")) if ec else None
+            if price is None:
+                continue
+            seen.add(sid)
+            out.append({"id": sid, "name": card.get("name") or sid, "type": "entry",
+                        "price": price, "direction": "above", "source": "picks"})
+    return out
+
+
+# ======================= 族群對應（tw_sectors）=======================
+TW_SECTORS_PATH = "data/tw_sectors.json"
+
+
+def load_sector_map(universe: List[Dict],
+                    tw_sectors_path: str = TW_SECTORS_PATH) -> Dict[str, Dict]:
+    """建 {sid: {"sector": 族群名, "tier": lead|mid|lag|None}}。
+    sector 來自 universe.json 人工 sector 欄；tier 解析優先序：
+      1. sid 直接落在 tw_sectors 某 group 的 stock_ids → 用該 group 的 tier。
+      2. 否則用 universe 的 sector 名對應 tw_sectors 的 group 名 → 該 group 的 tier。
+      3. 都無 → None（中性、不受輪動影響）。
+    tw_sectors 缺檔/壞檔一律降級：tier 全 None（不炸）。"""
+    id_to_sector = {str(u.get("id")): u.get("sector") for u in (universe or [])
+                    if u.get("id")}
+    tier_by_id, tier_by_group = {}, {}
+    try:
+        with open(tw_sectors_path, encoding="utf-8") as f:
+            groups = json.load(f)
+        for g in groups or []:
+            tier, name = g.get("tier"), g.get("group")
+            if name:
+                tier_by_group[name] = tier
+            for sid in g.get("stock_ids") or []:
+                tier_by_id[str(sid)] = tier
+    except Exception:
+        pass
+    out = {}
+    all_ids = set(id_to_sector) | set(tier_by_id)
+    for sid in all_ids:
+        sector = id_to_sector.get(sid)
+        tier = tier_by_id.get(sid) or (tier_by_group.get(sector) if sector else None)
+        out[sid] = {"sector": sector, "tier": tier}
+    return out
+
+
+def load_roster(path: str = "data/picks_roster.json") -> Optional[Dict]:
+    """讀上一份 picks 滾動記錄（tenure/rank/roster_changes 用）。缺檔/壞檔回 None（不炸）。"""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def save_roster(roster: Dict, data_date: Optional[str] = None,
+                path: str = "data/picks_roster.json") -> None:
+    """寫本日 picks 滾動記錄（供次日 tenure/rank_move）。壞路徑降級警告不炸主流程。"""
+    try:
+        d = os.path.dirname(path)
+        if d:
+            os.makedirs(d, exist_ok=True)
+        payload = {"date": data_date, "picks": roster.get("picks", {})}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2, sort_keys=True)
+    except OSError as e:
+        print(f"  [warn] 寫入 picks_roster 失敗: {type(e).__name__} {str(e)[:60]}")
 
 
 # ======================= picks ↔ stocks 單一事實源對齊 =======================
@@ -568,13 +923,16 @@ def align_picks_to_details(picks_block: Optional[Dict],
     invalidation/action_summary 一律改「直接取該股 stocks/<id>.json 的 primary_decision」，
     不再沿用 picks 自算的長線 MA 值——否則同一支股票精選卡防守 452.8、點進完整分析卻是
     447.1，同一天兩套數字打架最傷信任。picks 自算的 score/confidence 只用於評分排序，保留不動。
-    就地修改 picks_block（picks 卡的 id 必在 stock_details 內：白名單＝tracked ∪ 被選新股）。"""
+    就地修改 picks_block（picks 卡的 id 必在 stock_details 內：白名單＝tracked ∪ 被選新股）。
+    v1.6：改走分艙 pools（actionable/on_deck/research）；框架語言依所在池推定（research=long、
+    其餘=swing），維持與 v1.5 相同的對齊行為。"""
     if not picks_block:
         return
     gate = picks_block.get("gate")
     banned = (gate == "禁止新增部位")
-    for fw in ("short", "swing", "long"):
-        for card in picks_block.get(fw) or []:
+    pool_fw = {"actionable": "swing", "on_deck": "swing", "research": "long"}
+    for pool, fw in pool_fw.items():
+        for card in ((picks_block.get("pools") or {}).get(pool)) or []:
             detail = stock_details.get(card.get("id"))
             if not detail:
                 continue  # 理論上白名單保證存在；缺就保留自算值不炸
@@ -603,10 +961,11 @@ def _gate_note(new_position: str, has_long: bool) -> str:
 def empty_picks(new_position: str = "僅限試單",
                 generated_from: str = "tw-stock-screener opportunities + FinMind",
                 note: Optional[str] = None) -> Dict:
-    """給 build_all 純函式/離線模式的預設空區塊（仍符合契約）。"""
+    """給 build_all 純函式/離線模式的預設空分艙區塊（仍符合契約 v1.6）。"""
     return {"generated_from": generated_from, "gate": new_position,
             "note": note or "本次未生成主動選股（離線/純函式模式）。",
-            "short": [], "swing": [], "long": []}
+            "pools": {"actionable": [], "on_deck": [], "research": []},
+            "roster_changes": {"new": [], "dropped": [], "stay_note": None}}
 
 
 # ======================= 打網路的組裝（generate_picks）=======================
@@ -654,6 +1013,8 @@ def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
     if universe is None:
         universe = load_universe()
 
+    sector_map = load_sector_map(universe)
+    roster = load_roster()
     pool = build_candidate_pool(opportunities, universe, tracked_ids, core_ids)
 
     counter = [0]
@@ -662,19 +1023,19 @@ def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
         sid = cand["id"]
         tracked_res = results.get(sid)
         daily_m, rev_m, val_m = _fetch_light(sid, fetch_fn, counter)
-        m = assemble_metrics(cand, daily_m, rev_m, val_m, tracked_res)
+        m = assemble_metrics(cand, daily_m, rev_m, val_m, tracked_res,
+                             sector_info=sector_map.get(sid))
         if m.get("close") is None:
             continue  # 現價缺＝資料不足，不評分（誠實不編）
         scored.append({"metrics": m, "short": score_short(m),
                        "swing": score_swing(m), "long": score_long(m)})
 
-    # 先算選檔（不含可點入白名單），得出被選 id → 決定哪些新股要 analyze（上限 6）
-    prelim = select_frameworks(scored)
+    # 先算選檔（含輪動降權、不含可點入白名單），得出被選 id → 決定哪些新股要 analyze（上限 6）
+    prelim = select_frameworks(apply_rotation(scored))
     banned = (new_position == "禁止新增部位")
     ordered_new = []
+    # 分艙後會被列出的框架：禁新倉時 tactical 進 on_deck 仍要 analyze（可點入）、long 恆列
     for fw in ("short", "swing", "long"):
-        if banned and fw in ("short", "swing"):
-            continue
         for metrics, _score in prelim[fw]:
             sid = metrics["id"]
             if sid not in results and sid not in ordered_new:
@@ -694,13 +1055,14 @@ def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
 
     # 白名單＝tracked（已有 detail）+ 這次成功 analyze 的新股
     allow_ids = set(results.keys()) | set(picks_results.keys())
-    picks_block, _selected = build_picks_block(
+    picks_block, _selected, new_roster = build_pools_block(
         scored, new_position,
         generated_from="tw-stock-screener opportunities + FinMind",
-        max_new_ids=allow_ids)
+        max_new_ids=allow_ids, roster=roster)
 
     stats = {"finmind_calls": counter[0] + analyze_calls,
              "scoring_calls": counter[0], "analyze_calls": analyze_calls,
              "opp_source": opp_source, "pool_size": len(pool),
-             "analyzed": list(picks_results.keys())}
+             "analyzed": list(picks_results.keys()),
+             "roster": new_roster, "roster_changes": picks_block["roster_changes"]}
     return picks_block, picks_results, stats

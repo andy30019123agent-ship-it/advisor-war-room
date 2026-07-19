@@ -25,20 +25,24 @@ export function JournalEntryFormModal({
   onDeleted,
 }: {
   // 編輯現有紀錄傳完整 JournalEntry；持股頁「記一筆」快速預填傳 { stock_id, name }；
-  // 全新空白紀錄傳 null。
-  seed: JournalEntry | { stock_id: string; name: string } | null
+  // 查股頁分析結果「記一筆」（v1.6 執行鏈路節）額外帶 price（該股現價）預填成交價，
+  // 使用者仍可手動改；全新空白紀錄傳 null。
+  seed: JournalEntry | { stock_id: string; name: string; price?: number } | null
   onClose: () => void
   onSaved: (entries: JournalEntry[]) => void
   onDeleted?: (entries: JournalEntry[]) => void
 }) {
   const isEditing = !!(seed && 'id' in seed)
   const existing = isEditing ? (seed as JournalEntry) : null
+  const quickSeed = !isEditing && seed ? (seed as { stock_id: string; name: string; price?: number }) : null
 
   const [date, setDate] = useState(existing?.date ?? todayTaipei())
   const [stockId, setStockId] = useState(seed?.stock_id ?? '')
   const [name, setName] = useState(seed?.name ?? '')
   const [side, setSide] = useState<JournalSide>(existing?.side ?? 'buy')
-  const [price, setPrice] = useState(existing ? String(existing.price) : '')
+  const [price, setPrice] = useState(
+    existing ? String(existing.price) : quickSeed?.price != null ? String(quickSeed.price) : ''
+  )
   const [qty, setQty] = useState(existing ? String(existing.qty) : '')
   const [followedAdvice, setFollowedAdvice] = useState(existing?.followed_advice ?? true)
   const [note, setNote] = useState(existing?.note ?? '')

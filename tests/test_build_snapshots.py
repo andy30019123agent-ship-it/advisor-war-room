@@ -186,7 +186,7 @@ class TestTrackedAndAlerts(unittest.TestCase):
         alerts = build_alerts_for_stock("9999", "測試股", res["primary_decision"])
         self.assertEqual(len(alerts), 1)
         self.assertEqual(alerts[0], {"id": "9999", "name": "測試股", "type": "defense",
-                                     "price": 90.0, "direction": "below"})
+                                     "price": 90.0, "direction": "below", "source": "tracked"})
 
     def test_alerts_include_entry_when_present(self):
         res = make_fake_res(action="觀望",
@@ -754,7 +754,8 @@ class TestPicksSingleSourceAlignment(unittest.TestCase):
         self_calc_defense = card["defense_price"]
         self.assertEqual(self_calc_defense, 826.5)  # 對齊前＝自算長線值
         picks_input = {"generated_from": "t", "gate": "禁止新增部位", "note": "n",
-                       "short": [], "swing": [], "long": [card]}
+                       "pools": {"actionable": [], "on_deck": [], "research": [card]},
+                       "roster_changes": {"new": [], "dropped": [], "stay_note": None}}
         daily, details, _ = build_all(
             data_dir=os.path.join(REPO_ROOT, "data"),
             market_inputs=TestBuildAllRealData.OFFLINE_MARKET_INPUTS,
@@ -762,7 +763,7 @@ class TestPicksSingleSourceAlignment(unittest.TestCase):
         self.assertIn("2454", details)
         expected = details["2454"]["primary_decision"]["defense_price"]
         self.assertIsNotNone(expected)
-        aligned = daily["picks"]["long"][0]
+        aligned = daily["picks"]["pools"]["research"][0]
         # 核心驗收：picks 卡的防守價 == 對應 stocks json 的 defense_price（單一事實源）
         self.assertEqual(aligned["defense_price"], expected)
         self.assertNotEqual(aligned["defense_price"], self_calc_defense)  # 真的換過源

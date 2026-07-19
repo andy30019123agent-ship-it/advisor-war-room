@@ -154,9 +154,42 @@ export const PickSchema = z.object({
   defense_price: z.number().nullable(),
   invalidation: z.string(),
   reasons: z.array(z.string()),
+  // ---------- v1.6 增補（docs/contracts/data-contract-v1.md「v1.6 增補」節）----------
+  // 全部 optional/nullable：v1.5 舊 fixture（引擎尚未升級）沒有這些欄位也能過 schema，
+  // Pick 型別本身向後相容，只有下面的容器結構（pools vs 平鋪 short/swing/long）分兩種。
+  sector: z.string().nullable().optional(),
+  tenure_days: z.number().nullable().optional(),
+  rank_move: z.enum(['↑', '↓', '−']).nullable().optional(),
+  status_note: z.string().nullable().optional(),
+  horizon: z.enum(['short', 'swing', 'long']).nullable().optional(),
 })
 
-export const PicksSchema = z.object({
+export type Pick = z.infer<typeof PickSchema>
+
+// v1.6 分艙容器（daily.picks.pools）：今日可操作／解禁後優先／長線研究三分組。
+export const RosterChangesSchema = z.object({
+  new: z.array(z.string()),
+  dropped: z.array(z.string()),
+  stay_note: z.string().nullable(),
+})
+
+export const PicksPoolsContainerSchema = z.object({
+  actionable: z.array(PickSchema),
+  on_deck: z.array(PickSchema),
+  research: z.array(PickSchema),
+})
+
+export const PicksV16Schema = z.object({
+  generated_from: z.string(),
+  gate: z.string(),
+  note: z.string(),
+  pools: PicksPoolsContainerSchema,
+  roster_changes: RosterChangesSchema.optional().nullable(),
+})
+
+// v1.5 舊平鋪容器（部署切換期相容用；引擎已宣告 v1.6 起不再輸出，但前端保留 fallback
+// 防炸——見 PicksSection.tsx 的向後相容渲染）。
+export const PicksV15Schema = z.object({
   generated_from: z.string(),
   gate: z.string(),
   note: z.string(),
@@ -165,7 +198,13 @@ export const PicksSchema = z.object({
   long: z.array(PickSchema),
 })
 
-export type Pick = z.infer<typeof PickSchema>
+// union：先試 v1.6（有 pools 才會過），解不過再退回 v1.5 平鋪；兩種形狀在執行期用
+// `'pools' in picks` 分辨（見 PicksSection.tsx）。
+export const PicksSchema = z.union([PicksV16Schema, PicksV15Schema])
+
+export type PicksPools = z.infer<typeof PicksV16Schema>
+export type PicksFlat = z.infer<typeof PicksV15Schema>
+export type RosterChanges = z.infer<typeof RosterChangesSchema>
 export type Picks = z.infer<typeof PicksSchema>
 
 export const DailySchema = z.object({

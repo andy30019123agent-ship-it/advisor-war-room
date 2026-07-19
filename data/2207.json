@@ -1,25 +1,167 @@
 {
-  "meta": {
-    "schema_version": 1,
-    "data_date": "2026-07-17",
-    "generated_at": "2026-07-19T14:46:18+08:00",
-    "sources": [
-      "FinMind",
-      "yfinance"
-    ]
+  "stock_id": "2207",
+  "name": "和泰車",
+  "fundamental": {
+    "light": "green",
+    "ev": {
+      "最新營收月": "2026/6",
+      "營收YoY": "+51.2%",
+      "近3月平均YoY": "+32.8%",
+      "PER": 14.2,
+      "PER歷史分位": "5%",
+      "殖利率": "4.12%"
+    }
   },
-  "profile": {
-    "id": "2207",
-    "name": "和泰車",
-    "market": "TWSE",
-    "is_core_holding": false
+  "technical": {
+    "light": "amber",
+    "ev": {
+      "收盤": 486.0,
+      "MA20": 477.6,
+      "MA60": 476.6,
+      "MA120": 498.0,
+      "RSI14": 55.0,
+      "量能": "0.9×20日均量",
+      "排列": "均線糾結",
+      "買入參考區": "MA20 478 · MA60 477",
+      "壓力參考位": "近20日高 493 · MA120 498",
+      "備註": "—"
+    }
   },
-  "price": {
-    "close": 486.0,
-    "change_pct": -1.42,
-    "ma20": 477.6,
-    "ma60": 476.6
+  "chips": {
+    "light": "green",
+    "ev": {
+      "近5日法人淨額(張)": "720",
+      "連續方向天數": "買 10 天",
+      "最新日": "2026-07-17",
+      "備註": "新聞情緒分類待 LLM 團隊層補上"
+    },
+    "breakdown": {
+      "as_of": "2026-07-17",
+      "groups": {
+        "外資": {
+          "net_latest": 439465,
+          "net_5d": 942317,
+          "streak": 10,
+          "dir": "買",
+          "ratio_20d_vol": 0.5026
+        },
+        "投信": {
+          "net_latest": -275468,
+          "net_5d": -247986,
+          "streak": 1,
+          "dir": "賣",
+          "ratio_20d_vol": 0.315
+        },
+        "自營": {
+          "net_latest": -1915,
+          "net_5d": 25721,
+          "streak": 1,
+          "dir": "賣",
+          "ratio_20d_vol": 0.0022
+        }
+      },
+      "divergence": true,
+      "divergence_note": "外資買、投信賣（主力分歧）"
+    }
   },
+  "news": [
+    {
+      "title": "從賣車到賣「預判」：和泰 24 年霸權背後的 AI 變骨術 - Yahoo - 汽機車",
+      "url": "https://news.google.com/rss/articles/CBMilwJBVV95cUxPOXQ4VlNxZHpEMExOOHBOaXRaMTloSGtjSU9WYzNqOExRV2JXSnlIa1JnbG5mZEs5QjFROEppRjFrTTBBOGxncEhUNFBzV0Z6alJDSGs5QWNDN3oxY0lubWVOaWFTMmRIWVZPLU1KdUhuSHFQcnhzM0FZa2RYUjFNMURfdXJxM09lMUtFelZCLWV1UmNNVjhOd092TEFWTzRad09Sb2xOYXMtXzBIVk9rQ29DQnBNRjFxbDZGTjFZdWhLTTNMV0V6eXpJSTk5a0trUHhxalV0QnVyLThlUWlCRm4wWjVlTlhDVlgxMVMtODkybkpXcUJVblRnc1JxUmd3Nkh4RVZWSWllejJLTXRhb2hBZU5sb0U?oc=5",
+      "date": "Wed, 15 Jul 2026 23:33:10 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "和泰車6月合併營收 同期新高 - UDN",
+      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9MUHdvQUJWbDJtTENrdWJWbjZQRWIwOTRiLTQtT3NKTjBBYnc3enlidkZoY21WMmhuVXRuVmlXX29qN2dsWDNaZDFEd3VRU1lW0gFWQVVfeXFMUFFsR2p0cUNXbjVlZF9uWVN5Y2ZXcm5qd19wSmxuMzVLNHBXNGZ0MG9aYURMZE9EZkpfdWc3MXlMUENZbFVaZVVEQ2IyVkZDTDdKRHBoa0E?oc=5",
+      "date": "Mon, 13 Jul 2026 17:02:05 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "營收速報》併購效應 和泰車營收創新高 - 自由時報",
+      "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1HSFMzbVBZVmdkQWgzQVZlQTZMNXRQcTFCWUtFMnZUdnhpbXF1WlF1bEd6dUNkVmFNOGM0b2hMa3ByZ0NvMzUtMXhmbTJzNlM3a3h4MVhtT2M?oc=5",
+      "date": "Sun, 05 Jul 2026 16:26:55 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "景氣回穩與政策延續帶動買氣，和泰汽車展望2026年總市場預估上看44萬台！ - Yahoo - 汽機車",
+      "url": "https://news.google.com/rss/articles/CBMiwANBVV95cUxNdHU3ZW80VFZXVW5Qa01xLW14RUZjYXQycnFsTVlibG1HaFlvM2NWV2tuSThtWHJoV3k0TTN1OWNVN0JSRlIxU1RBdlM3ejJvRkZpd18tZDJkRHJwcTkzTUU4TzhOZUVsTk5jME8tblhGQW1EaWlzczRyRmIyZG9LOGp3RkRqQXRhbnotZVNFZ2FSbDdjb2pTeU0xaG9Fd3UzWlpOUGFmU2NONllySU4zYjI3X1JlWUtFaGVfMDcxQXQ0cTBTSGc2cDZRWm1haEFKYUpuVnJkTEhoWklSYlRnQ2ZRWXl2OTBJR3puUFNPdzZ4b2pqbG5jNU9uVWtuNVpxVDNrQ21SaXdpSWRyUExicnFkWHZ6VFhiaGdyMmJmUjZkZHYyTnFQdWVvbkozazlOTjVWaGZ0RkxPdGhXWG1HUHF4aHhiWVhycUR4UXFmbUhiU1E1VVBCdHVHTDZVVURyY3JoWUdLdVdsMmxQQjVCeTV3ckJ4X1E1bkZrT2VpUFV6NzFTODluU2gwdllEMExIbWgzeVlYRTRqcUVjSWozTDBPUGpuMXhiVkdOSUhJUGNVMFp5czVjcE43ekdyRHpP?oc=5",
+      "date": "Tue, 14 Jul 2026 21:35:28 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "進入銷售旺季　和泰車6月營收年增48%創單月次高 - 經濟日報",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFB2X21paTY4ZWNuM3hWUVIyYlJFZlREYUN6bUFoYlFaS1J4eTloakt5cTFDVXdJdDY4S3pVUVVmUjBkYm5MOEVmVlRpLUlYLVBuVEhLb3ppWDYxQdIBX0FVX3lxTE5ORndJb2llOUhkYUtRRWI4VmNJZXE0WkhBRmtoRll2MkVOd01mWlItcnNycWctWGdFRjhRbEpXTmxlN21Ca2VEMjJLVnQ4QkFDekduYzJWS2tCeEx0aENj?oc=5",
+      "date": "Mon, 13 Jul 2026 10:56:06 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "和泰汽車啟動海外布局 將投資日本日野商用車事業 - Yahoo - 汽機車",
+      "url": "https://news.google.com/rss/articles/CBMizAJBVV95cUxQUE8wSk1fdUl0dk5zLUdld1VXQlRfdjQ4bFByc1NEX0lJRkNxTU04WkVoQWFBeEJPcnBGLVlJTlI2YW1vclhlUGlhSXF4RFZXenMwMGNMUDBCc3AxckRyU0ZJb0JaamdOVEZmeHc2eVltOURYOUtzRGhNcFB2cWNJNWRlQVJTTHdoTmItMVprNTRwRlFfVFpGU3Z6aEZJQUVJbHZjOGVhOXkxd1VlMkpaeW5uNnE2THZoaldQMlJuMXVlSVAxODhBZ1l1UlZZVkFRRENBSGY3d2E0LXNDMUI5UVl4eW9ZcHRYOEluTGhSWHJzT0JmaWxOM05WcnZiS19QRXJ6c2JfeHVQN1p2UEl3dlpJeS15Z2N0S0ZicEJmLUU0b1J2M2ZJSlloSzNiYTRaallobUg3M2txcVIxTlZ4ZVBXMGRDelI0T3dTeg?oc=5",
+      "date": "Wed, 15 Jul 2026 21:32:36 GMT",
+      "src": "Google News"
+    }
+  ],
+  "summary": {
+    "score": 0.7,
+    "direction": "中性",
+    "confidence": "高",
+    "conflict": false,
+    "derived_from": "primary_decision"
+  },
+  "data_flags": {
+    "fundamental": true,
+    "revenue_yoy_base_invalid": false,
+    "technical": true,
+    "chips": true,
+    "eps_statement": true
+  },
+  "fundamentals_quality": {
+    "total": 5,
+    "max": 10,
+    "pct": 0.5,
+    "streak_bonus": -2,
+    "roe_value": 0.1947,
+    "factors": {
+      "revenue": {
+        "score": 2,
+        "applicable": true,
+        "value": "最新月 YoY +51.2%"
+      },
+      "eps": {
+        "score": 1,
+        "applicable": true,
+        "value": "TTM EPS 34.1 vs 前 33.9"
+      },
+      "gross_margin": {
+        "score": null,
+        "applicable": false,
+        "value": "科目不適用（無此科目）"
+      },
+      "operating_margin": {
+        "score": null,
+        "applicable": false,
+        "value": "科目不適用（無此科目）"
+      },
+      "roe": {
+        "score": 2,
+        "applicable": true,
+        "value": "ROE 19.5%"
+      },
+      "fcf": {
+        "score": 2,
+        "applicable": true,
+        "value": "營業現金流 正、同季 YoY 增（以 OCF 評分，未扣資本支出）"
+      },
+      "debt": {
+        "score": 0,
+        "applicable": true,
+        "value": "負債比 70%"
+      }
+    },
+    "note": "7 因子各 0-2 分；缺科目標不適用不扣分；連續改善另加減分"
+  },
+  "as_of_date": "2026-07-17",
   "primary_decision": {
     "action": "試單",
     "stance": "中性偏多",
@@ -37,7 +179,8 @@
     "readable_reason": "因為基本面沒惡化，所以小量試單；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "跌破 447.1 防守位就先降波段部位",
     "position": {
-      "tier_amount": 200000.0,
+      "tier": "標準",
+      "tier_amount": 200000,
       "lots": 0,
       "odd_shares": 411
     },
@@ -46,32 +189,7 @@
       "price": 493.0,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-07-27",
-    "advice": {
-      "holder": {
-        "action_text": "續抱不動，跌破 447 收盤再降一半波段部位。",
-        "plan": [
-          {
-            "trigger": "收盤跌破 447（防守價）",
-            "act": "賣出波段部位的 1/2"
-          },
-          {
-            "trigger": "站回 MA120 498 且法人連 2 日買超",
-            "act": "大盤禁新倉，不回補、維持既有部位"
-          }
-        ]
-      },
-      "nonholder": {
-        "action_text": "暫不進場（大盤禁新倉），站回 MA120 498 且法人連 2 日買超後再評估。",
-        "plan": [
-          {
-            "trigger": "站回 MA120 498 且法人連 2 日買超",
-            "act": "暫不進場（大盤禁新倉），站回 MA120 498 且法人連 2 日買超後再評估"
-          }
-        ]
-      }
-    },
-    "defense_explain": "防守價 447＝關鍵均線支撐與 -8%～-15% 停損帶取較近者（原始錨落在停損帶外、已收斂至邊界）；跌破代表波段結構破壞。"
+    "reeval_date": "2026-07-27"
   },
   "context": {
     "timeframes": {
@@ -244,19 +362,91 @@
     ],
     "events": []
   },
-  "track": [
-    {
-      "date": "2026-07-17",
-      "action": "試單",
-      "price_at_rec": 486.0,
-      "outcome": {
-        "r5": null,
-        "r20": null,
-        "r60": null
+  "decision": {
+    "rating": "試單",
+    "fair_value": {
+      "bear": 600.0,
+      "base": 656.9,
+      "bull": 693.2
+    },
+    "valuation": {
+      "path": "per",
+      "eps_ttm": 34.15,
+      "eps_source": "financial_statement",
+      "eps_forward": 41.96,
+      "growth_used": 0.2286,
+      "multiples": {
+        "bear": 14.3,
+        "base": 15.66,
+        "bull": 16.52
       },
-      "status": "pending"
-    }
-  ],
+      "current_multiple": 14.24,
+      "current_percentile": 0.09,
+      "disclosure": "TTM EPS 34.15（財報 TTM）、成長 g=+22.9%（clamp -20%~+40%）、Forward EPS 41.96；PER 25/50/75=15.23/16.52/18.2（regime=3y，現值 14.24，分位 +9.0%）；品質股 Base 上修；大盤紅燈倍數下修一檔",
+      "bvps": null,
+      "roe": null
+    },
+    "risk_reward": 4.39,
+    "stop": {
+      "price": 447.1,
+      "pct": -0.08,
+      "basis": "關鍵均線",
+      "clamped": true,
+      "note": "參考防守位，接回自行判斷"
+    },
+    "entry": {
+      "pullback": "回測型：回檔至支撐 477.6±6.2（0.5×ATR）、隔日收盤站回不破再進",
+      "breakout": "突破型：收盤帶量突破近20日高 493.0、且量>1.3×20日均量（約 1,136,682）"
+    },
+    "position": {
+      "tier": "標準",
+      "amount": 200000,
+      "odd_lot": true,
+      "shares": 411,
+      "lots": 0,
+      "odd_shares": 411,
+      "reason": "R/R<1.5／資料不足／訊號分歧／大盤紅燈 其一（保守）",
+      "core_note": ""
+    },
+    "confidence": {
+      "total": 72,
+      "completeness": 30,
+      "consistency": 22,
+      "rr": 20,
+      "regime": 0,
+      "valuation_penalty": 0
+    },
+    "time_frames": {
+      "short": {
+        "label": "短線 1-4 週",
+        "stance": "偏多",
+        "basis": "技術中性＋籌碼偏多為主",
+        "ref_price": "參考 MA20 477.6"
+      },
+      "swing": {
+        "label": "波段 1-3 月（主）",
+        "stance": "中性偏多",
+        "basis": "主結論：試單",
+        "ref_price": "合理價 Base 656.9"
+      },
+      "mid": {
+        "label": "中期 3-12 月",
+        "stance": "偏多",
+        "basis": "基本面偏多＋估值分位",
+        "ref_price": "樂觀目標 Bull 693.2"
+      }
+    },
+    "invalidation": {
+      "price": "價格：收盤 486.0 vs 防守位 447.1（未觸發）",
+      "fundamental": "基本面：最新營收 YoY 轉負且連 2 月低於 6 月均（未觸發）",
+      "chips": "籌碼：法人連 3 日同向賣且賣超佔 20 日均量>15%（未觸發）",
+      "any_triggered": false
+    },
+    "as_of_price": 486.0,
+    "note": null,
+    "disclaimer": "本區塊為規則引擎輸出之決策輔助，非投資建議；數字依固定規則計算，最終決策與風險由使用者承擔。",
+    "change_pct": -1.42
+  },
   "forecast": {
     "method": "monte_carlo_gbm",
     "n_paths": 2000,

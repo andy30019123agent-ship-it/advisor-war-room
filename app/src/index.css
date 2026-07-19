@@ -1900,6 +1900,120 @@ header.page-header {
   margin-left: 6px;
 }
 
+/* ---------- 今日精選 v1.6：分艙（今日可操作／解禁後優先／長線研究）＋新面孔＋執行鏈路 ---------- */
+
+.roster-changes-banner {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  background: rgba(74, 85, 199, 0.08);
+  color: var(--text);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.roster-changes-banner .stay-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.pick-sector {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-soft);
+  background: rgba(118, 118, 128, 0.12);
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+
+.pick-rank {
+  font-size: 14px;
+  font-weight: 800;
+  margin-left: 5px;
+}
+
+.pick-rank.up { color: var(--green); }
+.pick-rank.down { color: var(--red); }
+.pick-rank.flat { color: var(--text-soft); }
+
+.pick-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.pick-tenure {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.pick-position-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13.5px;
+  border-top: 1px solid var(--hairline);
+}
+
+.pick-position-row .k {
+  color: var(--text-soft);
+}
+
+.pick-position-row .v {
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+}
+
+.pick-track-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.pick-track-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pick-track-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(74, 85, 199, 0.1);
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.pick-track-msg {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+
+.pick-track-msg.success {
+  background: rgba(29, 138, 78, 0.12);
+  color: var(--green);
+}
+
+.pick-track-msg.warn {
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
 /* ---------- C 包・交易日誌／連敗保護／本週覆盤（data-contract-v1.md v1.5「App 行為」節） ---------- */
 
 .streak-alert {

@@ -120,11 +120,13 @@ def build_message(alert, price):
     sid = alert.get("id", "")
     target = fmt_price(alert.get("price"))
     cur = fmt_price(price)
+    # source='picks'（主動選股標的，尚未在追蹤清單）文案標「精選標的」，與 tracked 持股區隔（v1.6）。
+    tag = "精選標的 " if alert.get("source") == "picks" else ""
     if alert.get("type") == "defense":
-        return f"⚠️ {name} {sid} 跌破防守價 {target}（現價 {cur}）——照紀律先降波段部位，核心定期定額不動。"
+        return f"⚠️ {tag}{name} {sid} 跌破防守價 {target}（現價 {cur}）——照紀律先降波段部位，核心定期定額不動。"
     if alert.get("type") == "entry":
-        return f"🎯 {name} {sid} 觸發進場條件 {target}（現價 {cur}）——可依計畫分批進場，記得同步設好防守價。"
-    return f"ℹ️ {name} {sid} 到價提醒：{target}（現價 {cur}）。"
+        return f"🎯 {tag}{name} {sid} 觸發進場條件 {target}（現價 {cur}）——可依計畫分批進場，記得同步設好防守價。"
+    return f"ℹ️ {tag}{name} {sid} 到價提醒：{target}（現價 {cur}）。"
 
 
 def _fetch_price_twse_exchange(stock_id, prefix, timeout=6):

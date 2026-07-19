@@ -13,6 +13,7 @@ import {
   getStreakAlert,
   getWeeklyReview,
 } from '../src/lib/journal.ts'
+import { applyCooldown } from '../src/lib/cooldown.ts'
 
 let pass = 0
 let fail = 0
@@ -168,6 +169,24 @@ function mk(side, stock_id, price, qty, day, overrides = {}) {
   const sellOrphanOnly = { ...mk('sell', stock2, 30, 10, 2), date: '2026-07-14' }
   const review2 = getWeeklyReview([sellOrphanOnly], now)
   assertEqual(review2.realizedPnl, null, 'T6b: 唯一一筆賣出是 orphan → realizedPnl=null（不能顯示 0）')
+}
+
+// ---------- Test 7：冷靜期落地（applyCooldown，契約 v1.6 執行鏈路節）----------
+{
+  const none = applyCooldown(200000, 0)
+  assertEqual(none, { level: 'none', amount: 200000, badgeText: null }, 'T7a: streak=0 → none，金額原封不動')
+
+  const one = applyCooldown(200000, 1)
+  assertEqual(one, { level: 'none', amount: 200000, badgeText: null }, 'T7b: streak=1 → 還沒觸發，仍是 none')
+
+  const amber = applyCooldown(200000, 2)
+  assertEqual(amber, { level: 'amber', amount: 100000, badgeText: '冷靜期' }, 'T7c: streak=2 → amber，金額減半')
+
+  const red = applyCooldown(200000, 3)
+  assertEqual(red, { level: 'red', amount: null, badgeText: '暫停新倉' }, 'T7d: streak=3 → red，金額改用暫停新倉文字取代')
+
+  const redAbove = applyCooldown(200000, 5)
+  assertEqual(redAbove.level, 'red', 'T7e: streak>3 一樣是 red（不會回退）')
 }
 
 console.log(`\n${pass} passed, ${fail} failed`)

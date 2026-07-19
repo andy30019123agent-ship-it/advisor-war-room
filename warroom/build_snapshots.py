@@ -287,16 +287,17 @@ def build_tracked_entry(stock_id: str, res: Dict) -> Dict:
 
 
 def build_alerts_for_stock(stock_id: str, name: str, primary: Dict) -> List[Dict]:
-    """從 primary_decision 的 defense_price/entry_condition 提取，不重算。"""
+    """從 primary_decision 的 defense_price/entry_condition 提取，不重算。
+    source='tracked'（追蹤清單來源，v1.6 執行鏈路：picks 進場錨走 source='picks'，見 picks.py）。"""
     out = []
     dp = _num(primary.get("defense_price"))
     if dp is not None:
         out.append({"id": stock_id, "name": name, "type": "defense",
-                    "price": dp, "direction": "below"})
+                    "price": dp, "direction": "below", "source": "tracked"})
     ec = primary.get("entry_condition")
     if ec and ec.get("price") is not None:
         out.append({"id": stock_id, "name": name, "type": "entry",
-                    "price": _num(ec["price"]), "direction": "above"})
+                    "price": _num(ec["price"]), "direction": "above", "source": "tracked"})
     return out
 
 
@@ -1096,6 +1097,12 @@ def build_all(data_dir: str = DATA_DIR, market_inputs: Optional[Dict] = None,
     # 全部建好（含被選新股）之後跑，picks 卡的 id 才保證都有對應完整分析可取。
     if picks_input is not None:
         _picks_mod.align_picks_to_details(daily.get("picks"), stock_details)
+        # 執行鏈路（v1.6 P1）：picks 各池進場錨點寫進 alerts_snapshot（type=entry、source='picks'），
+        # 不必等加入 tracked。tracked 已由 build_daily 產生自身警報 → 用 tracked ids 去重。
+        tracked_ids = {t["id"] for t in daily.get("tracked") or []}
+        daily["alerts_snapshot"].extend(
+            _picks_mod.picks_entry_alerts(daily.get("picks"), stock_details,
+                                          skip_ids=tracked_ids))
     return daily, stock_details, skipped
 
 
@@ -1125,7 +1132,7 @@ def main() -> None:
               f"被選新股 analyze={picks_stats['analyzed']}", file=sys.stderr)
     except Exception as ex:
         warnings.warn(f"picks 生成失敗（{type(ex).__name__} {ex}）；daily.picks 退預設空區塊")
-        picks_input, picks_results = None, None
+        picks_input, picks_results, picks_stats = None, None, None
 
     daily, stock_details, skipped = build_all(
         market_inputs=market_inputs, picks_input=picks_input, picks_results=picks_results)
@@ -1163,6 +1170,11 @@ def main() -> None:
     else:
         print("[build_snapshots] 無可信交易資料日（行情日與個股 as_of 皆缺），"
               "跳過 forecast/scenario log 寫入。", file=sys.stderr)
+
+    # picks 滾動記錄（v1.6 新面孔機制）：存本日 tenure/rank，供次日 tenure_days／rank_move。
+    # 只在成功生成 picks（picks_input 非 None、stats 帶 roster）時寫，離線/失敗不覆寫既有記錄。
+    if picks_input is not None and isinstance(picks_stats, dict) and picks_stats.get("roster"):
+        _picks_mod.save_roster(picks_stats["roster"], data_date=daily["meta"]["data_date"])
 
     write_json(os.path.join(OUT_DIR, "daily.json"), daily)
     for sid, detail in stock_details.items():
