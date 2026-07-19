@@ -533,7 +533,7 @@ def build_pick_card(m: Dict, framework: str, score: float,
                     new_position: str, tenure_days: int = 1,
                     rank_move: str = "−", status_note: Optional[str] = None) -> Dict:
     """組單檔操作卡（符合 schema pick 定義）。reasons 恰 3 條、每條含數字。
-    tenure_days＝連續入榜天數、rank_move＝名次變化（↑↓−）、sector＝族群（來自 metrics）、
+    tenure_days＝連續入榜天數、rank_move＝同池名次變化（↑↓−／換池 pool_change）、sector＝族群（來自 metrics）、
     status_note＝分艙備註（on_deck 才有，如「等大盤解禁」）——v1.6 新面孔／輪動機制。"""
     close = m.get("close")
     low, high = _entry_zone(m)
@@ -625,11 +625,19 @@ def _build_reasons(m: Dict, framework: str, defense) -> List[str]:
             avg = m.get("avg3_yoy")
             avg_s = f"，近 3 月均 {avg:+.1f}%" if avg is not None else ""
             out.append(f"營收 YoY {m['revenue_yoy']:+.1f}%{avg_s}")
-        if m.get("per_pctile") is not None:
+        # 金融股走 PBR 估值路徑計分（score_long：PER 對金融股不可比，見該函式 docstring），
+        # 研究卡顯示的估值分位要跟真正拿去計分的那個對齊，不能顯示不可比的 PER 分位
+        # （2026-07-19 抓到：華南金卡片顯示「PER 落在歷史 92% 分位」，但金融股計分根本沒用
+        # PER，PBR 反被 [:3] 砍到第 4 條看不到——掩蓋了真正的計分依據）。
+        is_fin = m.get("is_financial")
+        if is_fin:
+            if m.get("pbr_pctile") is not None:
+                out.append(f"PBR 歷史 {m['pbr_pctile']*100:.0f}% 分位")
+        elif m.get("per_pctile") is not None:
             out.append(f"PER 落在歷史 {m['per_pctile']*100:.0f}% 分位")
         if m.get("div_yield") is not None and m["div_yield"] > 0:
             out.append(f"殖利率 {m['div_yield']:.1f}%")
-        if m.get("pbr_pctile") is not None:
+        if not is_fin and m.get("pbr_pctile") is not None:
             out.append(f"PBR 歷史 {m['pbr_pctile']*100:.0f}% 分位")
         if m.get("risk_flags"):
             out.append(f"風險旗標 {len(m['risk_flags'])} 項（已扣分）")
@@ -693,12 +701,18 @@ def apply_rotation(scored: List[Dict]) -> List[Dict]:
     return out
 
 
-def _rank_move(sid: str, cur_rank: int, roster: Optional[Dict]) -> str:
-    """名次變化：與上一份 roster 同池名次比。升→↑、降→↓、持平或新進→−。"""
+def _rank_move(sid: str, cur_rank: int, roster: Optional[Dict], cur_pool: Optional[str] = None) -> str:
+    """名次變化：只在同池（actionable/on_deck/research）內比名次，跨池名次不可比
+    （2026-07-19 抓到：昨 on_deck rank2 → 今 research rank1，1<2 顯示「↑」，其實是換池，
+    不是名次躍升）。升→↑、降→↓、持平或新進→−；換池→"pool_change"（前端顯示「換艙」，
+    不給箭頭）。"""
     prev = ((roster or {}).get("picks") or {}).get(sid) or {}
     prev_rank = prev.get("rank")
+    prev_pool = prev.get("pool")
     if prev_rank is None:
         return "−"
+    if prev_pool is not None and cur_pool is not None and prev_pool != cur_pool:
+        return "pool_change"
     if cur_rank < prev_rank:
         return "↑"
     if cur_rank > prev_rank:
@@ -709,10 +723,15 @@ def _rank_move(sid: str, cur_rank: int, roster: Optional[Dict]) -> str:
 def _tenure_of(sid: str, roster: Optional[Dict], data_date: Optional[str] = None) -> int:
     """連續入榜天數：上一份 roster 有此 sid 且日期不同 → 前值+1；
     同一 data_date 重跑（盤後多次 rebuild）→ 沿用前值不遞增（冪等，2026-07-19 抓到
-    同日跑三次變「3 日留任」的 bug）；不在上一份 → 1（今日新進）。"""
+    同日跑三次變「3 日留任」的 bug）；不在上一份 → 1（今日新進）。
+    data_date=None（假日/API 全失敗，連 build_meta 的個股 as_of 最大值 fallback 都拿不到、
+    無法判斷是否為同日重跑）→ 保守不遞增：舊面孔沿用前值、新面孔給 1（防同日/假日重跑
+    tenure 無限膨脹回歸，寧可少算一天也不虛報留任天數）。"""
     prev = ((roster or {}).get("picks") or {}).get(sid) or {}
     prev_days = int(prev.get("tenure_days", 0))
-    if prev_days and data_date and (roster or {}).get("date") == data_date:
+    if data_date is None:
+        return prev_days or 1
+    if prev_days and (roster or {}).get("date") == data_date:
         return prev_days
     return prev_days + 1
 
@@ -779,7 +798,7 @@ def build_pools_block(scored: List[Dict], new_position: str, generated_from: str
             sid = m["id"]
             card = build_pick_card(m, fw, s, new_position,
                                    tenure_days=_tenure_of(sid, roster, data_date),
-                                   rank_move=_rank_move(sid, rank, roster),
+                                   rank_move=_rank_move(sid, rank, roster, cur_pool=pool_name),
                                    status_note=note)
             cards.append(card)
             selected_ids.append(sid)
@@ -845,14 +864,39 @@ def picks_entry_alerts(picks_block: Optional[Dict], stock_details: Dict[str, Dic
 # ======================= 族群對應（tw_sectors）=======================
 TW_SECTORS_PATH = "data/tw_sectors.json"
 
+# universe.json 的 sector 人工欄與 tw_sectors.json 的 group 名（來自 warroom/sectors.py
+# TW_GROUPS 固定 7 類：軍工航太／封裝測試／AI/半導體／金融／PCB/載板／半導體設備／散熱）
+# 命名對齊表（2026-07-19 抓到：兩邊字彙沒對齊時 tier 靜默落 None、輪動席/降權對該股完全
+# 不作用，見 load_sector_map docstring 修復說明）。只收「同一族群的命名變體」，不得亂配
+# 語意不同的產業（例如「電子代工」≠「AI/半導體」，鴻海/廣達不能因為都跟 AI 沾邊就被算進
+# 台積電那組的漲跌，會把不相關的股票錯誤捲進輪動判斷）。
+# 現況誠實揭露：universe 裡「工業電腦／汽車／水泥／電子代工／電信／航運／電子零組件／
+# 食品／鋼鐵／塑化／光學／零售」這些產業，tw_sectors 的 TW_GROUPS 目前根本沒有對應類別
+# 可以對齊（不是命名不一致，是量化輪動池子還沒追蹤那些產業）——這些股 tier=None 是「範圍
+# 外」的正確結果，不是本表能解的 bug；要擴大覆蓋需在 warroom/sectors.py TW_GROUPS 補新
+# 族群（會增加 fetch_tw_sectors 的 FinMind 呼叫量，屬另一個決策，不在本次修復範圍）。
+_SECTOR_GROUP_ALIAS = {
+    "AI半導體": "AI/半導體",   # 漏斜線
+    "半導體": "AI/半導體",
+    "金融保險": "金融",        # 對齊 picks.py 自己另一處 _FINANCIAL_SECTORS 用語
+    "PCB": "PCB/載板",
+    "載板": "PCB/載板",
+    "封測": "封裝測試",
+    "半導體設備商": "半導體設備",
+    "軍工": "軍工航太",
+    "航太": "軍工航太",
+}
+
 
 def load_sector_map(universe: List[Dict],
                     tw_sectors_path: str = TW_SECTORS_PATH) -> Dict[str, Dict]:
     """建 {sid: {"sector": 族群名, "tier": lead|mid|lag|None}}。
     sector 來自 universe.json 人工 sector 欄；tier 解析優先序：
       1. sid 直接落在 tw_sectors 某 group 的 stock_ids → 用該 group 的 tier。
-      2. 否則用 universe 的 sector 名對應 tw_sectors 的 group 名 → 該 group 的 tier。
-      3. 都無 → None（中性、不受輪動影響）。
+      2. 否則用 universe 的 sector 名對應 tw_sectors 的 group 名（含 _SECTOR_GROUP_ALIAS
+         同義詞/命名變體對齊表）→ 該 group 的 tier。
+      3. 都無 → None（中性、不受輪動影響；也可能是該產業本來就不在 tw_sectors 七大類覆蓋
+         範圍內，見 _SECTOR_GROUP_ALIAS 上方說明，不是壞資料）。
     tw_sectors 缺檔/壞檔一律降級：tier 全 None（不炸）。"""
     id_to_sector = {str(u.get("id")): u.get("sector") for u in (universe or [])
                     if u.get("id")}
@@ -872,7 +916,9 @@ def load_sector_map(universe: List[Dict],
     all_ids = set(id_to_sector) | set(tier_by_id)
     for sid in all_ids:
         sector = id_to_sector.get(sid)
-        tier = tier_by_id.get(sid) or (tier_by_group.get(sector) if sector else None)
+        tier = tier_by_id.get(sid)
+        if tier is None and sector:
+            tier = tier_by_group.get(sector) or tier_by_group.get(_SECTOR_GROUP_ALIAS.get(sector))
         out[sid] = {"sector": sector, "tier": tier}
     return out
 
@@ -975,15 +1021,27 @@ def empty_picks(new_position: str = "僅限試單",
 
 
 # ======================= 打網路的組裝（generate_picks）=======================
-def _fetch_light(sid: str, fetch_fn, counter: List[int]) -> Tuple[Dict, Dict, Dict]:
+def _fetch_light(sid: str, fetch_fn, counter: List[int],
+                 quota_flag: Optional[List[bool]] = None) -> Tuple[Dict, Dict, Dict]:
     """抓單檔輕量 3 dataset（日線/月營收/PER），回 (daily_m, rev_m, val_m)。
-    fetch_fn(method, **kw)＝cached_fetch；每次呼叫 counter[0]+=1（含快取命中，供估算）。"""
+    fetch_fn(method, **kw)＝cached_fetch；每次呼叫 counter[0]+=1（含快取命中，供估算）。
+    quota_flag（維運 2026-07-19：額度耗盡偏誤可見化）：任一 dataset 失敗且被
+    analyze_tw._is_finmind_unavailable 判定為「FinMind 全域不可用」（額度用完/429/402），
+    就把 quota_flag[0] 設 True。跟一般單一 dataset 缺資料（該股本來就沒資料，不是額度
+    問題）分開辨識，才不會把所有缺值都誤報成額度耗盡。"""
     def _grab(method, kw):
         counter[0] += 1
         try:
             df = fetch_fn(method, **{**kw, "stock_id": sid})
             return df if (df is not None and len(df) > 0) else None
-        except Exception:
+        except Exception as e:
+            if quota_flag is not None:
+                try:
+                    from warroom.analyze_tw import _is_finmind_unavailable
+                    if _is_finmind_unavailable(e):
+                        quota_flag[0] = True
+                except Exception:
+                    pass
             return None
     daily_df = _grab("taiwan_stock_daily", _DAILY_KW)
     rev_df = _grab("taiwan_stock_month_revenue", _REV_KW)
@@ -1002,7 +1060,10 @@ def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
     - analyze_fn：預設 analyze_tw.analyze（被選新股跑完整分析產 stocks/<id>.json）。
     回 (picks_block, picks_results, stats)：
       picks_results＝{sid: analyze_res}（僅新股，供 build_all 產 stock detail）；
-      stats＝{finmind_calls, opp_source, pool_size, analyzed}。
+      stats＝{finmind_calls, opp_source, pool_size, analyzed, quota_exhausted,
+             unscored_candidates}（後兩者：偵測到 FinMind 額度耗盡訊號時 quota_exhausted=
+             True，unscored_candidates＝本輪因缺現價未評分的候選數；同時會把「本日 N 檔
+             候選未能評分」附進 picks_block["note"]，見下方額度耗盡偏誤可見化說明）。
     """
     if fetch_fn is None:
         from warroom.finmind_cache import cached_fetch as fetch_fn  # noqa
@@ -1025,15 +1086,18 @@ def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
     pool = build_candidate_pool(opportunities, universe, tracked_ids, core_ids)
 
     counter = [0]
+    quota_flag = [False]
     scored = []
+    unscored_ids = []
     for cand in pool:
         sid = cand["id"]
         tracked_res = results.get(sid)
-        daily_m, rev_m, val_m = _fetch_light(sid, fetch_fn, counter)
+        daily_m, rev_m, val_m = _fetch_light(sid, fetch_fn, counter, quota_flag)
         m = assemble_metrics(cand, daily_m, rev_m, val_m, tracked_res,
                              sector_info=sector_map.get(sid))
         if m.get("close") is None:
-            continue  # 現價缺＝資料不足，不評分（誠實不編）
+            unscored_ids.append(sid)  # 現價缺＝資料不足，不評分（誠實不編）
+            continue
         scored.append({"metrics": m, "short": score_short(m),
                        "swing": score_swing(m), "long": score_long(m)})
 
@@ -1067,8 +1131,20 @@ def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
         generated_from="tw-stock-screener opportunities + FinMind",
         max_new_ids=allow_ids, roster=roster, data_date=data_date)
 
+    # 額度耗盡偏誤可見化（維運 2026-07-19）：候選池組裝順序是 opportunities→tracked→
+    # universe，額度剛好在跑到一半時用完，排在後段的候選股會系統性拿到空指標、算不到分
+    # ——不會報錯，因為每檔看起來都只是走了正常的「資料不足不給分」路徑，使用者無從分辨
+    # 「今天真的沒有更好的股票」還是「額度不夠評不到」。偵測到本輪任一 dataset 呼叫命中
+    # FinMind 全域不可用訊號（quota_flag）時，把「本日 N 檔候選未能評分」寫進 note，讓這個
+    # 不可見偏誤變可見。
+    if quota_flag[0] and unscored_ids:
+        picks_block["note"] = (picks_block["note"] +
+                               f" 本日 {len(unscored_ids)} 檔候選未能評分"
+                               "（FinMind 額度可能已用盡，非個股基本面不佳）。")
+
     stats = {"finmind_calls": counter[0] + analyze_calls,
              "scoring_calls": counter[0], "analyze_calls": analyze_calls,
+             "quota_exhausted": quota_flag[0], "unscored_candidates": len(unscored_ids),
              "opp_source": opp_source, "pool_size": len(pool),
              "analyzed": list(picks_results.keys()),
              "roster": new_roster, "roster_changes": picks_block["roster_changes"]}

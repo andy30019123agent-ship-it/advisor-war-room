@@ -44,10 +44,15 @@ def fetch_market():
                           "dot": _dot(wk, kind), "grp": "us"})
         except Exception as e:
             items.append({"name": name, "value": "—", "wk": None, "dot": "y", "grp": "us", "err": str(e)[:40]})
-    # 外資買賣超（FinMind 全市場合計）
+    # 外資買賣超（FinMind 全市場合計）：走同日快取（維運 2026-07-19 抓到：這個端點原本繞過
+    # cached_fetch 直接呼叫，fetch_market() 在管線裡被呼叫兩次（warroom.update 一次、
+    # build_snapshots.fetch_market_inputs() 又呼叫一次拿 foreign_net_yi），等於同日打了
+    # 這個端點兩次；且這正是 07-18 唯一一次真跑實測出現 5 分鐘延遲的那個端點，改走快取後
+    # 兩次呼叫變一次快取命中，少打一次慢端點）。
     foreign = None
     try:
-        fdf = dl.taiwan_stock_institutional_investors_total(start_date="2026-07-01")
+        fdf = cached_fetch("taiwan_stock_institutional_investors_total", loader=dl,
+                           start_date="2026-07-01")
         f = fdf[fdf["name"].str.contains("Foreign", case=False, na=False)]
         if len(f):
             latest_date = f["date"].max()

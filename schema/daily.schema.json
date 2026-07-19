@@ -649,7 +649,8 @@
                       "properties": {
                         "direction": { "type": "string", "enum": ["buy", "sell"] },
                         "days": { "type": "integer", "minimum": 0 },
-                        "latest_yi": { "type": "number" }
+                        "latest_yi": { "type": "number" },
+                        "days_capped": { "type": "boolean" }
                       }
                     }
                   ]
@@ -808,7 +809,8 @@
           "enum": [
             "↑",
             "↓",
-            "−"
+            "−",
+            "pool_change"
           ]
         },
         "status_note": {

@@ -277,10 +277,14 @@ class TestPools(unittest.TestCase):
 # ---------- 新面孔（tenure / rank_move / roster_changes）----------
 class TestRoster(unittest.TestCase):
     def test_tenure_and_rank_move_from_roster(self):
+        # data_date 明確給「新的一天」（不等於 roster 缺的 date、也非 None）：驗證正常換日
+        # 情境的 tenure +1／rank_move，跟「data_date=None 防膨脹」的邊界情境（另有專屬測試）
+        # 分開，避免混用同一顆測試斷言兩種語意（2026-07-19 修復：_tenure_of 的 None 語意
+        # 改成「不遞增」後，這裡不能再靠隱式 None 依賴舊行為）。
         roster = {"picks": {"W1": {"tenure_days": 2, "rank": 2, "pool": "actionable"}}}
         scored = [_scored("W1", 0, 90, 0), _scored("W2", 0, 80, 0)]
         block, _s, new_roster = picks.build_pools_block(scored, "可正常布局", "gen",
-                                                        roster=roster)
+                                                        roster=roster, data_date="2026-07-19")
         w1 = next(c for c in block["pools"]["actionable"] if c["id"] == "W1")
         w2 = next(c for c in block["pools"]["actionable"] if c["id"] == "W2")
         self.assertEqual(w1["tenure_days"], 3)     # 連任+1
@@ -293,12 +297,46 @@ class TestRoster(unittest.TestCase):
         roster = {"picks": {"OLD": {"tenure_days": 5, "rank": 1, "pool": "research"},
                             "STAY": {"tenure_days": 2, "rank": 1, "pool": "actionable"}}}
         scored = [_scored("STAY", 0, 90, 0), _scored("NEW", 0, 80, 0)]
-        block, _s, _r = picks.build_pools_block(scored, "可正常布局", "gen", roster=roster)
+        block, _s, _r = picks.build_pools_block(scored, "可正常布局", "gen", roster=roster,
+                                                data_date="2026-07-19")
         rc = block["roster_changes"]
         self.assertEqual(rc["new"], ["NEW"])
         self.assertEqual(rc["dropped"], ["OLD"])
         self.assertIn("STAY", rc["stay_note"])       # STAY 連任達 3 日
         self.assertIn("連續 3 日", rc["stay_note"])
+
+    # ---- rank_move 只在同池比較（2026-07-19 修復：跨艙不可比）----
+    def test_rank_move_direct_same_pool_up(self):
+        roster = {"picks": {"X": {"rank": 2, "pool": "on_deck"}}}
+        self.assertEqual(picks._rank_move("X", 1, roster, cur_pool="on_deck"), "↑")
+
+    def test_rank_move_direct_pool_change_not_up(self):
+        # 昨 on_deck rank2、今 research rank1：1<2 但換池，不可比，該回 "pool_change"
+        # 不是「↑」（換池被誤讀成名次躍升的原始 bug）。
+        roster = {"picks": {"X": {"rank": 2, "pool": "on_deck"}}}
+        self.assertEqual(picks._rank_move("X", 1, roster, cur_pool="research"), "pool_change")
+
+    def test_rank_move_pool_change_via_build_pools_block(self):
+        roster = {"picks": {"X": {"tenure_days": 2, "rank": 2, "pool": "on_deck"}}}
+        scored = [_scored("X", 0, 0, 90)]  # 今日只達長線門檻 → 落 research（換池）
+        block, _s, _r = picks.build_pools_block(scored, "可正常布局", "gen", roster=roster)
+        card = block["pools"]["research"][0]
+        self.assertEqual(card["rank_move"], "pool_change")
+        jsonschema.validate(block, PICKS_SCHEMA)  # schema 已補 "pool_change" 到 enum
+
+    # ---- tenure：data_date=None 時不遞增（2026-07-19 修復：防假日重跑膨脹回歸）----
+    def test_tenure_data_date_none_keeps_prev_days(self):
+        roster = {"picks": {"W1": {"tenure_days": 2, "rank": 1, "pool": "actionable"}}}
+        self.assertEqual(picks._tenure_of("W1", roster, data_date=None), 2)  # 不遞增
+
+    def test_tenure_data_date_none_new_stock_is_one(self):
+        self.assertEqual(picks._tenure_of("NEW", None, data_date=None), 1)
+
+    def test_tenure_data_date_none_repeated_calls_stable(self):
+        # 同一天缺 data_date 重跑三次，tenure 不該像 f852a12 那樣每跑一次 +1。
+        roster = {"picks": {"W1": {"tenure_days": 1, "rank": 1, "pool": "actionable"}}}
+        for _ in range(3):
+            self.assertEqual(picks._tenure_of("W1", roster, data_date=None), 1)
 
 
 # ---------- 執行鏈路：picks entry alerts ----------
@@ -339,6 +377,49 @@ class TestSectorMap(unittest.TestCase):
         smap = picks.load_sector_map([{"id": "9999", "name": "X", "sector": "未知"}],
                                      tw_sectors_path="/no/such.json")
         self.assertEqual(smap["9999"]["tier"], None)
+
+    # ---- 字彙對齊（2026-07-19 修復）----
+    def test_sector_alias_normalizes_name_variant(self):
+        # universe 若手誤漏斜線（"AI半導體"）仍要能對到 tw_sectors 真正的族群名
+        # "AI/半導體"（_SECTOR_GROUP_ALIAS），不能因為字面不同就靜默 tier=None。
+        tmp = os.path.join(REPO_ROOT, "tests", "_tmp_tw_sectors_alias.json")
+        json.dump([{"group": "AI/半導體", "stock_ids": [], "tier": "lead"}], open(tmp, "w"))
+        try:
+            smap = picks.load_sector_map(
+                [{"id": "8887", "name": "X", "sector": "AI半導體"}], tw_sectors_path=tmp)
+            self.assertEqual(smap["8887"]["tier"], "lead")
+        finally:
+            os.remove(tmp)
+
+    def test_sector_name_match_lead_group_reserves_rotation_seat(self):
+        """驗證「領先族群命中 universe 內至少一檔時席位機制真的觸發」：用族群名（非 id）對齊
+        出 tier=lead 的候選，走完整 apply_rotation + build_pools_block，確認真的拿到 on_deck
+        輪動席，不是 tier=None 靜默不作用（2026-07-19 修復驗收要求）。"""
+        tmp = os.path.join(REPO_ROOT, "tests", "_tmp_tw_sectors_lead.json")
+        json.dump([{"group": "封裝測試", "stock_ids": ["9999999"], "tier": "lead"}],
+                  open(tmp, "w"))
+        try:
+            smap = picks.load_sector_map(
+                [{"id": "8887", "name": "測試封測", "sector": "封裝測試"}], tw_sectors_path=tmp)
+            self.assertEqual(smap["8887"]["tier"], "lead")  # 靠 sector 名對齊，不是 id 命中
+            scored = [_scored("8887", 0, 90, 0, sector_tier=smap["8887"]["tier"])]
+            block, _sel, _r = picks.build_pools_block(scored, "可正常布局", "gen")
+            ondeck_ids = [c["id"] for c in block["pools"]["on_deck"]]
+            self.assertIn("8887", ondeck_ids)
+            self.assertIn("輪動席", block["pools"]["on_deck"][0]["status_note"])
+        finally:
+            os.remove(tmp)
+
+    def test_real_universe_has_at_least_one_lead_tier_stock(self):
+        """回歸守門：真實 data/universe.json 對真實 data/tw_sectors.json，至少要有一檔能
+        解出 tier=lead（目前是 3711 封裝測試）。2026-07-19 抓到的問題是「多數股 tier=None、
+        輪動對它們靜默不作用」——這條測試確保「至少一檔命中」的底線不會無聲退化成 0 檔。"""
+        universe = picks.load_universe(os.path.join(REPO_ROOT, "data", "universe.json"))
+        smap = picks.load_sector_map(
+            universe, tw_sectors_path=os.path.join(REPO_ROOT, "data", "tw_sectors.json"))
+        universe_ids = {s["id"] for s in universe}
+        lead_ids = [sid for sid in universe_ids if smap.get(sid, {}).get("tier") == "lead"]
+        self.assertGreaterEqual(len(lead_ids), 1)
 
 
 # ---------- 候選池 / fallback ----------
@@ -429,6 +510,45 @@ class TestGeneratePicksOffline(unittest.TestCase):
         self.assertEqual(block["pools"]["actionable"], [])
         self.assertEqual(block["gate"], "禁止新增部位")
         jsonschema.validate(block, PICKS_SCHEMA)
+
+    def _fetch_fn_quota_exhausted_for(self, blocked_id):
+        """模擬額度耗盡：指定 id 的每個 dataset 呼叫都丟出 FinMind 全域不可用型例外
+        （訊息含 "rate limit"，命中 analyze_tw._is_finmind_unavailable 的關鍵字判定），
+        其餘 id 正常回資料。"""
+        def _fn(method, stock_id=None, start_date=None, **kw):
+            if stock_id == blocked_id:
+                raise RuntimeError("Final response status: 429, rate limit exceeded")
+            return self._fetch_fn(method, stock_id=stock_id, start_date=start_date, **kw)
+        return _fn
+
+    def test_quota_exhaustion_marks_note_and_stats(self):
+        """2026-07-19 維運修復：評分階段命中 FinMind 額度耗盡訊號時，該股缺現價不評分＝
+        「額度耗盡偏誤」，要在 stats／picks.note 揭露，不能悄悄變成「資料不足不給分」看不
+        出額度問題。"""
+        eg = {"new_position": "可正常布局", "risk_temp": 3}
+        block, _results, stats = picks.generate_picks(
+            eg, results={}, profile={"core_holdings": []},
+            fetch_fn=self._fetch_fn_quota_exhausted_for("1101"),
+            analyze_fn=self._analyze_fn,
+            opportunities=[{"id": "3034", "name": "聯詠", "reasons": ["外資連買"],
+                            "support_ma20": 100.0, "recent_high20": 140.0, "risk_flags": []}],
+            universe=[{"id": "2308", "name": "台達電"}, {"id": "1101", "name": "台泥"}])
+        jsonschema.validate(block, PICKS_SCHEMA)
+        self.assertTrue(stats["quota_exhausted"])
+        self.assertGreaterEqual(stats["unscored_candidates"], 1)
+        self.assertIn("未能評分", block["note"])
+
+    def test_no_quota_signal_note_unchanged(self):
+        """一般缺資料（非額度問題）不該誤觸發額度耗盡文案。"""
+        eg = {"new_position": "可正常布局", "risk_temp": 3}
+        block, _results, stats = picks.generate_picks(
+            eg, results={}, profile={"core_holdings": ["2330", "0050"]},
+            fetch_fn=self._fetch_fn, analyze_fn=self._analyze_fn,
+            opportunities=[{"id": "3034", "name": "聯詠", "reasons": ["外資連買"],
+                            "support_ma20": 100.0, "recent_high20": 140.0, "risk_flags": []}],
+            universe=[{"id": "2308", "name": "台達電"}, {"id": "1101", "name": "台泥"}])
+        self.assertFalse(stats["quota_exhausted"])
+        self.assertNotIn("未能評分", block["note"])
 
 
 if __name__ == "__main__":

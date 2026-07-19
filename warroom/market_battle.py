@@ -68,7 +68,7 @@ DISPLAY_OHLC_BARS = 60
 LOW_WINDOW = 20
 HIGH_WINDOW = 60
 KEY_LEVEL_MIN_SPACING_PCT = 0.015
-FOREIGN_STREAK_WINDOW = 10
+FOREIGN_STREAK_WINDOW = 15
 VIX_EXTREME_PCT = 8.0
 
 TW_SECTORS_PATH = "data/tw_sectors.json"
@@ -202,7 +202,12 @@ def build_foreign_streak(foreign_df, window: int = FOREIGN_STREAK_WINDOW) -> Opt
     「從最新日往回數連續同向天數」規則，只是這裡餵的是全市場外資淨額而非單股單一法人組）。
     最新日淨額剛好 0（無方向）時 direction 落 "buy"、streak 天數為 0（同 _streak 的 0 邊界
     行為，非真正有方向的連續——契約沒有定義第三種 "flat" 方向列舉，這裡不新增）。
-    無資料（df 缺／無 Foreign 列）→ None（graceful）。"""
+    無資料（df 缺／無 Foreign 列）→ None（graceful）。
+
+    days_capped（2026-07-19 修復）：streak 天數吃滿整個 window（=nets 可用天數，可能因資料
+    不足 <window）時，代表連續天數可能早於 window 起點就開始，只是被截斷看不到，不能當作
+    「恰好連 N 天」的精確值。此時附加 "days_capped": true（契約向後相容欄位，缺此鍵＝未達
+    上限、天數精確；前端拿到 true 時顯示「N+ 日」而非精確 N 日）。"""
     if foreign_df is None or len(foreign_df) == 0 or "name" not in foreign_df.columns:
         return None
     f = foreign_df[foreign_df["name"].str.contains("Foreign", case=False, na=False)]
@@ -218,7 +223,10 @@ def build_foreign_streak(foreign_df, window: int = FOREIGN_STREAK_WINDOW) -> Opt
         return None
     direction = "sell" if nets[-1] < 0 else "buy"
     days = _streak(nets)
-    return {"direction": direction, "days": days, "latest_yi": round(nets[-1], 1)}
+    out = {"direction": direction, "days": days, "latest_yi": round(nets[-1], 1)}
+    if days > 0 and days >= len(nets):
+        out["days_capped"] = True
+    return out
 
 
 def load_leading_sectors(path: str = TW_SECTORS_PATH,

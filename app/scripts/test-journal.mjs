@@ -128,11 +128,45 @@ function mk(side, stock_id, price, qty, day, overrides = {}) {
   assertEqual(getLossStreak(entries), 3, 'T5a: 連續 3 筆虧損（FIFO 都配得到成本）')
   assertEqual(getStreakAlert(entries).level, 'red', 'T5a: 連 3 筆 → red')
 
-  // 在最新加一筆「配不到成本」的 orphan 賣出（庫存已空）：應該中斷連敗，不是繼續數
+  // 在最新加一筆「配不到成本」的 orphan 賣出（庫存已空）：孤兒單跳過不中斷，往前數仍是 3
+  // （大檢查2 Y5：null 之前被當「中斷」處理，會讓使用者補記一筆漏配的賣單就把冷靜期保護
+  // 整個歸零，方向反了——孤兒單不代表使用者賺錢或該解除保護，應該跳過繼續往前看）
   const sOrphan = mk('sell', stock, 60, 50, 5)
   entries = [...entries, sOrphan]
-  assertEqual(getLossStreak(entries), 0, 'T5b: 最新一筆是 orphan（isLoss=null）→ 連敗中斷歸零')
-  assertEqual(getStreakAlert(entries).level, 'none', 'T5b: 中斷後 alert 回 none')
+  assertEqual(getLossStreak(entries), 3, 'T5b: 最新一筆是 orphan（isLoss=null）→ 跳過往前看，連敗仍計 3')
+  assertEqual(getStreakAlert(entries).level, 'red', 'T5b: 跳過孤兒單後仍連 3 筆 → red（不會被孤兒單放行）')
+
+  // 孤兒單夾在兩筆虧損中間（不是只在最新一筆）：一樣要跳過，不當成分隔點，繼續往前數
+  const stockMid = '2609'
+  const bMid = mk('buy', stockMid, 100, 200, 1) // 庫存只夠配 2 筆各 100 股
+  const lossA = mk('sell', stockMid, 90, 100, 2) // 虧，配得到成本（吃掉庫存 100）
+  const lossB = mk('sell', stockMid, 80, 100, 3) // 虧，配得到成本（吃光剩下 100，庫存歸零）
+  const orphanC = mk('sell', stockMid, 70, 30, 4) // 庫存已空 → 孤兒，最新一筆
+  const entriesMid = [bMid, lossA, lossB, orphanC]
+  assertEqual(getLossStreak(entriesMid), 2, 'T5e: 最新一筆孤兒單跳過，往前是 lossB、lossA 兩筆虧損 → streak=2')
+
+  // 全部都是孤兒（完全沒有買進）→ 一路跳過到底，streak=0（不是「跳過」跳出無限連敗）
+  const stockAllOrphan = '9958'
+  const orphanOnly1 = mk('sell', stockAllOrphan, 50, 10, 1)
+  const orphanOnly2 = mk('sell', stockAllOrphan, 48, 10, 2)
+  assertEqual(getLossStreak([orphanOnly1, orphanOnly2]), 0, 'T5f: 全部都是孤兒單（無買進）→ 跳到底仍是 0')
+
+  // 同日先記賣、後補買（Y5 描述的實際成因）：created_at 決定真實處理順序，賣單記錄在買單
+  // 之前 → 賣單處理當下庫存還沒進 queue → 變孤兒；但孤兒單已改成跳過不中斷，所以連敗
+  // 保護不會被這種補記順序打斷。
+  const stockSameDay = '3037'
+  const bEarlyStreak = mk('buy', stockSameDay, 100, 200, 1)
+  const lossX = mk('sell', stockSameDay, 90, 100, 2) // 虧，配得到成本
+  const lossY = mk('sell', stockSameDay, 85, 100, 3) // 虧，配得到成本，庫存歸零
+  // 同一天（day 4）：使用者「先記了賣單」（created_at 較早），之後才「補記買單」
+  // （created_at 較晚）——依 created_at 時序，賣單處理時買單還沒進庫存 → 孤兒。
+  const sellRecordedFirst = mk('sell', stockSameDay, 70, 20, 4, { created_at: 'T0001' })
+  const buyRecordedLater = mk('buy', stockSameDay, 60, 20, 4, { created_at: 'T9999' })
+  const entriesSameDay = [bEarlyStreak, lossX, lossY, sellRecordedFirst, buyRecordedLater]
+  assertEqual(
+    getLossStreak(entriesSameDay), 2,
+    'T5g: 同日先記賣後補買造成的孤兒單，跳過後往前仍是 lossY、lossX 兩筆虧損 → streak=2',
+  )
 
   // 換成賺錢的賣出也會中斷（用另一檔股票獨立驗證，避免庫存互相干擾）
   const stock2 = '2882'

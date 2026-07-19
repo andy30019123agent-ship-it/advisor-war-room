@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchDaily, SchemaMismatchError } from '../lib/api'
 import { loadHoldings } from '../lib/holdings'
 import { loadWatchlist } from '../lib/watchlist'
-import { useQuotes, isLiveQuote, type QuotesMap } from '../lib/quotes'
+import { useQuotes, isLiveQuote, isIntradayDefenseBreach, type QuotesMap } from '../lib/quotes'
 import { FreshnessBadge } from '../components/FreshnessBadge'
 import { LiveQuoteBadge } from '../components/LiveQuoteBadge'
 import { MarketBattle } from '../components/MarketBattle'
@@ -205,6 +205,7 @@ export function Today({
                   ? ((currentPrice - defensePrice) / currentPrice) * 100
                   : null
               const tension = tensionClass(distPct)
+              const intradayBreach = isIntradayDefenseBreach(live, currentPrice, defensePrice)
               return (
                 <div className="list-row" key={h.id}>
                   <button
@@ -231,6 +232,9 @@ export function Today({
                         <span className="pill neutral">距防守 {distPct.toFixed(1)}%</span>
                       ) : (
                         <span className="pill neutral">非追蹤清單，暫無防守價</span>
+                      )}
+                      {intradayBreach && (
+                        <span className="quote-breach-hint">盤中已觸及防守，以收盤確認為準</span>
                       )}
                     </div>
                   </button>

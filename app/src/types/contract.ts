@@ -253,7 +253,8 @@ export const PickSchema = z.object({
   // Pick 型別本身向後相容，只有下面的容器結構（pools vs 平鋪 short/swing/long）分兩種。
   sector: z.string().nullable().optional(),
   tenure_days: z.number().nullable().optional(),
-  rank_move: z.enum(['↑', '↓', '−']).nullable().optional(),
+  // pool_change：跨艙比較不可比（換池），引擎改用這個值取代假箭頭（大檢查2 R2）。
+  rank_move: z.enum(['↑', '↓', '−', 'pool_change']).nullable().optional(),
   status_note: z.string().nullable().optional(),
   horizon: z.enum(['short', 'swing', 'long']).nullable().optional(),
 })

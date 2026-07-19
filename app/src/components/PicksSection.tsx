@@ -35,8 +35,13 @@ function suggestedTier(score: number): number {
   return 100000
 }
 
-function rankMoveClass(mark: string | null | undefined): string {
-  return mark === '↑' ? 'up' : mark === '↓' ? 'down' : 'flat'
+// rank_move='pool_change'：昨天在別艙、今天換到這艙，名次不可跨艙比較（大檢查2 R2），
+// 不能顯示假箭頭；改顯示中性小標「換池」提示是引擎正在改分艙，不是名次真的變動。
+function rankMoveDisplay(mark: string): { cls: string; text: string } {
+  if (mark === '↑') return { cls: 'up', text: '↑' }
+  if (mark === '↓') return { cls: 'down', text: '↓' }
+  if (mark === 'pool_change') return { cls: 'flat pool-change', text: '換池' }
+  return { cls: 'flat', text: mark } // '−'
 }
 
 function ChevronGlyph() {
@@ -73,7 +78,10 @@ function PickCard({
               {pick.name}
               <span className="pick-code mono">{pick.id}</span>
               {pick.sector && <span className="pick-sector">{pick.sector}</span>}
-              {pick.rank_move && <span className={`pick-rank ${rankMoveClass(pick.rank_move)}`}>{pick.rank_move}</span>}
+              {pick.rank_move && (() => {
+                const rm = rankMoveDisplay(pick.rank_move)
+                return <span className={`pick-rank ${rm.cls}`}>{rm.text}</span>
+              })()}
             </span>
             <span className="pick-close mono">{formatPrice(pick.close)}</span>
           </div>

@@ -41,6 +41,11 @@ RECOMMENDATION_LOG = "data/recommendation_log.json"
 FORECAST_LOG = "data/forecast_log.json"
 # 各 horizon 到期所需交易日數（week=forecast.week_range_70／m1／m3，對齊 forecast.horizons）。
 FORECAST_HORIZON_TRADING_DAYS = {"week": 5, "m1": 21, "m3": 63}
+# 回填日期門檻（曆日，比照 warroom/scenario_calibration.py REALIZE_MIN_CALENDAR_DAYS 的
+# 曆日/交易日比例＝1.4，含週末/假日緩衝）：進場未滿門檻的 entry 不打 API，維運 2026-07-19
+# 抓到 forecast_log 回填沒有這個門檻，每天對還沒到期的新筆也先打了 FinMind 才知道會落空
+# （14 筆全新 × 3 horizon＝42 次白打）。
+FORECAST_HORIZON_MIN_CALENDAR_DAYS = {"week": 7, "m1": 30, "m3": 89}
 FORECAST_ACCURACY_MIN_SAMPLES = 10
 FORECAST_ACCURACY_NOTE_INSUFFICIENT = "樣本累積中：每天記錄預估區間，5 日後開始回填驗證"
 # 未來事件來源①：法說會行事曆（姊妹專案；不存在則跳過，不編）。
@@ -180,9 +185,12 @@ def _daily_change_yf(ticker: str) -> Optional[float]:
 
 # v1.8 大盤作戰區：TAIEX 需要 ≥120 根交易日（forecast_range_m1 的 GBM 門檻，見
 # warroom/forecast.py MIN_BARS）才拿得到完整區間，比 ohlc 展示用的 60 根更長；用曆日回抓
-# 天數留寬鬆緩衝（含週末/國定假日空檔）。外資全市場合計只需近 10 個交易日算連買賣天數。
+# 天數留寬鬆緩衝（含週末/國定假日空檔）。外資全市場合計需近 FOREIGN_STREAK_WINDOW（15）個
+# 交易日算連買賣天數（2026-07-19 window 10→15 上修）；15 個交易日曆日回抓要留夠緩衝
+# （15×7/5≈21 天再加國定假日空檔），30 天曆日留寬鬆邊界，避免抓不滿 window 天數讓
+# build_foreign_streak 的 days_capped 誤觸發。
 MARKET_BATTLE_TAIEX_LOOKBACK_DAYS = 260
-MARKET_BATTLE_FOREIGN_LOOKBACK_DAYS = 20
+MARKET_BATTLE_FOREIGN_LOOKBACK_DAYS = 30
 
 
 def _fetch_taiex_series(days_back: int = MARKET_BATTLE_TAIEX_LOOKBACK_DAYS):
@@ -976,11 +984,27 @@ def _finmind_close_after(stock_id: str, entry_date: str, n_trading_days: int) ->
         return None
 
 
+def _eligible_for_forecast_backfill(entry_date: str, today: str, min_calendar_days: int) -> bool:
+    """entry_date 起是否已過 min_calendar_days 曆日（比照 scenario_calibration._eligible_
+    for_backfill 同款寫法）。日期格式壞掉 → False（保守不打）。"""
+    try:
+        d0 = datetime.strptime(entry_date[:10], "%Y-%m-%d").date()
+        t = datetime.strptime(today[:10], "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return False
+    return (t - d0).days >= min_calendar_days
+
+
 def backfill_forecast_log(log: List[Dict], price_lookup=_finmind_close_after,
                           today: Optional[str] = None) -> List[Dict]:
     """就地回填每筆 entry 的 week_hit/m1_hit/m3_hit（已回填過的欄位跳過不重算）。
     price_lookup(stock_id, entry_date, n_trading_days) -> 收盤價|None，預設走 FinMind；
-    測試可注入假 lookup 離線跑（沿用 warroom.track_record.backfill_outcomes 的同款寫法）。"""
+    測試可注入假 lookup 離線跑（沿用 warroom.track_record.backfill_outcomes 的同款寫法）。
+    日期門檻（FORECAST_HORIZON_MIN_CALENDAR_DAYS，比照 scenario_log 同款 _eligible_for_
+    backfill）：進場未滿門檻天數的 entry 直接跳過、不打 API——原本每個 horizon 不論到期
+    與否都先打了 FinMind 才讓函式內部判斷資料不足回 None，白白耗用額度（2026-07-19 維運
+    檢查抓到：全新 14 筆 × 3 horizon＝42 次注定落空的呼叫）。"""
+    today = today or _today()
     for e in log:
         sid, date = e.get("stock_id"), e.get("date")
         if not sid or not date:
@@ -992,6 +1016,9 @@ def backfill_forecast_log(log: List[Dict], price_lookup=_finmind_close_after,
             rng = e.get(key)
             if not (isinstance(rng, (list, tuple)) and len(rng) == 2
                     and rng[0] is not None and rng[1] is not None):
+                continue
+            min_days = FORECAST_HORIZON_MIN_CALENDAR_DAYS[key]
+            if not _eligible_for_forecast_backfill(date, today, min_days):
                 continue
             try:
                 close = price_lookup(sid, date, n_days)
@@ -1177,10 +1204,16 @@ def main() -> None:
     exposure_guidance = build_exposure_guidance(market_block["risk_temp"])
     profile = load_profile()
     results_for_picks, _ = load_stock_results(discover_stock_files(DATA_DIR))
+    # picks 冪等 guard 要吃到跟 build_meta/save_roster 同一套 data_date fallback（個股 as_of
+    # 最大值），不能只用原始 market_inputs["trade_date"]——否則假日/API 全失敗時 trade_date=
+    # None，generate_picks 的冪等 guard 停用、每重跑一次 roster tenure 就 +1，但 save_roster
+    # 那邊用的 meta.data_date 已經 fallback 過，兩邊日期來源不一致（2026-07-19 抓到的回歸：
+    # f852a12「同日三跑變3日留任」在缺 trade_date 時重現）。
+    picks_data_date = market_inputs.get("trade_date") or _max_as_of_date(results_for_picks)
     try:
         picks_input, picks_results, picks_stats = _picks_mod.generate_picks(
             exposure_guidance, results_for_picks, profile,
-            data_date=market_inputs.get("trade_date"))
+            data_date=picks_data_date)
         print(f"[build_snapshots] picks：候選 {picks_stats['pool_size']} 檔"
               f"（opp 來源={picks_stats['opp_source']}），FinMind 呼叫估 "
               f"{picks_stats['finmind_calls']} 次（評分 {picks_stats['scoring_calls']}"

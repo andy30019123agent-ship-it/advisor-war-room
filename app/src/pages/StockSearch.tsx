@@ -18,7 +18,7 @@ import { CandleChart } from '../components/CandleChart'
 import { MidLongReads } from '../components/MidLongReads'
 import { LiveQuoteBadge } from '../components/LiveQuoteBadge'
 import { loadWatchlist } from '../lib/watchlist'
-import { useQuotes, isLiveQuote } from '../lib/quotes'
+import { useQuotes, isLiveQuote, isIntradayDefenseBreach } from '../lib/quotes'
 import type { Daily, StockDetail } from '../types/contract'
 
 export function StockSearch() {
@@ -270,6 +270,10 @@ function StockDetailView({
   const cooldown =
     !suppressPosition && pd.position.tier_amount > 0 ? applyCooldown(pd.position.tier_amount, streak) : null
 
+  // 誠實揭露（大檢查2 Y1）：盤中即時價已跌破防守價，但防守價本身的失效判定以收盤為準——
+  // 兩個基準同框時要明講，不要讓使用者把「盤中暫破」誤讀成「劇本已經判定跌破」。
+  const intradayBreach = isIntradayDefenseBreach(live, displayClose, pd.defense_price)
+
   const [journalSeed, setJournalSeed] = useState<{ stock_id: string; name: string; price?: number } | null>(null)
 
   return (
@@ -333,6 +337,9 @@ function StockDetailView({
               <span className="k">防守價</span>
               <span className="v risk">{formatNumber(pd.defense_price)}</span>
             </div>
+          )}
+          {intradayBreach && (
+            <p className="quote-breach-hint quote-breach-hint-block">盤中已觸及防守，以收盤確認為準</p>
           )}
 
           {context.rr != null && (

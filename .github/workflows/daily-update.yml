@@ -15,7 +15,9 @@ concurrency:
 jobs:
   build-and-commit:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45  # 維運 2026-07-19：picks/market_battle/三條 log 回填整包新管線第一次
+    # 真實網路實戰，07-18 唯一一次真跑實測單一 FinMind 呼叫就出現過 5 分鐘延遲，30 分鐘緩衝
+    # 太薄；45 分鐘成本仍是 0（public repo Actions 分鐘數全免費），先求穩過關
     steps:
       - uses: actions/checkout@v4
 

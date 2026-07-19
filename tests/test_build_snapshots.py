@@ -526,12 +526,16 @@ class TestUpdateForecastLog(unittest.TestCase):
 
 
 class TestBackfillForecastLog(unittest.TestCase):
+    # entry 日 2026-07-18 起 94 天＝2026-10-20，超過三個 horizon 的日期門檻（週19 這裡指
+    # week/m1/m3 分別 7/30/89 曆日），供「已到期」情境測試用；門檻本身另有專屬測試。
+    _ELIGIBLE_TODAY = "2026-10-20"
+
     def test_close_within_range_marks_hit_true(self):
         log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
                "m1": [90.0, 110.0], "m3": [80.0, 120.0],
                "week_hit": None, "m1_hit": None, "m3_hit": None}]
         lookup = lambda sid, date, n_days: 100.0  # 落在三個區間內
-        out = backfill_forecast_log(log, price_lookup=lookup)
+        out = backfill_forecast_log(log, price_lookup=lookup, today=self._ELIGIBLE_TODAY)
         self.assertTrue(out[0]["week_hit"])
         self.assertTrue(out[0]["m1_hit"])
         self.assertTrue(out[0]["m3_hit"])
@@ -541,7 +545,7 @@ class TestBackfillForecastLog(unittest.TestCase):
                "m1": [90.0, 110.0], "m3": [80.0, 120.0],
                "week_hit": None, "m1_hit": None, "m3_hit": None}]
         lookup = lambda sid, date, n_days: 200.0  # 三個區間都落外
-        out = backfill_forecast_log(log, price_lookup=lookup)
+        out = backfill_forecast_log(log, price_lookup=lookup, today=self._ELIGIBLE_TODAY)
         self.assertFalse(out[0]["week_hit"])
         self.assertFalse(out[0]["m1_hit"])
         self.assertFalse(out[0]["m3_hit"])
@@ -551,7 +555,7 @@ class TestBackfillForecastLog(unittest.TestCase):
                "m1": [90.0, 110.0], "m3": [80.0, 120.0],
                "week_hit": None, "m1_hit": None, "m3_hit": None}]
         lookup = lambda sid, date, n_days: 105.0  # week 上界，含端點
-        out = backfill_forecast_log(log, price_lookup=lookup)
+        out = backfill_forecast_log(log, price_lookup=lookup, today=self._ELIGIBLE_TODAY)
         self.assertTrue(out[0]["week_hit"])
 
     def test_lookup_returns_none_leaves_pending_for_next_run(self):
@@ -559,7 +563,7 @@ class TestBackfillForecastLog(unittest.TestCase):
                "m1": [90.0, 110.0], "m3": [80.0, 120.0],
                "week_hit": None, "m1_hit": None, "m3_hit": None}]
         lookup = lambda sid, date, n_days: None  # 還沒到期／抓不到
-        out = backfill_forecast_log(log, price_lookup=lookup)
+        out = backfill_forecast_log(log, price_lookup=lookup, today=self._ELIGIBLE_TODAY)
         self.assertIsNone(out[0]["week_hit"])
         self.assertIsNone(out[0]["m1_hit"])
         self.assertIsNone(out[0]["m3_hit"])
@@ -574,7 +578,7 @@ class TestBackfillForecastLog(unittest.TestCase):
             calls.append(n_days)
             return 100.0
 
-        backfill_forecast_log(log, price_lookup=lookup)
+        backfill_forecast_log(log, price_lookup=lookup, today=self._ELIGIBLE_TODAY)
         self.assertNotIn(5, calls)  # week（5 交易日）已回填過，不該再呼叫
 
     def test_lookup_exception_does_not_crash_whole_batch(self):
@@ -585,8 +589,44 @@ class TestBackfillForecastLog(unittest.TestCase):
         def boom(sid, date, n_days):
             raise RuntimeError("網路掛了")
 
-        out = backfill_forecast_log(log, price_lookup=boom)  # 不炸
+        out = backfill_forecast_log(log, price_lookup=boom, today=self._ELIGIBLE_TODAY)  # 不炸
         self.assertIsNone(out[0]["week_hit"])
+
+    # ---- 日期門檻（比照 scenario_log 的 _eligible_for_backfill）----
+    def test_not_yet_eligible_skips_api_call(self):
+        """進場才 1 天，三個 horizon 都還沒到門檻（week 需 7 曆日）→ 完全不打 price_lookup，
+        省掉注定落空的呼叫（2026-07-19 維運檢查抓到的白打問題）。"""
+        log = [{"date": "2026-07-18", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": None, "m1_hit": None, "m3_hit": None}]
+        calls = []
+
+        def lookup(sid, date, n_days):
+            calls.append(n_days)
+            return 100.0
+
+        out = backfill_forecast_log(log, price_lookup=lookup, today="2026-07-19")
+        self.assertEqual(calls, [])
+        self.assertIsNone(out[0]["week_hit"])
+        self.assertIsNone(out[0]["m1_hit"])
+        self.assertIsNone(out[0]["m3_hit"])
+
+    def test_week_eligible_before_m1_and_m3(self):
+        """week 門檻 7 天先到，m1（30 天）／m3（89 天）還沒到 → 只打 week 那次呼叫。"""
+        log = [{"date": "2026-07-01", "stock_id": "9999", "week": [95.0, 105.0],
+               "m1": [90.0, 110.0], "m3": [80.0, 120.0],
+               "week_hit": None, "m1_hit": None, "m3_hit": None}]
+        calls = []
+
+        def lookup(sid, date, n_days):
+            calls.append(n_days)
+            return 100.0
+
+        out = backfill_forecast_log(log, price_lookup=lookup, today="2026-07-10")  # 差 9 天
+        self.assertEqual(calls, [5])  # 只有 week（5 交易日）達門檻
+        self.assertTrue(out[0]["week_hit"])
+        self.assertIsNone(out[0]["m1_hit"])
+        self.assertIsNone(out[0]["m3_hit"])
 
 
 class TestBuildForecastAccuracy(unittest.TestCase):

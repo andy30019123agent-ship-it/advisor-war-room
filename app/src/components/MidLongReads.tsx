@@ -11,6 +11,17 @@ function biasClass(bias: string): string {
   return 'flat'
 }
 
+// flip_condition 引擎端保證「一律指向相反方向的下一個 stance」（primary_decision.py
+// _direction_read docstring）：bias 偏多 → flip_condition 描述怎麼翻空；bias 偏空／中性
+// → flip_condition 描述怎麼翻多。label 之前寫死「翻多條件」，偏多股會出現「翻多條件：
+// 跌破…轉偏空」的語意反話（大檢查2 R1）。改依 bias 動態算 label，跟 flip_condition 內容
+// 的實際方向對齊。
+function flipLabel(bias: string): string {
+  if (bias.includes('偏多')) return '翻空條件'
+  if (bias.includes('偏空')) return '翻多條件'
+  return '翻向條件'
+}
+
 function ReadCard({ label, read }: { label: string; read: MidLongRead }) {
   return (
     <div className="summary-card midlong-card">
@@ -21,7 +32,7 @@ function ReadCard({ label, read }: { label: string; read: MidLongRead }) {
       {read.path_text && <p className="midlong-path">{read.path_text}</p>}
       {read.flip_condition && (
         <div className="midlong-flip">
-          <span className="midlong-flip-label">翻多條件</span>
+          <span className="midlong-flip-label">{flipLabel(read.bias)}</span>
           <span>{read.flip_condition}</span>
         </div>
       )}

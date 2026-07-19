@@ -155,15 +155,21 @@ export function pairSells(allEntries: JournalEntry[], sellsSubset?: JournalEntry
 // ---------- 連敗保護 ----------
 
 // 連續停損筆數：從時間序最新的賣出往回數，遇到「FIFO 配對得到成本且虧損」的賣出就繼續數；
-// 配不到成本（isLoss=null，含整筆 orphan＝賣超庫存的部分）視為中斷——資料不全或賣超時
-// 無法確認虧損，保守起見不算進連敗，但也不能假裝沒事繼續往前數，直接中斷計數。isLoss 已
-// 是 FIFO 損益的結果（見 computeFifoMatches），這裡不用再處理配對細節。
+// 遇到「配得到成本但賺錢」（isLoss=false）才真的中斷——那才是連敗被打斷的證據。
+// 孤兒賣單（isLoss=null，配不到成本，例如漏記買進、或同日補記賣單時買單還沒進 queue）
+// 改成「跳過、繼續往前看」而不是中斷：孤兒單本身不代表使用者賺錢或停損保護該解除，
+// 之前把 null 當中斷會讓使用者補記一筆漏配的賣單就把冷靜期保護整個歸零（大檢查2 Y5，
+// 保守方向反了——寧可繼續數，不要誤放行冷靜期）。isLoss 已是 FIFO 損益的結果（見
+// computeFifoMatches，內部依 sortedByTime＝date 優先、同日用 created_at 決勝排序），
+// 這裡不用再處理配對細節。
 export function getLossStreak(entries: JournalEntry[]): number {
   const sells = pairSells(entries) // 已經是時間升冪
   let streak = 0
   for (let i = sells.length - 1; i >= 0; i--) {
-    if (sells[i].isLoss === true) streak++
-    else break
+    const isLoss = sells[i].isLoss
+    if (isLoss === true) streak++
+    else if (isLoss === null) continue // 孤兒單：跳過，不中斷、不計數
+    else break // isLoss === false：真的賺錢，連敗到此為止
   }
   return streak
 }

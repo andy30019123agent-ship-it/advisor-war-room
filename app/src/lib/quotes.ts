@@ -63,3 +63,16 @@ export function useQuotes(ids: readonly string[]) {
 export function isLiveQuote(q: QuoteEntry | undefined): q is QuoteEntry & { price: number; at: string } {
   return !!q && q.stale === false && q.price != null && q.at != null
 }
+
+// 誠實揭露（大檢查2 Y1）：畫面上「距防守 %」用盤中即時價算，但劇本／決策卡的失效判定
+// 一律以「收盤」為準（primary_decision／短線劇本都寫死「收盤跌破防守價才失效」）。
+// 盤中即時價已經跌破防守、但收盤還沒收確認時，兩個基準會同框出現矛盾訊號——即時價讀起來
+// 像「已經破防守」，但劇本卡仍在講「還沒破」。這裡只負責判斷是否要秀出那句誠實提示，
+// 不改變任何判定邏輯本身。
+export function isIntradayDefenseBreach(
+  live: boolean,
+  currentPrice: number | null,
+  defensePrice: number | null,
+): boolean {
+  return live && currentPrice != null && defensePrice != null && currentPrice < defensePrice
+}

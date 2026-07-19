@@ -137,6 +137,20 @@ class TestForeignStreak(unittest.TestCase):
         self.assertEqual(out["direction"], "buy")
         self.assertEqual(out["days"], 1)
 
+    def test_streak_fills_window_marks_days_capped(self):
+        # 20 天資料、window=15（FOREIGN_STREAK_WINDOW）全部同向買超 → streak 吃滿整個
+        # window，代表連續天數可能更早開始只是被截斷看不到，需標 days_capped（2026-07-19
+        # 修復：window 10→15＋此旗標，讓前端能顯示「15+ 日」而非誤植精確值）。
+        out = build_foreign_streak(make_foreign_df([10] * 20))
+        self.assertEqual(out["days"], 15)
+        self.assertTrue(out.get("days_capped"))
+
+    def test_streak_within_window_not_capped(self):
+        # streak 天數 < 可用天數（3 天同向後翻轉）→ 不該有 days_capped 這個鍵。
+        out = build_foreign_streak(make_foreign_df([-8, -5, 5, 5, 5]))
+        self.assertEqual(out["days"], 3)
+        self.assertNotIn("days_capped", out)
+
     def test_no_foreign_rows_returns_none(self):
         df = pd.DataFrame([{"date": "2026-07-01", "name": "Investment_Trust",
                              "buy": 100.0, "sell": 0.0}])
