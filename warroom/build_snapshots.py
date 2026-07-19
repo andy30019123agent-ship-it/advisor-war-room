@@ -304,19 +304,22 @@ def build_alerts_for_stock(stock_id: str, name: str, primary: Dict) -> List[Dict
 def build_exposure_guidance(risk_temp: int) -> Dict:
     """風險溫度 → 白話曝險規則（規則表寫死、可揭露）：
     1-3→80%/可正常布局；4-6→60%/僅限試單；7-8→50%/僅限試單；9-10→40%/禁止新增部位。"""
+    # note 去重（實戰走查任務 3）：只講「理由＋現金水位」，不再重複 headline 已說的「操作結論」
+    # （不開新倉／僅限試單…）——今日指令中心 headline 講結論、note 講理由，兩者不重疊。前端命令卡
+    # 另把「風險溫度 X/10：」前綴收掉，讓風險溫度只出現一次（見 app/src/pages/Today.tsx）。
     rt = int(risk_temp)
     if rt <= 3:
         max_equity, new_pos = 80, "可正常布局"
-        note = f"風險溫度 {rt}/10：市場穩定，股票曝險可到 8 成，維持紀律正常布局。"
+        note = f"風險溫度 {rt}/10：市場穩定，股票曝險可到 8 成、現金約留 2 成。"
     elif rt <= 6:
         max_equity, new_pos = 60, "僅限試單"
-        note = f"風險溫度 {rt}/10：波動升高，股票曝險控在 6 成，新倉僅限試單、分批進。"
+        note = f"風險溫度 {rt}/10：波動升高，股票曝險控在 6 成、現金留 4 成。"
     elif rt <= 8:
         max_equity, new_pos = 50, "僅限試單"
-        note = f"風險溫度 {rt}/10：市場偏弱，現金至少留 5 成，只做小量試單、不追高。"
+        note = f"風險溫度 {rt}/10：市場偏弱，現金至少留 5 成。"
     else:
         max_equity, new_pos = 40, "禁止新增部位"
-        note = f"風險溫度 {rt}/10：市場劇烈波動，現金至少留六成，今天不開新倉。"
+        note = f"風險溫度 {rt}/10：市場劇烈波動，現金至少留六成。"
     return {"risk_temp": rt, "max_equity_pct": max_equity,
             "min_cash_pct": 100 - max_equity, "new_position": new_pos, "note": note}
 
@@ -1088,6 +1091,11 @@ def build_all(data_dir: str = DATA_DIR, market_inputs: Optional[Dict] = None,
         if sid not in stock_details:
             stock_details[sid] = build_stock_detail(sid, res, profile, meta,
                                                     market_new_position)
+    # 單一事實源對齊（實戰走查 🔴 任務 1）：picks 操作卡對外顯示的 defense/entry_zone/
+    # invalidation 改取 stock_details 的 primary_decision，兩邊同源不打架。必須在 stock_details
+    # 全部建好（含被選新股）之後跑，picks 卡的 id 才保證都有對應完整分析可取。
+    if picks_input is not None:
+        _picks_mod.align_picks_to_details(daily.get("picks"), stock_details)
     return daily, stock_details, skipped
 
 

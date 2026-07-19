@@ -275,6 +275,12 @@ function TermRow({ label, value, explain, valueClass }: { label: string; value: 
 
 function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily | undefined }) {
   const { profile, price, primary_decision: pd, context, evidence } = detail
+  // 禁新倉時不對空手者秀部位金額（實戰走查任務 4）：大盤禁新倉＋使用者沒持有這檔＝這時秀
+  // 「20 萬部位」會誘導在該空手時進場，改顯示「—（禁新倉）」。資料保留，只在顯示層處理；
+  // 持有者仍看得到自己既有部位大小，不受影響。
+  const gateBanned = daily?.exposure_guidance?.new_position === '禁止新增部位'
+  const isHolder = loadHoldings().some((h) => h.id === profile.id)
+  const suppressPosition = gateBanned && !isHolder
 
   return (
     <>
@@ -299,9 +305,11 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
           <div className="decision-meta-row">
             <span className="k">部位</span>
             <span className="v">
-              {pd.position.tier_amount > 0
-                ? `${(pd.position.tier_amount / 10000).toFixed(0)} 萬（${formatShares(pd.position.lots * SHARES_PER_LOT + pd.position.odd_shares)}）`
-                : '空手'}
+              {suppressPosition
+                ? '—（禁新倉）'
+                : pd.position.tier_amount > 0
+                  ? `${(pd.position.tier_amount / 10000).toFixed(0)} 萬（${formatShares(pd.position.lots * SHARES_PER_LOT + pd.position.odd_shares)}）`
+                  : '空手'}
             </span>
           </div>
 

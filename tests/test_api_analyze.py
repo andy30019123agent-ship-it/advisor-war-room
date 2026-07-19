@@ -78,5 +78,19 @@ class TestHandlerRateLimited(unittest.TestCase):
         self.assertEqual(self._sent_json(h), {"error": "查詢太頻繁，請稍後再試"})
 
 
+class TestExposureGateFailClosed(unittest.TestCase):
+    """實戰走查 🔴 任務 2：即時查詢的曝險閘門讀不到 daily.json 時要 fail-closed 回「禁止新增
+    部位」，不能回 None（不受限）——否則 read 一出差錯就吐「試單 10 萬」違反禁新倉。"""
+    def test_returns_banned_when_daily_json_unreadable(self):
+        import os
+        with patch("api.analyze._ROOT", "/no/such/dir"):
+            self.assertEqual(analyze._lite_exposure_new_position(), "禁止新增部位")
+
+    def test_reads_real_new_position_when_available(self):
+        # 正常路徑：讀得到已部署 daily.json → 回其 exposure_guidance.new_position（三態之一）
+        val = analyze._lite_exposure_new_position()
+        self.assertIn(val, ("禁止新增部位", "僅限試單", "可正常布局"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -409,11 +409,7 @@ def build_pick_card(m: Dict, framework: str, score: float,
 
     banned = (new_position == "禁止新增部位")
     action = _action_summary(framework, low, high, defense, new_position, banned)
-    fund_cond = {"short": "動能轉弱、爆量收黑",
-                 "swing": "營收 YoY 連 2 月轉負",
-                 "long": "營收連 2 月轉負或估值回到高分位"}[framework]
-    invalidation = (f"跌破 {defense} 或{fund_cond}" if defense is not None
-                    else f"{fund_cond}")
+    invalidation = _invalidation(framework, defense)
     return {
         "id": m["id"], "name": m.get("name") or m["id"],
         "close": _num(close), "score": round(score, 1),
@@ -425,6 +421,17 @@ def build_pick_card(m: Dict, framework: str, score: float,
         "invalidation": invalidation,
         "reasons": reasons,
     }
+
+
+# 失效條件的基本面語言（各框架固定），對外顯示與精選卡自算防守數字組合成一句話。
+_INVALIDATION_FUND_COND = {"short": "動能轉弱、爆量收黑",
+                           "swing": "營收 YoY 連 2 月轉負",
+                           "long": "營收連 2 月轉負或估值回到高分位"}
+
+
+def _invalidation(framework: str, defense: Optional[float]) -> str:
+    fund_cond = _INVALIDATION_FUND_COND[framework]
+    return f"跌破 {defense} 或{fund_cond}" if defense is not None else fund_cond
 
 
 def _action_summary(framework, low, high, defense, new_position, banned) -> str:
@@ -530,6 +537,58 @@ def build_picks_block(scored: List[Dict], new_position: str,
     picks = {"generated_from": generated_from, "gate": new_position, "note": note,
              "short": block["short"], "swing": block["swing"], "long": block["long"]}
     return picks, selected_ids
+
+
+# ======================= picks ↔ stocks 單一事實源對齊 =======================
+def _authoritative_entry_zone(detail: Dict) -> Tuple[Optional[float], Optional[float]]:
+    """從個股完整分析（stocks/<id>.json）的 primary_decision.advice「空手進場錨點」推回精選卡
+    的觀察區——用 advice 那條同款 _nonholder_entry 邏輯（站回上方均線／回測下方均線／
+    entry_condition），確保精選卡的進場區與完整分析的進場劇本同源、同一個數字。回 (low, high)
+    ＝現價與錨點之間的觀察帶；資料不足回 (None, None)（呼叫端保留自算值）。"""
+    from warroom.primary_decision import _nonholder_entry, _executable_anchors
+    primary = detail.get("primary_decision") or {}
+    price = _num((detail.get("price") or {}).get("close"))
+    if price is None:
+        return None, None
+    defense = _num(primary.get("defense_price"))
+    tech_facts = (((detail.get("context") or {}).get("lights") or {})
+                  .get("technical") or {}).get("facts") or []
+    entry = _nonholder_entry(price, tech_facts, primary.get("entry_condition"),
+                             _executable_anchors(price, tech_facts, defense))
+    if not entry or entry.get("price") is None:
+        return None, None
+    anchor = round(float(entry["price"]), 1)
+    p = round(price, 1)
+    return (min(anchor, p), max(anchor, p))
+
+
+def align_picks_to_details(picks_block: Optional[Dict],
+                           stock_details: Dict[str, Dict]) -> None:
+    """單一事實源（實戰走查 🔴 任務 1）：精選操作卡「對外顯示」的 defense_price/entry_zone/
+    invalidation/action_summary 一律改「直接取該股 stocks/<id>.json 的 primary_decision」，
+    不再沿用 picks 自算的長線 MA 值——否則同一支股票精選卡防守 452.8、點進完整分析卻是
+    447.1，同一天兩套數字打架最傷信任。picks 自算的 score/confidence 只用於評分排序，保留不動。
+    就地修改 picks_block（picks 卡的 id 必在 stock_details 內：白名單＝tracked ∪ 被選新股）。"""
+    if not picks_block:
+        return
+    gate = picks_block.get("gate")
+    banned = (gate == "禁止新增部位")
+    for fw in ("short", "swing", "long"):
+        for card in picks_block.get(fw) or []:
+            detail = stock_details.get(card.get("id"))
+            if not detail:
+                continue  # 理論上白名單保證存在；缺就保留自算值不炸
+            primary = detail.get("primary_decision") or {}
+            defense = _num(primary.get("defense_price"))
+            if defense is None:
+                continue  # 完整分析也沒有防守價（資料不足）→ 保留自算值
+            low, high = _authoritative_entry_zone(detail)
+            if low is None or high is None:  # 完整分析無可執行錨點 → 沿用自算觀察區
+                low, high = card["entry_zone"][0], card["entry_zone"][1]
+            card["defense_price"] = defense
+            card["entry_zone"] = [low, high]
+            card["action_summary"] = _action_summary(fw, low, high, defense, gate, banned)
+            card["invalidation"] = _invalidation(fw, defense)
 
 
 def _gate_note(new_position: str, has_long: bool) -> str:

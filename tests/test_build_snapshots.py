@@ -737,5 +737,69 @@ class TestBuildDelta(unittest.TestCase):
         self.assertIsNone(daily["delta"])
 
 
+class TestPicksSingleSourceAlignment(unittest.TestCase):
+    """實戰走查 🔴 任務 1：精選操作卡對外顯示的 defense_price/entry_zone/invalidation 必須
+    「直接取該股 stocks/<id>.json 的 primary_decision」，不得用 picks 自算的長線 MA 值——
+    否則精選卡防守 452.8、點進完整分析卻 447.1，同一天兩套數字打架。"""
+    def test_pick_card_defense_equals_stock_detail_primary(self):
+        from warroom import picks
+        # 自算一張長線卡（防守＝MA60×0.95＝826.5，刻意與 2454 真正 primary_decision 不同源）
+        m = {"id": "2454", "name": "聯發科", "close": 900.0, "ma20": 890.0, "ma60": 870.0,
+             "ma120": 850.0, "support": 890.0, "recent_high": 1000.0, "revenue_yoy": 8.0,
+             "avg3_yoy": 7.0, "per_pctile": 0.3, "pbr_pctile": 0.3, "div_yield": 3.0,
+             "risk_flags": [], "ret20": None, "ret60": None, "high20": None, "low20": None,
+             "vol_ratio": None, "chip_turn_buy": False, "chip_buy_streak_ge3": False,
+             "dist_high20_pct": None, "earnings_within7": False}
+        card = picks.build_pick_card(m, "long", 75.0, "禁止新增部位")
+        self_calc_defense = card["defense_price"]
+        self.assertEqual(self_calc_defense, 826.5)  # 對齊前＝自算長線值
+        picks_input = {"generated_from": "t", "gate": "禁止新增部位", "note": "n",
+                       "short": [], "swing": [], "long": [card]}
+        daily, details, _ = build_all(
+            data_dir=os.path.join(REPO_ROOT, "data"),
+            market_inputs=TestBuildAllRealData.OFFLINE_MARKET_INPUTS,
+            picks_input=picks_input)
+        self.assertIn("2454", details)
+        expected = details["2454"]["primary_decision"]["defense_price"]
+        self.assertIsNotNone(expected)
+        aligned = daily["picks"]["long"][0]
+        # 核心驗收：picks 卡的防守價 == 對應 stocks json 的 defense_price（單一事實源）
+        self.assertEqual(aligned["defense_price"], expected)
+        self.assertNotEqual(aligned["defense_price"], self_calc_defense)  # 真的換過源
+        # invalidation 帶對齊後的防守數字、entry_zone 兩端；action_summary 與 entry_zone 一致
+        self.assertIn(str(expected), aligned["invalidation"])
+        self.assertEqual(len(aligned["entry_zone"]), 2)
+        jsonschema.validate(daily, DAILY_SCHEMA)
+
+
+class TestStockDetailNewPositionGate(unittest.TestCase):
+    """實戰走查 🔴 任務 2：build_stock_detail（即時查詢 api/analyze 走的同一支組裝）在大盤
+    「禁止新增部位」時，空手建議一律「暫不進場」，不得吐「試單 10 萬」這種違反禁新倉、會叫人
+    在該空手時進場的建議。api/analyze._lite_exposure_new_position 讀 daily.json 同一來源餵這個閘門。"""
+    def _res(self, sid="2330"):
+        with open(os.path.join(REPO_ROOT, "data", f"{sid}.json"), encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_banned_gate_blocks_trial_entry_in_advice(self):
+        from warroom.profile import load_profile
+        res = self._res("2330")
+        profile = load_profile(os.path.join(REPO_ROOT, "data", "investor_profile.json"))
+        banned = build_stock_detail("2330", res, profile, FAKE_META, "禁止新增部位")
+        nh = banned["primary_decision"]["advice"]["nonholder"]
+        self.assertIn("暫不進場", nh["action_text"])
+        self.assertNotIn("試單 10 萬", nh["action_text"])
+        for step in nh.get("plan") or []:
+            self.assertNotIn("試單 10 萬", step.get("act", ""))
+
+    def test_unrestricted_gate_allows_trial_entry(self):
+        # 對照組：無大盤閘門（可正常布局）時，空手建議恢復可試單——證明上面的擋是閘門造成的
+        from warroom.profile import load_profile
+        res = self._res("2330")
+        profile = load_profile(os.path.join(REPO_ROOT, "data", "investor_profile.json"))
+        normal = build_stock_detail("2330", res, profile, FAKE_META, "可正常布局")
+        nh = normal["primary_decision"]["advice"]["nonholder"]
+        self.assertNotIn("暫不進場（大盤禁新倉）", nh["action_text"])
+
+
 if __name__ == "__main__":
     unittest.main()

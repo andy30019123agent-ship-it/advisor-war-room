@@ -58,6 +58,12 @@ function MarketSnapshot({ market }: { market: Daily['market'] }) {
   )
 }
 
+// 命令卡 footer 顯示用：收掉 note 開頭的「風險溫度 X/10：」前綴（headline 已講風險溫度，
+// 避免同一張卡出現兩次）。legacy 卡用原始 note、不套這個（見 LegacyCommandCard）。
+function stripRiskPrefix(note: string): string {
+  return note.replace(/^風險溫度\s*\d+\s*\/\s*10：/, '')
+}
+
 function exposureBadgeClass(newPosition: string): string {
   if (newPosition === '禁止新增部位') return 'block'
   if (newPosition === '僅限試單') return 'amber'
@@ -317,10 +323,13 @@ function TodayCommandCard({
         <div className="hairline" />
         <div className="command-footer">
           <MarketSnapshot market={market} />
-          <div className="command-risk-row">
-            <span className="risk-mini mono">風險 {market.risk_temp}/10</span>
-            {exposureGuidance && <span className="exposure-mini">{exposureGuidance.note}</span>}
-          </div>
+          {/* 去重（實戰走查任務 3）：headline 已帶「風險 X/10」＋操作結論，footer 不再重複風險溫度
+             小卡；note 也把「風險溫度 X/10：」前綴收掉，只留理由＋現金水位。風險溫度全卡只出現一次。 */}
+          {exposureGuidance && (
+            <div className="command-risk-row">
+              <span className="exposure-mini">{stripRiskPrefix(exposureGuidance.note)}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

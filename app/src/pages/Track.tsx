@@ -86,10 +86,13 @@ function WeeklyReviewCard() {
     <div className="group">
       <div className="summary-card">
         <div className="summary-inner">
-          <div className="row-top" style={{ marginBottom: review.count > 0 ? 14 : 0 }}>
-            <span style={{ fontSize: 15, fontWeight: 700 }}>本週覆盤</span>
+          <div className="row-top" style={{ marginBottom: 4 }}>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>本週覆盤 · 我的日誌</span>
             <span style={{ fontSize: 13, color: 'var(--text-soft)' }}>{review.week.label}</span>
           </div>
+          <p className="stat-note" style={{ padding: 0, marginBottom: review.count > 0 ? 14 : 0 }}>
+            數字來自你自己記的交易日誌（{review.count} 筆），跟上面「模型戰績」是兩回事。
+          </p>
 
           {review.count === 0 ? (
             <p className="stat-note" style={{ padding: 0 }}>
@@ -230,8 +233,16 @@ export function Track() {
         </div>
       )}
 
+      {/* 兩套戰績分清楚（實戰走查任務 7）：這區＝模型自己的建議命中率（引擎建議 log），
+         下面「本週覆盤」才是你自己的交易日誌，兩者數字來源不同、不會對帳。 */}
       {!isLoading && !dailyQuery.isError && dailyQuery.data?.track_stats && (
-        <TrackStatsCard stats={dailyQuery.data.track_stats} />
+        <>
+          <div className="group-title">模型戰績 · 引擎建議命中率</div>
+          <p className="section-note">
+            以下是「模型」給過的建議事後回測（累計 {dailyQuery.data.track_stats.n} 筆），不是你的交易。
+          </p>
+          <TrackStatsCard stats={dailyQuery.data.track_stats} />
+        </>
       )}
 
       {!isLoading && !dailyQuery.isError && <WeeklyReviewCard />}
@@ -247,7 +258,7 @@ export function Track() {
 
       {!isLoading && !dailyQuery.isError && entries.length > 0 && (
         <>
-          <div className="group-title">全部追蹤（{trackedIds.length} 檔）</div>
+          <div className="group-title">模型建議明細（{trackedIds.length} 檔追蹤股）</div>
           <div className="group">
             <div className="list-card">
               {entries.map((t, i) => {

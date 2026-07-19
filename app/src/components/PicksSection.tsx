@@ -34,11 +34,14 @@ function PickCard({ pick, gateOn, onSelectStock }: { pick: Pick; gateOn: boolean
             <span className="pick-close mono">{formatPrice(pick.close)}</span>
           </div>
           <div className="pick-row-bottom">
+            {/* 顯示評分（規則排序用的 score，非 confidence）＋「評分」小字 label——收合卡的
+               裸數字沒 label 讓人看不懂（實戰走查任務 5）。排序即依此 score，數字大＝排前面。 */}
             <span className="pick-conf">
               <span className="pick-conf-bar-track">
-                <span className="pick-conf-bar-fill" style={{ width: `${pick.confidence}%` }} />
+                <span className="pick-conf-bar-fill" style={{ width: `${Math.min(pick.score, 100)}%` }} />
               </span>
-              <span className="pick-conf-num mono">{pick.confidence}</span>
+              <span className="pick-conf-num mono">{Math.round(pick.score)}</span>
+              <span className="pick-conf-label">評分</span>
             </span>
             <span className="pick-summary">{pick.action_summary}</span>
           </div>
@@ -159,7 +162,7 @@ export function PicksSection({ daily, collapsed, onSelectStock }: {
           </div>
         )}
 
-        <div className="picks-disclaimer">精選＝規則篩選的研究候選，非投資指示；買賣前照劇本與防守紀律。</div>
+        <div className="picks-disclaimer">精選＝規則篩選的研究候選，非投資指示；買賣前照劇本與防守紀律。評分＝規則排序用，非勝率。</div>
       </div>
     </div>
   )

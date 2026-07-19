@@ -346,7 +346,9 @@ class TestExposureGuidance(unittest.TestCase):
     def test_high_risk_note_matches_contract(self):
         g = build_exposure_guidance(9)
         self.assertIn("現金至少留六成", g["note"])
-        self.assertIn("不開新倉", g["note"])
+        # note 只講「理由＋現金水位」，操作結論（不開新倉）交給 today_command.headline，
+        # 不再重複（實戰走查任務 3：指令中心去重）。
+        self.assertNotIn("不開新倉", g["note"])
 
 
 # ---------- events ----------

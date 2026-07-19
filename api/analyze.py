@@ -73,15 +73,21 @@ def _lite_exposure_new_position():
     """讀已部署 daily.json 的 exposure_guidance.new_position，讓即時查詢（非追蹤清單股票）
     的 advice 也跟大盤當下的曝險規則一致，不會出現「大盤禁新倉，即時查某股卻叫空手試單」
     的矛盾（見 warroom.build_snapshots._build_advice_and_defense 同語意用法）。
-    讀不到／格式不對回 None＝不受限（build_advice 的 market_new_position=None 就是原行為），
-    寧可不限制也不要資料源掛掉時錯誤鎖死所有查詢。"""
+
+    fail-closed（實戰走查 🔴 任務 2）：讀不到／格式不對時回「禁止新增部位」，而不是 None。
+    舊版回 None＝不受限，一旦這支 read 出任何差錯（檔案暫時讀不到、格式異常），即時查詢就會
+    吐出「空手可再試單 10 萬」這種違反大盤禁新倉、會叫人拿真錢在該空手時進場的建議（走查
+    首刷實測到的斷點）。這是真金白銀的錯，寧可保守擋下新倉（頂多多顯示一次「暫不進場」），
+    也不要在無法確認大盤安全時放行新倉。daily.json 已在 vercel.json includeFiles 內，正常路徑
+    一定讀得到，這個 fail-closed 只在真的異常時生效。"""
     try:
         path = os.path.join(_ROOT, "public", "data", "daily.json")
         with open(path, encoding="utf-8") as f:
             d = json.load(f)
-        return (d.get("exposure_guidance") or {}).get("new_position")
+        new_pos = (d.get("exposure_guidance") or {}).get("new_position")
+        return new_pos if new_pos else "禁止新增部位"
     except Exception:
-        return None
+        return "禁止新增部位"
 
 
 def _setup_lite_env() -> None:

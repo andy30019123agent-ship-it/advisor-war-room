@@ -652,6 +652,14 @@ header.page-header {
   color: var(--text-soft);
 }
 
+/* group-title 底下的一行來源說明（戰績頁區分「模型 vs 我的日誌」用）。 */
+.section-note {
+  margin: -2px 4px 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
 .exposure-warn {
   padding: 10px 16px 16px;
   font-size: 14px;
@@ -1737,7 +1745,7 @@ header.page-header {
 
 .pick-row-bottom {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-top: 6px;
 }
@@ -1768,13 +1776,23 @@ header.page-header {
   color: var(--text-soft);
 }
 
+.pick-conf-label {
+  font-size: 10px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
 .pick-summary {
   font-size: 13.5px;
   color: var(--text-soft);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   min-width: 0;
+  /* 兩行 clamp（實戰走查任務 6）：action_summary 過長時不再單行截斷成「觀察區 468.0-48…」，
+     改最多兩行、超過才省略，收合狀態也看得到完整進場區間。 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
 }
 
 .pick-card[open] summary .chevron {
