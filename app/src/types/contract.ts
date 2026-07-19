@@ -14,6 +14,98 @@ export const MetaSchema = z.object({
 export const ActionSchema = z.enum(['加碼', '續抱', '試單', '觀望', '減碼', '出場'])
 export const StanceSchema = z.enum(['偏多', '中性偏多', '中性', '中性偏空', '偏空'])
 
+// ---------- v1.4 增補（docs/contracts/data-contract-v1.md「v1.4 增補」節）----------
+// short_scenarios：短線（1-4 週）三劇本推演，取代扇形圖當查股票頁主角。
+// 整組可為 null／status=insufficient_data（後者只給一句話 message）。
+// 移到檔案前段（v1.8 增補）：daily.json 的 market_battle.scenarios 與個股 short_scenarios
+// 同構複用這組 schema，必須先定義在 DailySchema 之前（JS 模組是依序求值，DailySchema
+// 物件字面量組裝當下就要引用到已存在的 const）。
+
+export const ShortScenarioActionSchema = z.object({
+  stance: z.string(),
+  text: z.string(),
+})
+
+export const ShortScenarioSchema = z.object({
+  id: z.enum(['base', 'risk', 'bull']),
+  title: z.string(),
+  probability_pct: z.number(),
+  trigger: z.string(),
+  price_path: z.array(z.number()),
+  price_path_text: z.string(),
+  narrative: z.string(),
+  invalidation: z.string(),
+  action: ShortScenarioActionSchema,
+})
+
+export const ShortScenariosOkSchema = z.object({
+  status: z.literal('ok'),
+  horizon: z.string(),
+  key_levels: z.object({
+    supports: z.array(z.number()),
+    resistances: z.array(z.number()),
+  }),
+  scenarios: z.array(ShortScenarioSchema),
+  prob_note: z.string(),
+  disclaimer: z.string(),
+})
+
+export const ShortScenariosInsufficientSchema = z.object({
+  status: z.literal('insufficient_data'),
+  message: z.string(),
+})
+
+export const ShortScenariosSchema = z.discriminatedUnion('status', [
+  ShortScenariosOkSchema,
+  ShortScenariosInsufficientSchema,
+])
+
+export type ShortScenario = z.infer<typeof ShortScenarioSchema>
+export type ShortScenarios = z.infer<typeof ShortScenariosSchema>
+
+// ---------- v1.8 增補（docs/contracts/data-contract-v1.md「v1.8 增補」節）----------
+// market_battle：首頁大盤作戰區（TAIEX K 線＋大盤三劇本＋資金流向＋1 個月機率區間）。
+// 整組可為 null（引擎尚未產出／舊 daily.json，v1.7 前相容，前端整區隱藏）。
+// ohlc[].v 可為 null（大盤無成交量資料時，CandleChart 需支援「無 volume」情境）。
+
+export const MarketBattleOhlcCandleSchema = z.object({
+  d: z.string(),
+  o: z.number(),
+  h: z.number(),
+  l: z.number(),
+  c: z.number(),
+  v: z.number().nullable(),
+})
+
+export type MarketBattleOhlcCandle = z.infer<typeof MarketBattleOhlcCandleSchema>
+
+export const MarketBattleFlowSchema = z.object({
+  foreign_streak: z
+    .object({
+      direction: z.enum(['buy', 'sell']),
+      days: z.number(),
+      latest_yi: z.number(),
+    })
+    .nullable(),
+  leading_sectors: z.array(z.string()),
+  us_overnight: z.array(z.object({ id: z.string(), change_pct: z.number().nullable() })),
+})
+
+export type MarketBattleFlow = z.infer<typeof MarketBattleFlowSchema>
+
+export const MarketBattleSchema = z.object({
+  ohlc: z.array(MarketBattleOhlcCandleSchema).nullable(),
+  key_levels: z.object({
+    supports: z.array(z.number()),
+    resistances: z.array(z.number()),
+  }),
+  scenarios: ShortScenariosSchema.nullable(),
+  flow: MarketBattleFlowSchema,
+  forecast_range_m1: z.tuple([z.number(), z.number()]).nullable(),
+})
+
+export type MarketBattle = z.infer<typeof MarketBattleSchema>
+
 // ---------- daily.json ----------
 
 export const UsIndexSchema = z.object({
@@ -220,6 +312,9 @@ export const DailySchema = z.object({
   today_command: TodayCommandSchema.optional().nullable(),
   delta: DeltaSchema.optional().nullable(),
   picks: PicksSchema.optional().nullable(),
+  // v1.8：大盤作戰區。.catch(null)：形狀對不上時退化成 null，不拖垮整份 daily.json 解析
+  // （契約硬規則 3，graceful degrade；同 forecast/short_scenarios 的相容防呆手法）。
+  market_battle: MarketBattleSchema.optional().nullable().catch(null),
 })
 
 export type Daily = z.infer<typeof DailySchema>
@@ -418,50 +513,8 @@ export type Forecast = z.infer<typeof ForecastSchema>
 export type ForecastHorizonKey = 'm1' | 'm3' | 'm6'
 
 // ---------- v1.4 增補（docs/contracts/data-contract-v1.md「v1.4 增補」節）----------
-// short_scenarios：短線（1-4 週）三劇本推演，取代扇形圖當查股票頁主角。
-// 整組可為 null／status=insufficient_data（後者只給一句話 message）。
-
-export const ShortScenarioActionSchema = z.object({
-  stance: z.string(),
-  text: z.string(),
-})
-
-export const ShortScenarioSchema = z.object({
-  id: z.enum(['base', 'risk', 'bull']),
-  title: z.string(),
-  probability_pct: z.number(),
-  trigger: z.string(),
-  price_path: z.array(z.number()),
-  price_path_text: z.string(),
-  narrative: z.string(),
-  invalidation: z.string(),
-  action: ShortScenarioActionSchema,
-})
-
-export const ShortScenariosOkSchema = z.object({
-  status: z.literal('ok'),
-  horizon: z.string(),
-  key_levels: z.object({
-    supports: z.array(z.number()),
-    resistances: z.array(z.number()),
-  }),
-  scenarios: z.array(ShortScenarioSchema),
-  prob_note: z.string(),
-  disclaimer: z.string(),
-})
-
-export const ShortScenariosInsufficientSchema = z.object({
-  status: z.literal('insufficient_data'),
-  message: z.string(),
-})
-
-export const ShortScenariosSchema = z.discriminatedUnion('status', [
-  ShortScenariosOkSchema,
-  ShortScenariosInsufficientSchema,
-])
-
-export type ShortScenario = z.infer<typeof ShortScenarioSchema>
-export type ShortScenarios = z.infer<typeof ShortScenariosSchema>
+// short_scenarios：短線（1-4 週）三劇本推演，取代扇形圖當查股票頁主角。schema 定義已移到
+// 檔案前段（見上方「v1.4 增補」區塊，v1.8 market_battle.scenarios 複用同一組 schema）。
 
 // ---------- v1.7 增補（docs/contracts/data-contract-v1.md「v1.7 增補」節）----------
 // ohlc：過去 60 交易日日 K（K 線疊層圖用）；mid_long_reads：中長線方向判讀（波段/中期）。

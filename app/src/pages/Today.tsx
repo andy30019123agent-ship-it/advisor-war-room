@@ -5,6 +5,7 @@ import { loadWatchlist } from '../lib/watchlist'
 import { useQuotes, isLiveQuote, type QuotesMap } from '../lib/quotes'
 import { FreshnessBadge } from '../components/FreshnessBadge'
 import { LiveQuoteBadge } from '../components/LiveQuoteBadge'
+import { MarketBattle } from '../components/MarketBattle'
 import { IconSearch, IconChevron, IconPlus } from '../components/icons'
 import type { TabId } from '../App'
 import type { Daily, TrackedStock } from '../types/contract'
@@ -159,6 +160,8 @@ export function Today({
       ) : (
         <LegacyCommandCard market={market} exposureGuidance={exposure_guidance ?? null} />
       )}
+
+      <MarketBattle data={data.market_battle} />
 
       {delta && delta.items.length > 0 && (
         <>

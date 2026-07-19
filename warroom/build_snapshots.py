@@ -23,6 +23,7 @@ from typing import Dict, List, Optional, Tuple
 
 from warroom.finmind_cache import cached_fetch
 from warroom.market import fetch_market
+from warroom.market_battle import build_market_battle, load_leading_sectors
 from warroom.primary_decision import build_advice, build_defense_explain, generate_roles
 from warroom.profile import load_profile
 from warroom.scenario_calibration import sync_calibration, sync_scenario_log
@@ -177,10 +178,39 @@ def _daily_change_yf(ticker: str) -> Optional[float]:
         return None
 
 
+# v1.8 大盤作戰區：TAIEX 需要 ≥120 根交易日（forecast_range_m1 的 GBM 門檻，見
+# warroom/forecast.py MIN_BARS）才拿得到完整區間，比 ohlc 展示用的 60 根更長；用曆日回抓
+# 天數留寬鬆緩衝（含週末/國定假日空檔）。外資全市場合計只需近 10 個交易日算連買賣天數。
+MARKET_BATTLE_TAIEX_LOOKBACK_DAYS = 260
+MARKET_BATTLE_FOREIGN_LOOKBACK_DAYS = 20
+
+
+def _fetch_taiex_series(days_back: int = MARKET_BATTLE_TAIEX_LOOKBACK_DAYS):
+    """TAIEX 長序列（供 market_battle 的 ohlc/MA/關鍵位/GBM 用）。抓失敗 → None（graceful，
+    market_battle 整組跟著回 None，不讓整批 build 失敗）。"""
+    try:
+        start = (datetime.now(_TPE) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        return cached_fetch("taiwan_stock_daily", stock_id="TAIEX", start_date=start)
+    except Exception:
+        return None
+
+
+def _fetch_foreign_market_df(days_back: int = MARKET_BATTLE_FOREIGN_LOOKBACK_DAYS):
+    """全市場外資買賣超合計（FinMind taiwan_stock_institutional_investors_total，單位
+    元，warroom.market_battle.build_foreign_streak 內部 /1e8 轉億元）。抓失敗 → None。"""
+    try:
+        start = (datetime.now(_TPE) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        return cached_fetch("taiwan_stock_institutional_investors_total", start_date=start)
+    except Exception:
+        return None
+
+
 def fetch_market_inputs() -> Dict:
     """打網路：TAIEX 當日漲跌%（FinMind）＋ US 四指數當日漲跌%（yfinance）＋外資買賣超
     （沿用 warroom.market.fetch_market() 的合計，避免重算）。任何一段失敗都給 None，
-    不讓整批 build 失敗（契約硬規則 3）。"""
+    不讓整批 build 失敗（契約硬規則 3）。
+    market_battle 子欄位（v1.8）：TAIEX 長序列／全市場外資合計／領先族群，網路呼叫同樣
+    集中在這裡（模組設計原則），純函式 build_market_battle() 只吃這裡準備好的資料。"""
     taiex_close, taiex_chg, trade_date = _daily_change_finmind("TAIEX")
     us = [{"id": id_, "name": name, "change_pct": _daily_change_yf(ticker)}
           for id_, name, ticker in _US_INDEXES]
@@ -190,9 +220,14 @@ def fetch_market_inputs() -> Dict:
         foreign_net_yi = (m.get("foreign") or {}).get("net_yi")
     except Exception:
         pass
+    market_battle_inputs = {
+        "taiex_df": _fetch_taiex_series(),
+        "foreign_df": _fetch_foreign_market_df(),
+        "leading_sectors": load_leading_sectors(),
+    }
     return {"taiex": {"close": taiex_close, "change_pct": taiex_chg},
             "us": us, "foreign_net_yi": foreign_net_yi,
-            "trade_date": trade_date}
+            "trade_date": trade_date, "market_battle": market_battle_inputs}
 
 
 def compute_market_status(taiex_chg, sox_chg, vix_chg, foreign_net_yi) -> str:
@@ -1086,6 +1121,21 @@ def build_all(data_dir: str = DATA_DIR, market_inputs: Optional[Dict] = None,
     market_new_position = daily["exposure_guidance"]["new_position"]
     stock_details = {sid: build_stock_detail(sid, res, profile, meta, market_new_position)
                      for sid, res in results.items()}
+
+    # v1.8 大盤作戰區：市場端獨立掛載（跟 delta/picks 同款事後掛法，不進 build_daily 簽章）。
+    # taiex_df/foreign_df 缺席（舊版 market_inputs fixture 或抓取失敗）→ build_market_battle
+    # 自然回 None，daily.market_battle 就是契約允許的「整組 null」。
+    market_battle_inputs = market_inputs.get("market_battle") or {}
+    _us_by_id = {u.get("id"): u.get("change_pct") for u in market_block.get("us") or []}
+    daily["market_battle"] = build_market_battle(
+        taiex_df=market_battle_inputs.get("taiex_df"),
+        foreign_df=market_battle_inputs.get("foreign_df"),
+        leading_sectors=market_battle_inputs.get("leading_sectors"),
+        us=market_block.get("us"),
+        data_date=meta.get("data_date"),
+        market_new_position=market_new_position,
+        vix_chg=_us_by_id.get("VIX"), sox_chg=_us_by_id.get("SOX"),
+    )
     # B 包・主動選股掛載：picks 區塊掛到 daily；被選新股補 stocks/<id>.json（不進 tracked）。
     if picks_input is not None:
         daily["picks"] = picks_input

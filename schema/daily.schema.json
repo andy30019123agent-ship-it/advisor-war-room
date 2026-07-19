@@ -553,6 +553,131 @@
           }
         }
       }
+    },
+    "market_battle": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "ohlc",
+            "key_levels",
+            "scenarios",
+            "flow",
+            "forecast_range_m1"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "ohlc": {
+              "type": "array",
+              "minItems": 20,
+              "maxItems": 60,
+              "items": {
+                "type": "object",
+                "required": [
+                  "d",
+                  "o",
+                  "h",
+                  "l",
+                  "c",
+                  "v"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "d": { "type": "string" },
+                  "o": { "type": "number" },
+                  "h": { "type": "number" },
+                  "l": { "type": "number" },
+                  "c": { "type": "number" },
+                  "v": { "type": ["number", "null"] }
+                }
+              }
+            },
+            "key_levels": {
+              "type": "object",
+              "required": ["supports", "resistances"],
+              "additionalProperties": false,
+              "properties": {
+                "supports": { "type": "array", "items": { "type": "number" }, "maxItems": 3 },
+                "resistances": { "type": "array", "items": { "type": "number" }, "maxItems": 3 }
+              }
+            },
+            "scenarios": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": ["status", "message"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": { "const": "insufficient_data" },
+                    "message": { "type": "string" }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["status", "horizon", "scenarios", "prob_note", "disclaimer"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": { "const": "ok" },
+                    "horizon": { "type": "string" },
+                    "scenarios": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": { "$ref": "#/definitions/battle_scenario" }
+                    },
+                    "prob_note": { "type": "string" },
+                    "disclaimer": { "type": "string" }
+                  }
+                }
+              ]
+            },
+            "flow": {
+              "type": "object",
+              "required": ["foreign_streak", "leading_sectors", "us_overnight"],
+              "additionalProperties": false,
+              "properties": {
+                "foreign_streak": {
+                  "oneOf": [
+                    { "type": "null" },
+                    {
+                      "type": "object",
+                      "required": ["direction", "days", "latest_yi"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "direction": { "type": "string", "enum": ["buy", "sell"] },
+                        "days": { "type": "integer", "minimum": 0 },
+                        "latest_yi": { "type": "number" }
+                      }
+                    }
+                  ]
+                },
+                "leading_sectors": { "type": "array", "items": { "type": "string" } },
+                "us_overnight": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "change_pct"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": { "type": "string" },
+                      "change_pct": { "type": ["number", "null"] }
+                    }
+                  }
+                }
+              }
+            },
+            "forecast_range_m1": {
+              "oneOf": [
+                { "type": "null" },
+                { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+              ]
+            }
+          }
+        }
+      ]
     }
   },
   "definitions": {
@@ -688,6 +813,41 @@
         },
         "status_note": {
           "type": "string"
+        }
+      }
+    },
+    "battle_scenario": {
+      "type": "object",
+      "required": [
+        "id", "title", "probability_pct", "trigger", "price_path",
+        "price_path_text", "narrative", "invalidation", "action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "enum": ["base", "risk", "bull"] },
+        "title": { "type": "string" },
+        "probability_pct": { "type": "integer" },
+        "trigger": { "type": "string" },
+        "price_path": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 3
+        },
+        "price_path_text": { "type": "string" },
+        "narrative": { "type": "string" },
+        "invalidation": { "type": "string" },
+        "action": {
+          "type": "object",
+          "required": ["stance", "text"],
+          "additionalProperties": false,
+          "properties": {
+            "stance": {
+              "type": "string",
+              "enum": ["increase", "hold", "small_entry", "wait", "reduce", "exit"]
+            },
+            "text": { "type": "string" }
+          }
         }
       }
     }

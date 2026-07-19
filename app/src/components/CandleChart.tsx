@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import type { OhlcCandle } from '../types/contract'
 
-// K 線疊層圖（契約 v1.7 stocks/<id>.json.ohlc 節）：SVG 手繪 60 根日 K＋作戰地圖疊層
-// （防守價／進場錨／劇本關鍵價位）＋MA20/60。插在查股票頁「決策卡之後、短線推演之前」。
+// K 線疊層圖（契約 v1.7 stocks/<id>.json.ohlc 節；v1.8 daily.json.market_battle.ohlc
+// 複用同一元件畫 TAIEX）：SVG 手繪 60 根日 K＋作戰地圖疊層（防守價／進場錨／劇本關鍵價位）
+// ＋MA20/60。插在查股票頁「決策卡之後、短線推演之前」／首頁「大盤作戰區」內。
 //
 // 疊層線一律從既有欄位取，不新增資料（契約規則：「K 線疊層線＝defense_price/entry 錨/
 // 劇本價位，前端從既有欄位取，不新增」）——呼叫端把 primary_decision.defense_price／
@@ -11,20 +11,26 @@ import type { OhlcCandle } from '../types/contract'
 // MA20 用這 60 根 K 自己回算（真實 20 日移動平均，資料足夠）；MA60 因為契約只給
 // 「現值」一個數字（price.ma60），60 根 K 不夠回推完整 60 日移動平均線，改畫一條水平
 // 參考線，不假裝有完整趨勢曲線。
+//
+// 無 volume 參數化（v1.8）：market_battle.ohlc[].v 可為 null（大盤無成交量資料）——
+// 型別放寬成 number|null，量圖區偵測到全部 v 為 null 時不畫量柱，價格區直接吃滿原本
+// 量圖的高度（不留空白），hover tooltip 的「量」行也跟著省略。
+
+// 型別故意不從 contract.ts 的 OhlcCandle import：個股 ohlc（v 必為 number）與大盤
+// market_battle.ohlc（v 可為 null）結構性相容於這裡放寬後的型別，呼叫端各自傳各自的型別
+// 即可（structural typing），元件本身只認「有沒有 volume 資料」不認來源。
+type CandleBar = { d: string; o: number; h: number; l: number; c: number; v: number | null }
 
 const VB_W = 360
 const VB_H = 220
 const PAD_LEFT = 4
 const PAD_RIGHT = 72
 const PAD_TOP = 14
-const PRICE_H = 146
 const GAP = 6
 const VOL_H = 42
+const PRICE_H_WITH_VOL = 146
+const PRICE_H_NO_VOL = PRICE_H_WITH_VOL + GAP + VOL_H
 const PLOT_W = VB_W - PAD_LEFT - PAD_RIGHT
-const PRICE_Y0 = PAD_TOP
-const PRICE_Y1 = PAD_TOP + PRICE_H
-const VOL_Y0 = PRICE_Y1 + GAP
-const VOL_Y1 = VOL_Y0 + VOL_H
 
 // 沿用全站綠漲紅跌（跟台股慣例紅漲相反，App 內一致性用；圖角落一次性小註提醒）。
 const GREEN = '#197542'
@@ -43,12 +49,14 @@ export function CandleChart({
   defensePrice,
   entryPrice,
   keyLevels,
+  title = 'K 線走勢',
 }: {
-  ohlc: OhlcCandle[] | null | undefined
+  ohlc: CandleBar[] | null | undefined
   ma60: number | null
   defensePrice: number | null
   entryPrice: number | null
   keyLevels: number[]
+  title?: string
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
@@ -56,7 +64,7 @@ export function CandleChart({
   if (!ohlc || ohlc.length === 0) {
     return (
       <div className="group">
-        <div className="group-title">K 線走勢</div>
+        <div className="group-title">{title}</div>
         <div className="plain-card candle-empty">K 線資料準備中</div>
       </div>
     )
@@ -70,9 +78,18 @@ export function CandleChart({
     return PAD_LEFT + slot * (i + 0.5)
   }
 
+  // 無 volume 情境（v1.8 market_battle.ohlc）：全部 v 為 null 時量圖區收掉，價格區
+  // 吃滿高度；量柱渲染與 hover tooltip 的「量」行都跟著隱藏。
+  const hasVolume = ohlc.some((c) => c.v != null)
+  const PRICE_H = hasVolume ? PRICE_H_WITH_VOL : PRICE_H_NO_VOL
+  const PRICE_Y0 = PAD_TOP
+  const PRICE_Y1 = PAD_TOP + PRICE_H
+  const VOL_Y0 = PRICE_Y1 + GAP
+  const VOL_Y1 = VOL_Y0 + VOL_H
+
   const highs = ohlc.map((c) => c.h)
   const lows = ohlc.map((c) => c.l)
-  const vols = ohlc.map((c) => c.v)
+  const vols = ohlc.map((c) => c.v ?? 0)
 
   const ma20Series: Array<{ i: number; v: number }> = []
   for (let i = 19; i < n; i++) {
@@ -154,7 +171,7 @@ export function CandleChart({
 
   return (
     <div className="group">
-      <div className="group-title">K 線走勢</div>
+      <div className="group-title">{title}</div>
       <div className="list-card candle-card">
         <div className="candle-note">綠漲紅跌</div>
         <div className="candle-chart-wrap" ref={containerRef}>
@@ -219,16 +236,25 @@ export function CandleChart({
 
             <circle cx={PAD_LEFT + PLOT_W} cy={yScale(lastClose)} r="3.5" fill="var(--accent)" stroke="var(--card)" strokeWidth="1.5" />
 
-            {ohlc.map((c, i) => {
-              const up = c.c >= c.o
-              const color = up ? GREEN : RED
-              const x = xCenter(i)
-              const h = volScale(c.v)
-              return <rect key={`v-${c.d}`} x={x - bodyW / 2} y={VOL_Y1 - h} width={bodyW} height={h} fill={color} opacity={0.3} />
-            })}
+            {hasVolume &&
+              ohlc.map((c, i) => {
+                const up = c.c >= c.o
+                const color = up ? GREEN : RED
+                const x = xCenter(i)
+                const h = volScale(c.v ?? 0)
+                return <rect key={`v-${c.d}`} x={x - bodyW / 2} y={VOL_Y1 - h} width={bodyW} height={h} fill={color} opacity={0.3} />
+              })}
 
             {hoverIdx != null && (
-              <line x1={xCenter(hoverIdx)} y1={PRICE_Y0} x2={xCenter(hoverIdx)} y2={VOL_Y1} stroke="var(--text-soft)" strokeWidth="1" strokeDasharray="2 2" />
+              <line
+                x1={xCenter(hoverIdx)}
+                y1={PRICE_Y0}
+                x2={xCenter(hoverIdx)}
+                y2={hasVolume ? VOL_Y1 : PRICE_Y1}
+                stroke="var(--text-soft)"
+                strokeWidth="1"
+                strokeDasharray="2 2"
+              />
             )}
 
             {/* 觸控/滑鼠偵測層：全寬全高，放最上層才收得到 pointer 事件；按住（touchmove
@@ -254,7 +280,7 @@ export function CandleChart({
               <div>
                 低 {fmt(hovered.l)} ／ 收 {fmt(hovered.c)}
               </div>
-              <div>量 {hovered.v.toLocaleString()}</div>
+              {hovered.v != null && <div>量 {hovered.v.toLocaleString()}</div>}
             </div>
           )}
         </div>

@@ -406,6 +406,71 @@ class TestDataDateFallback(unittest.TestCase):
         self.assertEqual(daily["meta"]["data_date"], _max_as_of_date(results))
 
 
+# ---------- v1.8 大盤作戰區：build_all 掛載 ----------
+class TestMarketBattleMount(unittest.TestCase):
+    """market_battle 由 build_all() 事後掛到 daily（不進 build_daily 簽章，跟 delta/picks
+    同款掛法，見 warroom/build_snapshots.py build_all 內註解）。"""
+
+    def _taiex_df(self, n=200, base=20000.0, seed=3):
+        import numpy as np
+        rng = np.random.default_rng(seed)
+        rets = rng.normal(0, 0.008, size=n)
+        closes = base * np.exp(np.cumsum(rets))
+        dates = pd.bdate_range("2024-01-01", periods=n).strftime("%Y-%m-%d")
+        return pd.DataFrame([
+            {"date": d, "open": float(c) * 0.999, "max": float(c) * 1.004,
+             "min": float(c) * 0.996, "close": float(c)}
+            for d, c in zip(dates, closes)
+        ])
+
+    def test_absent_market_battle_inputs_degrades_to_null(self):
+        # 沿用既有（本測試檔既有的）OFFLINE_MARKET_INPUTS fixture，本來就不帶
+        # market_battle 子欄位（舊格式/抓取全失敗的寫照）——daily.market_battle 該是
+        # None，且整份 daily 仍照舊通過 schema（回歸保護：新增欄位不能破壞舊呼叫端）。
+        daily, _, _ = build_all(data_dir=os.path.join(REPO_ROOT, "data"),
+                                market_inputs=TestBuildAllRealData.OFFLINE_MARKET_INPUTS)
+        self.assertIsNone(daily["market_battle"])
+        jsonschema.validate(daily, DAILY_SCHEMA)
+
+    def test_wired_market_battle_populates_and_passes_schema(self):
+        market_inputs = dict(TestBuildAllRealData.OFFLINE_MARKET_INPUTS)
+        market_inputs["market_battle"] = {
+            "taiex_df": self._taiex_df(),
+            "foreign_df": None,
+            "leading_sectors": ["軍工航太", "封裝測試"],
+        }
+        daily, _, _ = build_all(data_dir=os.path.join(REPO_ROOT, "data"),
+                                market_inputs=market_inputs)
+        jsonschema.validate(daily, DAILY_SCHEMA)
+        battle = daily["market_battle"]
+        self.assertIsNotNone(battle)
+        self.assertEqual(battle["flow"]["leading_sectors"], ["軍工航太", "封裝測試"])
+
+    def test_bull_action_gate_matches_daily_exposure_guidance(self):
+        # 風險溫度 9（禁止新增部位）情境：market_battle 劇本的 bull action 不得出現
+        # 「回補試單」（大檢查・邏輯組同款 gate 一致性，見契約 v1.8「action 用曝險語言…
+        # 需與 exposure_guidance.new_position 一致」）。
+        bearish_inputs = {
+            "taiex": {"close": 20000.0, "change_pct": -2.5},
+            "us": [{"id": "SPX", "name": "S&P 500", "change_pct": -2.0},
+                   {"id": "NDX", "name": "Nasdaq 100", "change_pct": -2.2},
+                   {"id": "SOX", "name": "費城半導體", "change_pct": -2.5},
+                   {"id": "VIX", "name": "VIX", "change_pct": 12.0}],
+            "foreign_net_yi": -300, "trade_date": "2026-07-18",
+            "market_battle": {"taiex_df": self._taiex_df(), "foreign_df": None,
+                              "leading_sectors": []},
+        }
+        daily, _, _ = build_all(data_dir=os.path.join(REPO_ROOT, "data"),
+                                market_inputs=bearish_inputs)
+        self.assertEqual(daily["exposure_guidance"]["new_position"], "禁止新增部位")
+        battle = daily["market_battle"]
+        self.assertIsNotNone(battle)
+        scenarios = battle["scenarios"]
+        if scenarios.get("status") == "ok":
+            bull = next(sc for sc in scenarios["scenarios"] if sc["id"] == "bull")
+            self.assertNotIn("回補試單", bull["action"]["text"])
+
+
 # ---------- schema 檔本身要是合法 draft-07 ----------
 class TestSchemasAreValidDraft7(unittest.TestCase):
     def test_schemas_check_out(self):

@@ -1419,6 +1419,51 @@ header.page-header {
   font-size: 14px;
 }
 
+/* ---------- 大盤作戰區（MarketBattle，契約 v1.8 market_battle 節） ---------- */
+/* 收合摘要一行＋展開 chevron；.market-battle-body 蓋掉 .disclosure-body 的左右內距，
+   讓內層各區塊（CandleChart／劇本卡／flow 卡）各自的 .group 版面內距對齊全站其他頁面。 */
+
+.market-battle-summary-text {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.market-battle-body {
+  padding: 0;
+}
+
+.battle-flow-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+.battle-flow-item {
+  display: inline;
+}
+
+.battle-flow-sep {
+  color: var(--text-faint);
+  margin: 0 8px;
+}
+
+.battle-flow-card .mono.up { color: var(--green); }
+.battle-flow-card .mono.down { color: var(--red); }
+
+.battle-forecast-line {
+  padding: 14px 16px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* ---------- 中長線判讀（MidLongReads，契約 v1.7 mid_long_reads 節） ---------- */
 
 .midlong-list {

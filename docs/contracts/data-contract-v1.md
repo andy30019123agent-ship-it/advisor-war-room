@@ -427,7 +427,7 @@ serverless 代理 TWSE MIS 即時報價（純 stdlib；瀏覽器直打 MIS 有 C
 
 ### 生成規則
 
-- 大盤劇本＝複用 short_scenarios 引擎，映射：技術燈=TAIEX vs MA20/60/120 結構（多頭排列 green／跌破月季線 red／其餘 yellow）；籌碼燈=外資連買賣（連買≥3 green／連賣≥3 red／else yellow）；「大盤 status」修正項改用 VIX 單日 ±8% 與美股 SOX 方向；關鍵位=近 20 日低、MA20/60/120、近 60 日高，沿用 ≥2% 間距去重與 ≤15% 錨點；核心持股/部位語言不適用——action 改「曝險語言」（維持防禦／可回補試單／降曝險）。
+- 大盤劇本＝複用 short_scenarios 引擎，映射：技術燈=TAIEX vs MA20/60/120 結構（多頭排列 green／跌破月季線 red／其餘 yellow）；籌碼燈=外資連買賣（連買≥3 green／連賣≥3 red／else yellow）；「大盤 status」修正項改用 VIX 單日 ±8% 與美股 SOX 方向；關鍵位=近 20 日低、MA20/60/120、近 60 日高，沿用間距去重（大盤 ≥1.5%）與 ≤15% 錨點；核心持股/部位語言不適用——action 改「曝險語言」（維持防禦／可回補試單／降曝險）。
 - flow.foreign_streak 由 FinMind institutional 近 10 日合計；leading_sectors 讀 data/tw_sectors.json 排名前 2。
 - forecast_range_m1＝forecast.py GBM 引擎餵 TAIEX 序列（drift=0 同規則）取 m1 p15/p85。
 - 前端「大盤作戰區」插在今日頁指令卡之後、我的持股之前：K 線（複用 CandleChart，疊 key_levels）＋劇本卡（複用 ShortScenarios 元件、機率條同語言）＋flow 一行卡＋區間一句話（附「零漂移模擬」註）。
