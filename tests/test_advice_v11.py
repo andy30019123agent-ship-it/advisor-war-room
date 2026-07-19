@@ -14,6 +14,7 @@ from warroom.primary_decision import (
 )
 from warroom.build_snapshots import (
     build_exposure_guidance, build_events, build_track_stats, build_all,
+    build_track_stats_by_timeframe,
 )
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -222,6 +223,49 @@ class TestAdvice(unittest.TestCase):
                              _ACTION_DIR[action], f"{action} 方向打架")
 
 
+# ---------- v1.5：核心持股（無引擎資料）advice 不套波段防守模板 ----------
+class TestCoreHoldingNoEngineDataAdvice(unittest.TestCase):
+    """0050 這類核心持股，引擎判斷缺基本面資料（primary_code=fundamental_data_missing／
+    data_insufficient，見 decide_action 層 1）：advice.holder 改固定核心文案、不出現
+    「跌破 X 防守價」這類波段語句。2330 這類核心持股資料齊全（reason_codes 不含這兩碼）
+    維持雙軌不變（TestAdvice.test_holder_plan_normal_has_prices_and_ratios 已覆蓋）。"""
+
+    def test_core_holding_missing_fundamental_data_uses_fixed_core_text(self):
+        adv = build_advice(action="續抱", reason_codes=["fundamental_data_missing", "trend_ok"],
+                           price=180.0, defense_price=165.0, tech_facts=["收盤 180.0", "MA20 178.0"],
+                           entry_condition=None, is_core_holding=True)
+        self.assertEqual(adv["holder"]["action_text"],
+                         "核心持股：定期定額照常，僅基本面長期失效才調整。")
+        self.assertEqual(adv["holder"]["plan"], [])
+        self.assertNotIn("防守價", adv["holder"]["action_text"])
+        self.assertNotIn("跌破", adv["holder"]["action_text"])
+
+    def test_core_holding_data_insufficient_also_uses_fixed_core_text(self):
+        adv = build_advice(action="觀望", reason_codes=["data_insufficient"],
+                           price=180.0, defense_price=None, tech_facts=[],
+                           entry_condition=None, is_core_holding=True)
+        self.assertEqual(adv["holder"]["action_text"],
+                         "核心持股：定期定額照常，僅基本面長期失效才調整。")
+        self.assertEqual(adv["holder"]["plan"], [])
+
+    def test_non_core_stock_missing_fundamental_data_keeps_normal_template(self):
+        # 同樣缺基本面資料，但不是核心持股 → 不套用核心固定文案（維持一般 observe 模板）
+        adv = build_advice(action="續抱", reason_codes=["fundamental_data_missing", "trend_ok"],
+                           price=180.0, defense_price=165.0, tech_facts=["收盤 180.0", "MA20 178.0"],
+                           entry_condition=None, is_core_holding=False)
+        self.assertNotEqual(adv["holder"]["action_text"],
+                            "核心持股：定期定額照常，僅基本面長期失效才調整。")
+
+    def test_core_holding_with_full_engine_data_keeps_dual_track_unchanged(self):
+        # 2330 型：核心持股但資料齊全（reason_codes 沒有缺資料碼）→ 維持既有雙軌防守模板
+        adv = build_advice(action="續抱", reason_codes=["chips_broken", "trend_mixed"],
+                           price=2290.0, defense_price=2106.8, tech_facts=TECH_2330,
+                           entry_condition=None, is_core_holding=True)
+        self.assertNotEqual(adv["holder"]["action_text"],
+                            "核心持股：定期定額照常，僅基本面長期失效才調整。")
+        self.assertGreater(len(adv["holder"]["plan"]), 0)
+
+
 # ---------- defense_explain ----------
 class TestDefenseExplain(unittest.TestCase):
     def test_atr_clamped_describes_real_anchor(self):
@@ -382,6 +426,39 @@ class TestTrackStats(unittest.TestCase):
             json.dump(entries, open(p, "w"))
             st = build_track_stats(p)
         self.assertEqual(st["hit_rate_5d"], 0.6)  # 5 筆有方向中 3 命中；觀望那筆不計
+
+
+# ---------- v1.5：track_stats 分層（short/swing/long）----------
+class TestTrackStatsByTimeframe(unittest.TestCase):
+    def test_entries_without_timeframe_field_default_to_swing(self):
+        # 舊 entries（v1.5 之前落的）沒有 timeframe 欄位 → 一律視同 swing
+        entries = [{"rating": "續抱", "outcome": {"r20": 1.0}} for _ in range(3)]
+        out = build_track_stats_by_timeframe(entries)
+        self.assertEqual(out["swing"]["n"], 3)
+        self.assertEqual(out["short"]["n"], 0)
+        self.assertEqual(out["long"]["n"], 0)
+        self.assertIsNone(out["swing"]["hit_rate"])  # 3 筆 <5 樣本門檻 → null
+
+    def test_at_least_5_samples_per_timeframe_computes_hit_rate(self):
+        swing_entries = [{"timeframe": "swing", "rating": "續抱",
+                          "outcome": {"r20": (1.0 if i < 4 else -1.0)}} for i in range(5)]
+        short_entries = [{"timeframe": "short", "rating": "續抱",
+                          "outcome": {"r5": 1.0}} for _ in range(5)]
+        out = build_track_stats_by_timeframe(swing_entries + short_entries)
+        self.assertEqual(out["swing"]["n"], 5)
+        self.assertEqual(out["swing"]["hit_rate"], 0.8)  # 4/5 用 r20
+        self.assertEqual(out["short"]["n"], 5)
+        self.assertEqual(out["short"]["hit_rate"], 1.0)  # 5/5 用 r5
+        self.assertEqual(out["long"]["n"], 0)
+        self.assertIsNone(out["long"]["hit_rate"])
+
+    def test_build_track_stats_includes_by_timeframe_key(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "log.json")
+            json.dump([_log_entry("2026-07-15")], open(p, "w"))
+            st = build_track_stats(p)
+        self.assertIn("by_timeframe", st)
+        self.assertEqual(set(st["by_timeframe"]), {"short", "swing", "long"})
 
 
 # ---------- 六角色人話化 ----------

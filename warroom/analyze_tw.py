@@ -123,6 +123,18 @@ def rsi(series, n=14):
     return out
 
 
+def daily_change_pct(pdf):
+    """個股日漲跌%＝日線倒數兩根收盤（契約 v1.5：price.change_pct 真值）。不足 2 筆或
+    前一日收盤無效（0/缺）→ None，不編數字。df 需已依 date 排序（呼叫端已排序過）。"""
+    closes = pd.to_numeric(pdf["close"], errors="coerce").dropna()
+    if len(closes) < 2:
+        return None
+    last, prev = float(closes.iloc[-1]), float(closes.iloc[-2])
+    if not prev:
+        return None
+    return round((last / prev - 1) * 100, 2)
+
+
 def prior_n_high_low(df, hi_c, lo_c, n=20):
     """前 n 個「完整」交易日的高低點（不含當日，shift(1) 後再 tail(n)）。
     用於突破/停損參考：避免當日本身即創高時，「破近20日高」永遠不成立、也避免 lookahead。
@@ -499,7 +511,7 @@ def _decide(stock_id, d, res, flags):
                "confidence": {"total": 0, "completeness": 0, "consistency": 0,
                               "rr": 0, "regime": 0},
                "invalidation": {}, "stop": {"price": None},
-               "note": "日線資料缺，決策降級", "as_of_price": None,
+               "note": "日線資料缺，決策降級", "as_of_price": None, "change_pct": None,
                "disclaimer": "資料不足，僅供參考。"}
         _attach_primary(res, dec, None, None, market_light,
                         {"yoy_negative": False, "below_6m_2months": False},
@@ -560,6 +572,7 @@ def _decide(stock_id, d, res, flags):
         data_flags=flags, rev_signals=rev_sig, chip_signals=chip_sig,
         profile=load_profile(), stock_id=stock_id,
         ex_dividend_today=ex_today, ex_div_amt=ex_amt)
+    dec["change_pct"] = daily_change_pct(pdf)  # 契約 v1.5：price.change_pct 真值
 
     # 事件前高估值＋籌碼弱 → 自動降級（規格 §3.3）。has_ev 先預設 False：下方 try 若在
     # has_upcoming_event 算出來前就例外，短線劇本推演（見尾端 short_scenarios 掛載）仍要

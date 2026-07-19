@@ -450,6 +450,24 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
     - "僅限試單"：空手若原本因為 action=="加碼" 會看到 20/40/60 萬階梯，收斂回 10 萬
       試單額度，其餘 action（本來就是 10 萬起）不受影響。"""
     codes = reason_codes or []
+    # 核心持股且引擎沒有真正資料可判讀（ETF/特殊標的常態缺基本面，primary_code 落在
+    # fundamental_data_missing／data_insufficient——見 decide_action 層 1）：不套波段防守
+    # 模板（0050 這類標的沒有波段層可言，跌破某條均線算出的「防守價」對定期定額投資人
+    # 沒有意義）。2330 這類核心持股有完整波段層（f_light 非 na）不受影響，維持雙軌不變
+    # （契約 v1.5 App 行為段：核心持股顯示核心語言，不套波段防守模板）。
+    if is_core_holding and any(c in codes for c in
+                               ("fundamental_data_missing", "data_insufficient")):
+        core_text = "核心持股：定期定額照常，僅基本面長期失效才調整。"
+        holder = {"action_text": core_text, "plan": []}
+        entry = _nonholder_entry(price, tech_facts, entry_condition,
+                                 _executable_anchors(price, tech_facts, defense_price))
+        if entry:
+            nonholder = {"action_text": f"核心持股：可等{entry['trigger']}分批布局，不追高。",
+                        "plan": [{"trigger": entry["trigger"], "act": "分批布局，定期定額為主"}]}
+        else:
+            nonholder = {"action_text": "核心持股：資料不足，維持既定定期定額計畫。", "plan": []}
+        return {"holder": holder, "nonholder": nonholder}
+
     anchors = _executable_anchors(price, tech_facts, defense_price)
     defense_exec = _anchor_executable(defense_price, price)
     core_txt = "（核心不動）" if is_core_holding else ""

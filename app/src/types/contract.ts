@@ -93,6 +93,37 @@ export const TrackStatsSchema = z.object({
   note: z.string(),
 })
 
+// ---------- v1.5 增補（docs/contracts/data-contract-v1.md「v1.5 增補」節）----------
+// today_command／delta：D 包・今日指令中心，首頁新主角；全部 optional/nullable，
+// 缺欄位時前端退回舊版摘要卡（graceful degrade，契約硬規則 3）。
+
+export const TodayCommandTodoSchema = z.object({
+  text: z.string(),
+  stock_id: z.string().nullable().optional(),
+  kind: z.string().optional(),
+})
+
+export const TodayCommandActionSchema = z.object({
+  text: z.string(),
+  stock_id: z.string().nullable().optional(),
+})
+
+export const TodayCommandSchema = z.object({
+  headline: z.string(),
+  action: TodayCommandActionSchema.nullable(),
+  todos: z.array(TodayCommandTodoSchema),
+})
+
+export const DeltaSchema = z.object({
+  since: z.string().nullable(),
+  items: z.array(z.string()),
+})
+
+export type TodayCommandTodo = z.infer<typeof TodayCommandTodoSchema>
+export type TodayCommandAction = z.infer<typeof TodayCommandActionSchema>
+export type TodayCommand = z.infer<typeof TodayCommandSchema>
+export type Delta = z.infer<typeof DeltaSchema>
+
 export const DailySchema = z.object({
   meta: MetaSchema,
   market: MarketSchema,
@@ -103,6 +134,8 @@ export const DailySchema = z.object({
   exposure_guidance: ExposureGuidanceSchema.optional().nullable(),
   events: z.array(DailyEventSchema).optional(),
   track_stats: TrackStatsSchema.optional().nullable(),
+  today_command: TodayCommandSchema.optional().nullable(),
+  delta: DeltaSchema.optional().nullable(),
 })
 
 export type Daily = z.infer<typeof DailySchema>

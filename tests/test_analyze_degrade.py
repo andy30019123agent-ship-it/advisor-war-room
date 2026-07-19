@@ -8,6 +8,7 @@ import warroom.analyze_tw as analyze_tw
 from warroom.analyze_tw import (
     technical, rev_signals_from_df, chip_signals_from_df, fundamental, prior_n_high_low,
     _normalize_news, _parse_news_date, fetch, FinMindUnavailable, _is_finmind_unavailable,
+    daily_change_pct,
 )
 
 
@@ -34,6 +35,27 @@ class TestDegrade(unittest.TestCase):
     def test_technical_full_sample(self):
         light, ev = technical(price_df(150))
         self.assertIsInstance(ev["MA120"], (int, float))
+
+    # ---------- 契約 v1.5：price.change_pct 真值（日線倒數兩根）----------
+    def test_daily_change_pct_normal_two_rows(self):
+        pdf = pd.DataFrame([{"date": "2026-07-17", "close": 100.0},
+                            {"date": "2026-07-18", "close": 102.0}])
+        self.assertEqual(daily_change_pct(pdf), 2.0)
+
+    def test_daily_change_pct_negative(self):
+        pdf = pd.DataFrame([{"date": "2026-07-17", "close": 100.0},
+                            {"date": "2026-07-18", "close": 95.0}])
+        self.assertEqual(daily_change_pct(pdf), -5.0)
+
+    def test_daily_change_pct_insufficient_rows_gives_none(self):
+        pdf = pd.DataFrame([{"date": "2026-07-18", "close": 100.0}])
+        self.assertIsNone(daily_change_pct(pdf))
+
+    def test_daily_change_pct_zero_prev_close_gives_none(self):
+        # 前一日收盤 0（異常資料）不得除以零，回 None 而非 inf/crash
+        pdf = pd.DataFrame([{"date": "2026-07-17", "close": 0.0},
+                            {"date": "2026-07-18", "close": 100.0}])
+        self.assertIsNone(daily_change_pct(pdf))
 
     def test_rev_signals(self):
         # 去年每月 100、今年前 4 月 90（YoY 負），且低於 6 月均

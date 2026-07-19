@@ -17,6 +17,8 @@ from warroom.build_snapshots import (
     _max_as_of_date, _load_forecast_log, compute_conclusion, compute_market_status,
     compute_risk_temp, discover_stock_files, is_new_format, load_stock_results,
     update_forecast_log,
+    build_today_command, build_today_headline, build_today_action, build_today_todos,
+    build_delta, build_exposure_guidance,
 )
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -559,6 +561,180 @@ class TestBuildForecastAccuracy(unittest.TestCase):
         out = build_forecast_accuracy("9999", log)
         self.assertEqual(out["n_evaluated"], 10)
         self.assertEqual(out["hit_rate_70"], 1.0)
+
+
+# ---------- v1.5 today_command ----------
+def _tc_res(name, close, defense, action="續抱", reeval_date=None, codes=None):
+    return {"name": name, "decision": {"as_of_price": close},
+            "primary_decision": {"defense_price": defense, "action": action,
+                                 "reeval_date": reeval_date, "reason_codes": codes or []}}
+
+
+class TestTodayHeadline(unittest.TestCase):
+    def test_headline_per_new_position_and_within_25_chars(self):
+        for new_pos in ("禁止新增部位", "僅限試單", "可正常布局"):
+            eg = {"risk_temp": 8, "new_position": new_pos}
+            h = build_today_headline(eg)
+            self.assertLessEqual(len(h), 25, f"{new_pos} 標題過長：{h!r}（{len(h)} 字）")
+            self.assertIn("8/10", h)
+
+    def test_headline_unknown_new_position_degrades_safely(self):
+        h = build_today_headline({"risk_temp": 5, "new_position": "未知值"})
+        self.assertTrue(h)
+        self.assertLessEqual(len(h), 25)
+
+
+class TestTodayAction(unittest.TestCase):
+    def test_nearest_defense_stock_wins_tier1(self):
+        # 甲距防守 8%（不在<5%門檻內）、乙距防守 2%（最急迫）
+        results = {
+            "甲": _tc_res("甲股", close=108.0, defense=100.0),
+            "乙": _tc_res("乙股", close=102.0, defense=100.0),
+        }
+        action = build_today_action(results)
+        self.assertIsNotNone(action)
+        self.assertEqual(action["stock_id"], "乙")
+        self.assertIn("乙股", action["text"])
+        self.assertIn("跌破", action["text"])
+        self.assertLessEqual(len(action["text"]), 25)
+
+    def test_exit_action_uses_rebound_template_not_breakdown(self):
+        results = {"丙": _tc_res("丙股", close=101.0, defense=100.0, action="出場")}
+        action = build_today_action(results)
+        self.assertIn("反彈", action["text"])
+        self.assertNotIn("跌破", action["text"])
+
+    def test_tier2_reduce_or_exit_when_no_stock_near_defense(self):
+        results = {
+            "甲": _tc_res("甲股", close=150.0, defense=100.0, action="續抱"),
+            "乙": _tc_res("乙股", close=150.0, defense=100.0, action="減碼"),
+        }
+        action = build_today_action(results)
+        self.assertEqual(action["stock_id"], "乙")
+        self.assertIn("減碼", action["text"])
+
+    def test_no_action_when_nothing_urgent(self):
+        results = {"甲": _tc_res("甲股", close=150.0, defense=100.0, action="續抱")}
+        self.assertIsNone(build_today_action(results))
+
+
+class TestTodayTodos(unittest.TestCase):
+    def test_defense_near_sorted_by_distance(self):
+        results = {
+            "甲": _tc_res("甲股", close=101.0, defense=100.0),   # ~0.99%
+            "乙": _tc_res("乙股", close=102.5, defense=100.0),   # ~2.44%
+        }
+        todos = build_today_todos(results, events=[], next_trading_day=None)
+        self.assertEqual(len(todos), 2)
+        self.assertEqual(todos[0]["stock_id"], "甲")             # 距離最近排最前
+        self.assertEqual(todos[0]["kind"], "defense_near")
+        for t in todos:
+            self.assertLessEqual(len(t["text"]), 25)
+
+    def test_reeval_due_and_event_tomorrow_included(self):
+        results = {"甲": _tc_res("甲股", close=150.0, defense=100.0, reeval_date="2026-07-20")}
+        events = [{"date": "2026-07-20", "id": "乙", "name": "乙股", "label": "法說會"}]
+        todos = build_today_todos(results, events=events, next_trading_day="2026-07-20")
+        kinds = {t["kind"] for t in todos}
+        self.assertEqual(kinds, {"reeval_due", "event_tomorrow"})
+
+    def test_capped_at_3_items(self):
+        results = {f"s{i}": _tc_res(f"股{i}", close=100.0 + i * 0.1, defense=100.0)
+                  for i in range(5)}
+        todos = build_today_todos(results, events=[], next_trading_day=None)
+        self.assertLessEqual(len(todos), 3)
+
+    def test_no_next_trading_day_only_defense_items(self):
+        results = {"甲": _tc_res("甲股", close=101.0, defense=100.0, reeval_date="2026-07-20")}
+        todos = build_today_todos(results, events=[{"date": "2026-07-20", "id": "甲",
+                                                     "name": "甲股", "label": "法說會"}],
+                                  next_trading_day=None)
+        kinds = {t["kind"] for t in todos}
+        self.assertEqual(kinds, {"defense_near"})   # reeval/event 都需要 next_trading_day
+
+
+class TestBuildTodayCommand(unittest.TestCase):
+    def test_shape_has_headline_action_todos(self):
+        results = {"甲": _tc_res("甲股", close=150.0, defense=100.0)}
+        eg = build_exposure_guidance(7)
+        cmd = build_today_command(results, eg, events=[], data_date="2026-07-17")
+        self.assertIn("headline", cmd)
+        self.assertIn("action", cmd)
+        self.assertIn("todos", cmd)
+        self.assertIsInstance(cmd["todos"], list)
+
+    def test_missing_data_date_gives_empty_todos_not_crash(self):
+        results = {"甲": _tc_res("甲股", close=150.0, defense=100.0, reeval_date="2026-07-20")}
+        eg = build_exposure_guidance(7)
+        cmd = build_today_command(results, eg, events=[], data_date=None)
+        self.assertEqual(cmd["todos"], [])
+
+
+# ---------- v1.5 delta（昨→今變了什麼）----------
+def _daily_fixture(data_date, tracked=None, risk_temp=5, status="中性", watch=None):
+    return {
+        "meta": {"data_date": data_date},
+        "market": {"risk_temp": risk_temp, "status": status},
+        "tracked": tracked or [],
+        "watch": watch or [],
+    }
+
+
+class TestBuildDelta(unittest.TestCase):
+    def test_no_prev_daily_returns_none(self):
+        new = _daily_fixture("2026-07-18")
+        self.assertIsNone(build_delta(None, new, {}))
+
+    def test_same_data_date_is_idempotent_none(self):
+        # 冪等：同日重跑不能把「自己」當昨天比較（見 build_delta docstring）
+        prev = _daily_fixture("2026-07-18", tracked=[{"id": "2330", "name": "台積電",
+                              "decision": {"action": "續抱"}}])
+        new = _daily_fixture("2026-07-18", tracked=[{"id": "2330", "name": "台積電",
+                             "decision": {"action": "減碼"}}])
+        self.assertIsNone(build_delta(prev, new, {}))
+
+    def test_tracked_action_change_with_reason_suffix(self):
+        prev = _daily_fixture("2026-07-17", tracked=[
+            {"id": "2330", "name": "台積電", "decision": {"action": "續抱"}}])
+        new = _daily_fixture("2026-07-18", tracked=[
+            {"id": "2330", "name": "台積電", "decision": {"action": "減碼"}}])
+        results = {"2330": {"primary_decision": {"reason_codes": ["defense_broken"]}}}
+        delta = build_delta(prev, new, results)
+        self.assertEqual(delta["since"], "2026-07-17")
+        self.assertTrue(any("續抱→減碼" in i and "跌破防守" in i for i in delta["items"]))
+
+    def test_risk_temp_and_status_and_watchlist_changes(self):
+        prev = _daily_fixture("2026-07-17", risk_temp=5, status="中性",
+                              tracked=[{"id": "2330", "name": "台積電",
+                                       "decision": {"action": "續抱"}}])
+        new = _daily_fixture("2026-07-18", risk_temp=9, status="偏空防禦",
+                             tracked=[{"id": "2330", "name": "台積電",
+                                      "decision": {"action": "續抱"}},
+                                      {"id": "2603", "name": "長榮",
+                                       "decision": {"action": "續抱"}}])
+        delta = build_delta(prev, new, {})
+        joined = " ".join(delta["items"])
+        self.assertIn("風險溫度 5→9", joined)
+        self.assertIn("大盤狀態 中性→偏空防禦", joined)
+        self.assertIn("新增監控：長榮", joined)
+
+    def test_items_capped_at_5(self):
+        prev_tracked = [{"id": f"s{i}", "name": f"股{i}", "decision": {"action": "續抱"}}
+                        for i in range(6)]
+        new_tracked = [{"id": f"s{i}", "name": f"股{i}", "decision": {"action": "減碼"}}
+                      for i in range(6)]
+        prev = _daily_fixture("2026-07-17", tracked=prev_tracked)
+        new = _daily_fixture("2026-07-18", tracked=new_tracked)
+        delta = build_delta(prev, new, {})
+        self.assertLessEqual(len(delta["items"]), 5)
+
+    def test_first_run_no_prev_file_gives_null_delta_via_build_all(self):
+        # build_all 顯式傳 prev_daily=None（模擬缺前檔／首次跑）→ daily["delta"] 為 null
+        daily, _, _ = build_all(
+            data_dir=os.path.join(REPO_ROOT, "data"),
+            market_inputs=TestBuildAllRealData.OFFLINE_MARKET_INPUTS,
+            prev_daily=None)
+        self.assertIsNone(daily["delta"])
 
 
 if __name__ == "__main__":

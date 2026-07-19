@@ -4,6 +4,7 @@ import { fetchDaily, fetchStockDetail } from '../lib/api'
 import { loadHoldings, saveHolding, deleteHolding, type Holding } from '../lib/holdings'
 import { loadTotalCapital, saveTotalCapital } from '../lib/settings'
 import { formatShares, SHARES_PER_LOT } from '../lib/shares'
+import { fmtPct, pctClass } from '../lib/format'
 import { FreshnessBadge } from '../components/FreshnessBadge'
 import { IconEmptyBriefcase, IconPlus, IconTrash, IconClose, IconChevron } from '../components/icons'
 import type { Daily, StockDetail } from '../types/contract'
@@ -32,6 +33,10 @@ export function Holdings() {
   const { data: daily } = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
 
   const trackedIds = new Set((daily?.tracked ?? []).map((t) => t.id))
+  // 核心持股語意（速修 1.）：daily.core_holdings 是「核心配置」清單（目前 2330/0050），跟
+  // daily.tracked（波段監控清單）是兩件事——2330 兩邊都在、0050 只在核心清單。純核心（核心
+  // 但不在 tracked）不套波段的防守價／劇本語言，避免像新手體驗報告點名的「0050 被叫去砍波段部位」。
+  const coreHoldingsMap = new Map((daily?.core_holdings ?? []).map((c) => [c.id, c]))
   const untrackedHoldings = holdings.filter((h) => !trackedIds.has(h.id))
   const liveEligible = untrackedHoldings.slice(0, MAX_LIVE_TOTAL)
   const queuedIds = new Set(untrackedHoldings.slice(MAX_LIVE_TOTAL).map((h) => h.id))
@@ -131,8 +136,16 @@ export function Holdings() {
     const detail = live?.data as StockDetail | undefined
 
     const currentPrice = tracked?.close ?? detail?.price.close ?? null
+    const changePct = tracked?.change_pct ?? detail?.price.change_pct ?? null
     const pnlPct =
       currentPrice != null && h.costPrice > 0 ? ((currentPrice - h.costPrice) / h.costPrice) * 100 : null
+
+    const coreEntry = coreHoldingsMap.get(h.id)
+    const isCore = !!coreEntry
+    // 純核心：在核心清單但不在波段監控清單（例如 0050）。這種持股不套用波段的
+    // 防守價／持有建議／計畫階梯——那些是 detail.primary_decision 針對波段給的，
+    // 對定期定額核心部位講「跌破防守價賣一半」是誤導（07-19 新手體驗報告點名的矛盾）。
+    const isPureCore = isCore && !isTracked
 
     const advice = detail?.primary_decision.advice
     const action = detail?.primary_decision.action ?? tracked?.decision.action
@@ -147,7 +160,11 @@ export function Holdings() {
     return {
       holding: h,
       currentPrice,
+      changePct,
       pnlPct,
+      isCore,
+      isPureCore,
+      coreEntry,
       action,
       actionText,
       plan,
@@ -274,13 +291,17 @@ export function Holdings() {
                       <div className="row-top">
                         <div className="row-name">
                           <span className="name">{h.name || h.id}</span>
+                          {e.isCore && <span className="badge core">核心</span>}
                           <span className="code mono">{h.id}</span>
                         </div>
                         {e.isLiveLoading ? (
                           <span className="skeleton skeleton-line" style={{ width: 48, height: 19, marginBottom: 0 }} />
                         ) : (
-                          <div className={`row-price mono ${pnlClass === 'up' ? 'up' : pnlClass === 'down' ? 'down' : ''}`}>
-                            {e.currentPrice != null ? e.currentPrice.toLocaleString() : '—'}
+                          <div className="row-price-block">
+                            <div className={`row-price mono ${pnlClass === 'up' ? 'up' : pnlClass === 'down' ? 'down' : ''}`}>
+                              {e.currentPrice != null ? e.currentPrice.toLocaleString() : '—'}
+                            </div>
+                            <span className={`row-change mono ${pctClass(e.changePct)}`}>今日 {fmtPct(e.changePct)}</span>
                           </div>
                         )}
                       </div>
@@ -310,23 +331,32 @@ export function Holdings() {
                         </div>
                       )}
                       {!e.isLiveLoading && !e.isLiveError && (
-                        <>
-                          {e.actionText ? (
-                            <p className="holding-advice-text">{e.actionText}</p>
-                          ) : e.action ? (
-                            <div className="row-tags" style={{ marginTop: 8 }}>
-                              <span className="pill">{e.action}</span>
-                            </div>
-                          ) : null}
-                          {e.defensePrice != null && (
-                            <div className="row-tags" style={{ marginTop: 8 }}>
-                              <span className="pill stop">防守價 {e.defensePrice.toLocaleString()}</span>
-                            </div>
-                          )}
-                        </>
+                        e.isPureCore ? (
+                          // 純核心（核心但不追蹤波段，如 0050）：不講防守價／波段建議，
+                          // 改用 daily.core_holdings 自己的話術（跟今日首頁同一份資料，說法不打架）。
+                          <div className="row-tags" style={{ marginTop: 8 }}>
+                            <span className="pill">{e.coreEntry?.action ?? '定期定額照常'}</span>
+                            {e.coreEntry?.note && <span className="pill neutral">{e.coreEntry.note}</span>}
+                          </div>
+                        ) : (
+                          <>
+                            {e.actionText ? (
+                              <p className="holding-advice-text">{e.actionText}</p>
+                            ) : e.action ? (
+                              <div className="row-tags" style={{ marginTop: 8 }}>
+                                <span className="pill">{e.action}</span>
+                              </div>
+                            ) : null}
+                            {e.defensePrice != null && (
+                              <div className="row-tags" style={{ marginTop: 8 }}>
+                                <span className="pill stop">防守價 {e.defensePrice.toLocaleString()}</span>
+                              </div>
+                            )}
+                          </>
+                        )
                       )}
                     </button>
-                    {e.plan.length > 0 && (
+                    {!e.isPureCore && e.plan.length > 0 && (
                       <details className="plan-disclosure">
                         <summary>
                           查看計畫階梯
@@ -379,7 +409,20 @@ function CapitalInput({ value, onChange }: { value: number; onChange: (n: number
 
   function commit() {
     const n = Number(draft)
-    if (Number.isFinite(n) && n > 0) onChange(n)
+    if (!Number.isFinite(n) || n <= 0) {
+      setEditing(false)
+      return
+    }
+    // 總資金 <10 萬或 >1 億：不擋，但先跳確認，避免手滑或誤解單位（07-19 新手體驗報告：
+    // 100 萬預設值從沒問過使用者，容易在不知情下用錯本金算出離譜的曝險/損益）。
+    if (n < 100_000 || n > 100_000_000) {
+      const ok = window.confirm(`總資金設定為 ${n.toLocaleString()} 元，金額看起來不太合理，確定要這樣設定嗎？`)
+      if (!ok) {
+        setEditing(false)
+        return
+      }
+    }
+    onChange(n)
     setEditing(false)
   }
 
@@ -472,23 +515,31 @@ function HoldingForm({
     return () => clearTimeout(timer)
   }, [trimmedId])
 
+  // 原本只給「新增時自動帶名稱」用；輸入防呆（速修 2.）還需要「現價」拿來跟成本價比對，
+  // 新增/編輯都要能查，所以 enabled 拿掉 isNew/nameEditedByUser 限制——共用同一個
+  // queryKey（['stock', id]），已知代號（knownInDaily）不重打，快取也跟查股票頁共用。
   const liveNameQuery = useQuery({
-    // 沿用跟持股清單/查股票頁一樣的 queryKey（['stock', id]），同一代號若別處已查過就直接共用
-    // 快取，不重打。
     queryKey: ['stock', debouncedId],
     // enabled 已排除 knownInDaily，這裡打的一定是不在追蹤清單裡的代號 → 傳空 Set 讓
     // fetchStockDetail 直接跳過注定 404 的靜態檔、走 /api/analyze。
     queryFn: () => fetchStockDetail(debouncedId, new Set<string>()),
-    enabled: isNew && !nameEditedByUser && !knownInDaily && STOCK_ID_RE.test(debouncedId),
+    enabled: !knownInDaily && STOCK_ID_RE.test(debouncedId),
     staleTime: 5 * 60 * 1000,
     retry: 0,
   })
   useEffect(() => {
-    if (liveNameQuery.data && !nameEditedByUser) {
+    if (liveNameQuery.data && isNew && !nameEditedByUser) {
       setName(liveNameQuery.data.profile.name)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveNameQuery.data])
+
+  // 成本價與現價偏離過大提示（速修 2.）：現價先看 daily.tracked（已追蹤、免打 API），
+  // 查不到才退回上面那支即時查詢的 price.close。查不到現價就不比對，不硬跳警告。
+  const referencePrice = daily?.tracked.find((t) => t.id === trimmedId)?.close ?? liveNameQuery.data?.price.close ?? null
+  const costNum = Number(costPrice)
+  const costDeviationWarn =
+    referencePrice != null && referencePrice > 0 && costNum > 0 && Math.abs(costNum - referencePrice) / referencePrice > 0.5
 
   function submit() {
     if (!canSave) return
@@ -552,6 +603,7 @@ function HoldingForm({
         <div className="field">
           <label htmlFor="hf-cost">成本價</label>
           <input id="hf-cost" type="number" inputMode="decimal" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="2400" />
+          {costDeviationWarn && <p className="field-warn">成本價與現價差距大，確認一下？</p>}
         </div>
 
         <button type="button" className="btn-primary" onClick={submit} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.5 }}>

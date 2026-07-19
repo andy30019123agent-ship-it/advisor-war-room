@@ -6,6 +6,15 @@ import { Holdings } from './pages/Holdings'
 import { StockSearch } from './pages/StockSearch'
 import { Track } from './pages/Track'
 import { NotFoundError, SchemaMismatchError } from './lib/api'
+import { DeepLinkBridge } from './components/DeepLinkBridge'
+
+// D 包・deeplink（契約 v1.5「App 行為」節）：/?stock=2330 開啟即進查股票並載入該股，
+// 讓 TG 警報訊息可以直達分析結果。只在初次載入讀一次 query param（不用 history/router，
+// 這支 App 本來就沒有路由套件）。
+function readDeepLinkStock(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('stock')
+}
 
 export type TabId = 'today' | 'holdings' | 'search' | 'track'
 
@@ -26,13 +35,27 @@ const queryClient = new QueryClient({
 })
 
 function App() {
-  const [tab, setTab] = useState<TabId>('today')
+  const [tab, setTab] = useState<TabId>(() => (readDeepLinkStock() ? 'search' : 'today'))
+  // 目前待橋接（或剛從 URL 讀到）的代號：交給 DeepLinkBridge 模擬送出查股票表單，
+  // 送出後清空，避免同一個代號重複觸發。
+  const [deepLinkStock, setDeepLinkStock] = useState<string | null>(() => readDeepLinkStock())
+
+  // Today 首頁的指令卡／todos／持股／監控卡點擊，都走這條路徑直達查股票頁。
+  function navigateToStock(id: string) {
+    setDeepLinkStock(id)
+    setTab('search')
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
-      {tab === 'today' && <Today onNavigate={setTab} />}
+      {tab === 'today' && <Today onNavigate={setTab} onNavigateStock={navigateToStock} />}
       {tab === 'holdings' && <Holdings />}
-      {tab === 'search' && <StockSearch />}
+      {tab === 'search' && (
+        <>
+          <StockSearch />
+          {deepLinkStock && <DeepLinkBridge stockId={deepLinkStock} onDone={() => setDeepLinkStock(null)} />}
+        </>
+      )}
       {tab === 'track' && <Track />}
       <TabBar active={tab} onChange={setTab} />
     </QueryClientProvider>

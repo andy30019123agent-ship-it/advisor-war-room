@@ -39,6 +39,11 @@ def entry_from_res(res: Dict, today: str) -> Dict:
         "price": dec.get("as_of_price"), "rating": dec.get("rating"),
         "fair_base": fv.get("base"), "stop": stop.get("price"),
         "rr": dec.get("risk_reward"), "confidence": conf.get("total"),
+        # 建議當時的主時間框架（見 data/investor_profile.json time_frames.swing.is_primary）。
+        # log 目前沒有真正的 per-timeframe 建議來源（B 包主動選股 short/swing/long 分類尚
+        # 未接上這支 log），固定標「swing」；舊 entries 缺此欄位時 build_track_stats 的
+        # 分層統計一律視同 swing（規格 v1.5：track_stats 分層）。
+        "timeframe": "swing",
         "factors": {
             "fund_light": res.get("fundamental", {}).get("light"),
             "tech_light": res.get("technical", {}).get("light"),

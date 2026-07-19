@@ -143,7 +143,79 @@
         "hit_rate_5d": { "type": ["number", "null"] },
         "hit_rate_20d": { "type": ["number", "null"] },
         "hit_rate_60d": { "type": ["number", "null"] },
-        "note": { "type": "string" }
+        "note": { "type": "string" },
+        "by_timeframe": {
+          "type": "object",
+          "properties": {
+            "short": { "$ref": "#/definitions/timeframe_stat" },
+            "swing": { "$ref": "#/definitions/timeframe_stat" },
+            "long": { "$ref": "#/definitions/timeframe_stat" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "today_command": {
+      "type": "object",
+      "required": ["headline", "action", "todos"],
+      "additionalProperties": false,
+      "properties": {
+        "headline": { "type": "string", "maxLength": 25 },
+        "action": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["text", "stock_id"],
+              "additionalProperties": false,
+              "properties": {
+                "text": { "type": "string" },
+                "stock_id": { "type": "string" }
+              }
+            }
+          ]
+        },
+        "todos": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["text", "stock_id", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "text": { "type": "string" },
+              "stock_id": { "type": "string" },
+              "kind": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "delta": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["since", "items"],
+          "additionalProperties": false,
+          "properties": {
+            "since": { "type": "string" },
+            "items": { "type": "array", "maxItems": 5, "items": { "type": "string" } }
+          }
+        }
+      ]
+    },
+    "picks": {
+      "type": "object",
+      "required": ["generated_from", "gate", "note", "short", "swing", "long"],
+      "additionalProperties": false,
+      "properties": {
+        "generated_from": { "type": "string" },
+        "gate": { "type": "string" },
+        "note": { "type": "string" },
+        "short": { "type": "array", "maxItems": 1, "items": { "$ref": "#/definitions/pick" } },
+        "swing": { "type": "array", "maxItems": 3, "items": { "$ref": "#/definitions/pick" } },
+        "long": { "type": "array", "maxItems": 5, "items": { "$ref": "#/definitions/pick" } }
       }
     }
   },
@@ -157,6 +229,37 @@
         "data_date": { "type": "string" },
         "generated_at": { "type": "string" },
         "sources": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "timeframe_stat": {
+      "type": "object",
+      "required": ["n", "hit_rate"],
+      "additionalProperties": false,
+      "properties": {
+        "n": { "type": "integer", "minimum": 0 },
+        "hit_rate": { "type": ["number", "null"] }
+      }
+    },
+    "pick": {
+      "type": "object",
+      "required": [
+        "id", "name", "close", "score", "confidence", "action_summary",
+        "entry_zone", "defense_price", "invalidation", "reasons"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "close": { "type": ["number", "null"] },
+        "score": { "type": "number" },
+        "confidence": { "type": "number" },
+        "action_summary": { "type": "string" },
+        "entry_zone": {
+          "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2
+        },
+        "defense_price": { "type": ["number", "null"] },
+        "invalidation": { "type": "string" },
+        "reasons": { "type": "array", "items": { "type": "string" } }
       }
     }
   }

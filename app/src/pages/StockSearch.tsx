@@ -1,17 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail, postTrack, NotFoundError, SchemaMismatchError } from '../lib/api'
 import { loadHoldings } from '../lib/holdings'
 import { loadWatchlist, addToWatchlist } from '../lib/watchlist'
 import { formatShares, SHARES_PER_LOT } from '../lib/shares'
+import { fmtPct, pctClass } from '../lib/format'
+import { loadRecentSearches, addRecentSearch, type RecentSearch } from '../lib/recentSearches'
 import { IconSearch } from '../components/icons'
 import { ForecastFan } from '../components/ForecastFan'
 import { ShortScenarios } from '../components/ShortScenarios'
+import { GlossaryCard } from '../components/GlossaryCard'
 import type { Daily, StockDetail } from '../types/contract'
 
 export function StockSearch() {
   const [queryId, setQueryId] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState('')
+  // 最近查過（速修 4.）：查到新的一筆就記下來，chips 顯示在搜尋框下方可點重查。
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => loadRecentSearches())
 
   // daily.json 反正各分頁都會載、有共用快取；先知道追蹤清單再決定要不要試靜態檔，
   // 省一次注定 404 的請求（聯測 2026-07-18 #3/#8）。
@@ -28,11 +33,24 @@ export function StockSearch() {
     enabled: queryId !== null,
   })
 
+  // 查成功才算「查過」，記進最近查過清單（查無、查失敗都不記）。
+  useEffect(() => {
+    if (data) {
+      setRecentSearches(addRecentSearch(data.profile.id, data.profile.name))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
+
   function submit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = inputValue.trim()
     if (!trimmed) return
     setQueryId(trimmed)
+  }
+
+  function searchAgain(id: string) {
+    setInputValue(id)
+    setQueryId(id)
   }
 
   return (
@@ -61,12 +79,31 @@ export function StockSearch() {
         </div>
       </form>
 
-      {queryId === null && (
-        <div className="empty-state">
-          <IconSearch size={40} />
-          <div className="title">輸入代號開始分析</div>
-          <div className="desc">會給你一句話結論、防守價，和完整的證據拆解。</div>
+      {recentSearches.length > 0 && (
+        <div className="recent-chips-wrap">
+          <div className="recent-chips">
+            {recentSearches.map((r) => (
+              <button type="button" key={r.id} className="chip" onClick={() => searchAgain(r.id)}>
+                {r.name || r.id} <span className="mono">{r.id}</span>
+              </button>
+            ))}
+          </div>
         </div>
+      )}
+
+      {queryId === null && (
+        <>
+          <div className="empty-state">
+            <IconSearch size={40} />
+            <div className="title">輸入代號開始分析</div>
+            <div className="desc">會給你一句話結論、防守價，和完整的證據拆解。</div>
+          </div>
+          <div className="group">
+            <div className="list-card">
+              <GlossaryCard />
+            </div>
+          </div>
+        </>
       )}
 
       {queryId !== null && isLoading && <LoadingSkeleton />}
@@ -105,6 +142,15 @@ function LoadingSkeleton() {
 
 function formatNumber(n: number | null): string {
   return n == null ? '—' : n.toLocaleString()
+}
+
+// 負 R/R 白話（速修 3.）：散戶看不懂「R/R -10.39」在講什麼（07-19 深度使用報告點名），
+// 依數值分級給白話一句話。R/R < 0 代表連最好情況能賺的都比可能賠的少，比 0~0.5 更嚴重，
+// 用詞要更重（不宜追價 vs 先觀望較穩）。
+function rrWarnText(rr: number): string | null {
+  if (rr < 0) return '⚠ 上檔空間已用盡，不宜追價'
+  if (rr < 0.5) return '⚠ 上檔空間有限，划不來，先觀望較穩'
+  return null
 }
 
 // 加入監控（契約 v1.1 POST /api/track）：已在 daily.tracked（正式追蹤清單）或本機
@@ -236,8 +282,9 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
             <span style={{ fontSize: 17, fontWeight: 700 }}>
               {profile.name} <span className="code mono" style={{ fontSize: 13, color: 'var(--text-soft)' }}>{profile.id}</span>
             </span>
-            <span className={`row-price mono ${price.change_pct != null && price.change_pct < 0 ? 'down' : price.change_pct != null && price.change_pct > 0 ? 'up' : ''}`}>
-              {formatNumber(price.close)}
+            <span className="row-price-block">
+              <span className={`row-price mono ${pctClass(price.change_pct)}`}>{formatNumber(price.close)}</span>
+              <span className={`row-change mono ${pctClass(price.change_pct)}`}>今日 {fmtPct(price.change_pct)}</span>
             </span>
           </div>
           <div className="decision-action">{pd.action}</div>
@@ -269,11 +316,14 @@ function StockDetailView({ detail, daily }: { detail: StockDetail; daily: Daily 
           )}
 
           {context.rr != null && (
-            <TermRow
-              label="R/R"
-              value={context.rr.toFixed(2)}
-              explain="R/R（風險報酬比）＝預期能賺的空間 ÷ 可能賠的空間。例如 2 代表預期獲利大約是可能虧損的 2 倍，數字越高通常代表這筆進場越划算。"
-            />
+            <>
+              <TermRow
+                label="R/R"
+                value={context.rr.toFixed(2)}
+                explain="R/R（風險報酬比）＝預期能賺的空間 ÷ 可能賠的空間。例如 2 代表預期獲利大約是可能虧損的 2 倍，數字越高通常代表這筆進場越划算。"
+              />
+              {rrWarnText(context.rr) && <p className="rr-warn">{rrWarnText(context.rr)}</p>}
+            </>
           )}
 
           <div className="decision-meta-row">

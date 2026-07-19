@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-07-17",
-    "generated_at": "2026-07-19T00:37:14+08:00",
+    "generated_at": "2026-07-19T10:40:27+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -58,7 +58,7 @@
       "id": "2330",
       "name": "台積電",
       "close": 2290.0,
-      "change_pct": null,
+      "change_pct": -7.29,
       "decision": {
         "action": "續抱",
         "readable_reason": "因為基本面沒惡化，所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
@@ -69,7 +69,7 @@
       "id": "2454",
       "name": "聯發科",
       "close": 3370.0,
-      "change_pct": null,
+      "change_pct": -8.92,
       "decision": {
         "action": "觀望",
         "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
@@ -115,6 +115,26 @@
     "hit_rate_5d": null,
     "hit_rate_20d": null,
     "hit_rate_60d": null,
-    "note": "樣本累積中，5 日結果最快 2026-07-22 開始回填"
-  }
+    "note": "樣本累積中，5 日結果最快 2026-07-22 開始回填",
+    "by_timeframe": {
+      "short": {
+        "n": 0,
+        "hit_rate": null
+      },
+      "swing": {
+        "n": 6,
+        "hit_rate": null
+      },
+      "long": {
+        "n": 0,
+        "hit_rate": null
+      }
+    }
+  },
+  "today_command": {
+    "headline": "風險 9/10：今天不開新倉，只守防守價。",
+    "action": null,
+    "todos": []
+  },
+  "delta": null
 }

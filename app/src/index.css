@@ -1348,3 +1348,288 @@ header.page-header {
   transform-box: fill-box;
   transform-origin: center;
 }
+
+/* ---------- W1A 體驗速修（Holdings/StockSearch/Track，非首頁）---------- */
+
+/* 核心持股徽章：跟 .pill 區分開，用 accent 色系標出「這檔是核心配置」。 */
+.badge.core {
+  background: rgba(74, 85, 199, 0.12);
+  color: var(--accent);
+}
+
+/* 持股卡／查股票頁價格旁的「今日 %」小字，跟主價格同一欄但字級小一階。 */
+.row-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.row-change {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.row-change.up { color: var(--green); }
+.row-change.down { color: var(--red); }
+
+/* 輸入防呆：表單欄位下方的黃色確認提示（成本價與現價差距大等），不擋存檔。 */
+.field-warn {
+  font-size: 13px;
+  color: var(--amber-text);
+}
+
+/* R/R 負值／過低的白話警示（查股票頁）。 */
+.rr-warn {
+  padding: 0 16px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--amber-text);
+}
+
+/* 最近查過 chips（查股票頁，搜尋框下方）。 */
+.recent-chips-wrap {
+  padding: 0 16px 4px;
+}
+
+.recent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(118, 118, 128, 0.12);
+  color: var(--text);
+  border: none;
+  min-height: 32px;
+}
+
+.chip:active {
+  background: rgba(118, 118, 128, 0.2);
+}
+
+.chip .mono {
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+/* 新手名詞卡（GlossaryCard）：沿用 .disclosure 樣式，只補條目間距。 */
+.glossary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.glossary-item p {
+  margin: 0;
+}
+
+.glossary-term {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+/* ---------- D 包：今日指令中心（Today.tsx 首頁改版；只新增，不改既有規則） ---------- */
+
+.command-card {
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.command-headline {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.4;
+  padding: 18px 16px 4px;
+}
+
+.command-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  background: rgba(74, 85, 199, 0.08);
+  color: var(--accent);
+  border-radius: 10px;
+  font-size: 15.5px;
+  font-weight: 700;
+  text-align: left;
+  border: none;
+}
+
+.command-action .chevron {
+  flex-shrink: 0;
+}
+
+.command-action-static {
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  background: rgba(74, 85, 199, 0.08);
+  color: var(--accent);
+  border-radius: 10px;
+  font-size: 15.5px;
+  font-weight: 700;
+}
+
+.command-todos {
+  padding: 12px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.command-todo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  font-size: 14.5px;
+  color: var(--text-soft);
+  text-align: left;
+  line-height: 1.4;
+}
+
+.command-todo .chevron {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.command-footer {
+  padding: 12px 16px 16px;
+}
+
+.command-footer .market-snapshot {
+  font-size: 12.5px;
+  gap: 3px;
+}
+
+.command-risk-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+.command-risk-row .risk-mini {
+  font-weight: 700;
+  color: var(--red);
+  flex-shrink: 0;
+}
+
+.command-risk-row .exposure-mini {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 昨→今變化 */
+
+.delta-card {
+  padding: 4px 0;
+}
+
+.delta-row {
+  padding: 10px 16px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.delta-row + .delta-row {
+  border-top: 1px solid var(--hairline);
+}
+
+.delta-old {
+  color: var(--text-soft);
+}
+
+.delta-arrow {
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0 3px;
+}
+
+.delta-new {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* 核心持股小字提示列（取代原本的靜態卡） */
+
+.core-holdings-note {
+  padding: 0 20px 8px;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+/* 持股空狀態 CTA */
+
+.holdings-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 16px;
+  background: var(--card);
+  border-radius: 12px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+}
+
+/* 監控卡：距觸發 % */
+
+.monitor-distance {
+  font-size: 13px;
+  color: var(--text-soft);
+  flex-shrink: 0;
+}
+
+/* 緊張度色點（距防守／觸發價）：沿用三燈號色階，獨立一份避免跟 .light-dot 的
+   flex-start 對齊語意（用在 baseline 對齊的 row-name 裡）互相干擾。 */
+
+.tension-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.tension-dot.green { background: var(--green); }
+.tension-dot.yellow { background: #C79A1E; }
+.tension-dot.red { background: var(--red); }
+
+/* list-row 按鈕化：只重置按鈕的預設外觀，不動 .list-row 既有的 padding／邊框規則。 */
+
+.row-button-reset {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pill.down { background: rgba(193, 51, 40, 0.1); color: var(--red); }

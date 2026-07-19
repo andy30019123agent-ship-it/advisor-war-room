@@ -2,6 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail, SchemaMismatchError } from '../lib/api'
 import { FreshnessBadge } from '../components/FreshnessBadge'
 import { IconChevron } from '../components/icons'
+import { GlossaryCard } from '../components/GlossaryCard'
 import type { TrackEntry, TrackStats } from '../types/contract'
 
 // hit_rate_* 與 outcome.r5/r20/r60 在契約裡都是 ratio（0.8＝80%、0.0567＝5.67%），
@@ -64,6 +65,7 @@ function MethodExplainer() {
             <p>每筆建議記錄當日收盤價，5／20／60 天後回填報酬，方向對即算命中；樣本數要 ≥5 筆才會顯示命中率。</p>
           </div>
         </details>
+        <GlossaryCard />
       </div>
     </div>
   )

@@ -276,7 +276,7 @@ def build_tracked_entry(stock_id: str, res: Dict) -> Dict:
         "id": stock_id,
         "name": res.get("name", stock_id),
         "close": _num(dec.get("as_of_price")),
-        "change_pct": None,  # 已知缺口：引擎目前不產出個股日漲跌%，見模組尾端說明
+        "change_pct": _num(dec.get("change_pct")),  # 契約 v1.5：真值，見 analyze_tw.daily_change_pct
         "decision": {
             "action": primary["action"],
             "readable_reason": primary["readable_reason"],
@@ -397,10 +397,38 @@ def _is_hit(rating: Optional[str], r: float) -> bool:
     return r > 0
 
 
+def _hit_rate(entries: List[Dict], field: str) -> Optional[float]:
+    """該欄位（r5/r20/r60）的命中率：只計有方向的建議（outcome 已回填且 rating 非
+    「觀望」），樣本 <5 給 null（見 build_track_stats docstring）。"""
+    pairs = [(_num((e.get("outcome") or {}).get(field)), e.get("rating")) for e in entries]
+    pairs = [(v, rating) for v, rating in pairs
+             if v is not None and rating not in _DIRECTIONLESS_RATINGS]
+    if len(pairs) < 5:
+        return None
+    return round(sum(1 for v, rating in pairs if _is_hit(rating, v)) / len(pairs), 3)
+
+
+# 時間框架 → 對應的回填欄位（規格 v1.5：track_stats 分層 short/swing/long 各自 n/hit_rate）。
+# recommendation_log 目前沒有真正的 per-timeframe 建議來源（B 包主動選股尚未接上這支
+# log，見 track_record.entry_from_res），entries 固定標「swing」；短/長線分層先掛好管線，
+# 樣本自然會是 0（n=0 → hit_rate 沒有 <5 樣本的 null 判斷空間，直接給 null）。horizon
+# 對應：short→r5（1-4 週）、swing→r20（1-3 月）、long→r60（3-12 月），跟 profile 揭露的
+# 三時間框架 horizon 天然對齊。
+_TIMEFRAME_HORIZON = {"short": "r5", "swing": "r20", "long": "r60"}
+
+
+def build_track_stats_by_timeframe(entries: List[Dict]) -> Dict:
+    out = {}
+    for tf, field in _TIMEFRAME_HORIZON.items():
+        group = [e for e in entries if (e.get("timeframe") or "swing") == tf]
+        out[tf] = {"n": len(group), "hit_rate": _hit_rate(group, field)}
+    return out
+
+
 def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
     """戰績統計：n＝總建議數；closed＝outcome.r5 非 null 的筆數；各期命中率＝該期報酬方向
     對（見 _is_hit：看多 r>0、防禦 r<=0）的比例，樣本 <5 給 null。note 動態寫最快回填日
-    （最早 pending 日 +7 曆日 ≈ +5 交易日）。"""
+    （最早 pending 日 +7 曆日 ≈ +5 交易日）。by_timeframe：見 build_track_stats_by_timeframe。"""
     entries = []
     if os.path.exists(log_path):
         try:
@@ -411,14 +439,7 @@ def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
     n = len(entries)
 
     def _rate(field: str) -> Optional[float]:
-        pairs = [(_num((e.get("outcome") or {}).get(field)), e.get("rating")) for e in entries]
-        # 只計有方向的建議：outcome 已回填（v 非 None）且 rating 非「觀望」（無方向主張，
-        # 排除，不進分母也不進分子）。樣本 <5 給 null。
-        pairs = [(v, rating) for v, rating in pairs
-                 if v is not None and rating not in _DIRECTIONLESS_RATINGS]
-        if len(pairs) < 5:
-            return None
-        return round(sum(1 for v, rating in pairs if _is_hit(rating, v)) / len(pairs), 3)
+        return _hit_rate(entries, field)
 
     closed = sum(1 for e in entries if _num((e.get("outcome") or {}).get("r5")) is not None)
     pending_dates = [e.get("date") for e in entries
@@ -433,7 +454,205 @@ def build_track_stats(log_path: str = RECOMMENDATION_LOG) -> Dict:
         note = "尚無建議樣本，戰績待累積。"
     return {"n": n, "closed": closed,
             "hit_rate_5d": _rate("r5"), "hit_rate_20d": _rate("r20"),
-            "hit_rate_60d": _rate("r60"), "note": note}
+            "hit_rate_60d": _rate("r60"), "note": note,
+            "by_timeframe": build_track_stats_by_timeframe(entries)}
+
+
+def _fmt_int(v) -> str:
+    """人話文案用：四捨五入到整數＋千分位；缺值回「—」（同 primary_decision._fmt_price
+    的寫法，這裡獨立一份避免 build_snapshots 反過來 import primary_decision 私有函式）。"""
+    try:
+        return f"{round(float(v)):,}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _clip25(s: str) -> str:
+    """今日指令中心文案硬上限 25 字（規格 v1.5：headline/action/todos 全部 ≤25 字/條）。
+    正常模板都在門檻內，這裡只是防禦性收斂，不加省略號（維持句子完整可讀優先於精確 25 字）。"""
+    return s if len(s) <= 25 else s[:25]
+
+
+# ---------- v1.5 today_command（今日指令中心）----------
+_TODAY_HEADLINE_PHRASE = {
+    "禁止新增部位": "今天不開新倉，只守防守價。",
+    "僅限試單": "僅限小量試單，紀律優先。",
+    "可正常布局": "可正常布局，留意進場機會。",
+}
+
+
+def build_today_headline(exposure_guidance: Dict) -> str:
+    rt = exposure_guidance.get("risk_temp")
+    phrase = _TODAY_HEADLINE_PHRASE.get(exposure_guidance.get("new_position"),
+                                        "維持既定紀律，觀察為主。")
+    return _clip25(f"風險 {rt}/10：{phrase}")
+
+
+def _defense_distance_pct(res: Dict) -> Optional[float]:
+    """收盤價與防守價的相對距離（%，恆正）；缺 close/defense 或 close<=0 → None。"""
+    primary = res.get("primary_decision") or {}
+    dec = res.get("decision") or {}
+    close = _num(dec.get("as_of_price"))
+    defense = _num(primary.get("defense_price"))
+    if close is None or defense is None or close <= 0:
+        return None
+    return abs(close - defense) / close * 100
+
+
+_TIER2_ACTION_PHRASE = {"減碼": "控制部位風險", "出場": "紀律出清"}
+
+
+def build_today_action(results: Dict[str, Dict]) -> Optional[Dict]:
+    """規則優先序（規格 v1.5）：① 任一持股（追蹤清單）距防守 <5% → 該股防守劇本一句
+    （取距離最近者，最急迫）；② 否則 primary=減碼/出場的股 → 其動作（sorted(results)
+    取第一檔，確保決定性輸出）；③ 否則 None（無動作日）。"""
+    near = []
+    for sid, res in results.items():
+        dist = _defense_distance_pct(res)
+        if dist is not None and dist < 5:
+            near.append((dist, sid, res))
+    if near:
+        near.sort(key=lambda x: x[0])
+        _, sid, res = near[0]
+        primary = res["primary_decision"]
+        name = res.get("name", sid)
+        defense = _fmt_int(primary.get("defense_price"))
+        if primary.get("action") == "出場":
+            text = f"若{name}反彈至{defense}附近，波段部位出清。"
+        else:
+            text = f"若{name}收盤跌破{defense}，波段部位減半。"
+        return {"text": _clip25(text), "stock_id": sid}
+
+    for sid in sorted(results):
+        res = results[sid]
+        action = (res.get("primary_decision") or {}).get("action")
+        if action in ("減碼", "出場"):
+            name = res.get("name", sid)
+            phrase = _TIER2_ACTION_PHRASE.get(action, "留意風險")
+            return {"text": _clip25(f"{name}建議{action}，{phrase}。"), "stock_id": sid}
+    return None
+
+
+def build_today_todos(results: Dict[str, Dict], events: List[Dict],
+                      next_trading_day: Optional[str]) -> List[Dict]:
+    """0-3 條，來源優先序：① 距防守 <3%（依距離近到遠）② reeval_date 到期＝下一交易日
+    ③ 明日事件。曝險超標不算——那要知道使用者實際持股金額，是前端 localStorage
+    （total_capital）才知道的資訊，引擎只能用自己算得出來的訊號（規格 v1.5）。"""
+    todos: List[Dict] = []
+    near = []
+    for sid, res in results.items():
+        dist = _defense_distance_pct(res)
+        if dist is not None and dist < 3:
+            near.append((dist, sid, res.get("name", sid)))
+    near.sort(key=lambda x: x[0])
+    for dist, sid, name in near:
+        todos.append({"text": _clip25(f"{name}距防守價只剩{dist:.1f}%，今天留意收盤"),
+                      "stock_id": sid, "kind": "defense_near"})
+
+    if next_trading_day:
+        for sid in sorted(results):
+            res = results[sid]
+            if (res.get("primary_decision") or {}).get("reeval_date") == next_trading_day:
+                name = res.get("name", sid)
+                todos.append({"text": _clip25(f"{name}複評到期，檢視是否調整"),
+                              "stock_id": sid, "kind": "reeval_due"})
+
+        for ev in events:
+            if ev.get("date") == next_trading_day:
+                todos.append({"text": _clip25(f"{ev.get('name')}明日{ev.get('label')}，留意公布"),
+                              "stock_id": ev.get("id"), "kind": "event_tomorrow"})
+
+    return todos[:3]
+
+
+def build_today_command(results: Dict[str, Dict], exposure_guidance: Dict,
+                        events: List[Dict], data_date: Optional[str]) -> Dict:
+    from warroom.primary_decision import next_reeval_date
+    # 下一交易日＝data_date +1 曆日後對齊下一交易日（週六→+2、週日→+1），沿用
+    # primary_decision.next_reeval_date(days=1) 同一套簡化對齊規則（不接國定假日行事曆）。
+    next_trading_day = next_reeval_date(data_date, days=1) if data_date else None
+    return {
+        "headline": build_today_headline(exposure_guidance),
+        "action": build_today_action(results),
+        "todos": build_today_todos(results, events, next_trading_day),
+    }
+
+
+# ---------- v1.5 delta（昨→今變了什麼）----------
+_DELTA_REASON_SUFFIX = [
+    ("defense_broken", "跌破防守"), ("chips_broken", "籌碼轉弱"),
+    ("fundamental_broken", "基本面轉弱"),
+]
+
+
+def _delta_action_reason(res: Optional[Dict]) -> str:
+    if not res:
+        return ""
+    codes = (res.get("primary_decision") or {}).get("reason_codes") or []
+    for code, zh in _DELTA_REASON_SUFFIX:
+        if code in codes:
+            return f"（{zh}）"
+    return ""
+
+
+def build_delta(prev_daily: Optional[Dict], new_daily: Dict,
+                results: Dict[str, Dict]) -> Optional[Dict]:
+    """昨→今變了什麼（規格 v1.5）。prev_daily=None（首次/缺前檔）→ None。冪等：
+    prev/new 的 meta.data_date 相同（同日重跑）也回 None——不能把「自己今天已寫過的
+    那份」當成昨天的比較基準，否則同日重跑兩次會生出一堆自己跟自己比的假 delta。"""
+    if not prev_daily:
+        return None
+    prev_date = ((prev_daily.get("meta") or {}).get("data_date"))
+    new_date = ((new_daily.get("meta") or {}).get("data_date"))
+    if not prev_date or not new_date or prev_date == new_date:
+        return None
+
+    items = []
+    prev_tracked = {t.get("id"): t for t in (prev_daily.get("tracked") or [])}
+    for t in new_daily.get("tracked") or []:
+        sid = t.get("id")
+        old = prev_tracked.get(sid)
+        if not old:
+            continue
+        old_action = (old.get("decision") or {}).get("action")
+        new_action = (t.get("decision") or {}).get("action")
+        if old_action and new_action and old_action != new_action:
+            reason = _delta_action_reason(results.get(sid))
+            items.append(f"{t.get('name', sid)} {old_action}→{new_action}{reason}")
+
+    old_rt = (prev_daily.get("market") or {}).get("risk_temp")
+    new_rt = (new_daily.get("market") or {}).get("risk_temp")
+    if old_rt is not None and new_rt is not None and old_rt != new_rt:
+        items.append(f"風險溫度 {old_rt}→{new_rt}")
+
+    old_status = (prev_daily.get("market") or {}).get("status")
+    new_status = (new_daily.get("market") or {}).get("status")
+    if old_status and new_status and old_status != new_status:
+        items.append(f"大盤狀態 {old_status}→{new_status}")
+
+    def _monitored_ids(daily: Dict):
+        return ({t.get("id") for t in (daily.get("tracked") or [])} |
+                {w.get("id") for w in (daily.get("watch") or [])})
+
+    old_ids, new_ids = _monitored_ids(prev_daily), _monitored_ids(new_daily)
+    name_lookup = {t.get("id"): t.get("name") for t in (new_daily.get("tracked") or [])}
+    name_lookup.update({w.get("id"): w.get("name") for w in (new_daily.get("watch") or [])})
+    old_name_lookup = {t.get("id"): t.get("name") for t in (prev_daily.get("tracked") or [])}
+    old_name_lookup.update({w.get("id"): w.get("name") for w in (prev_daily.get("watch") or [])})
+    for sid in sorted(new_ids - old_ids):
+        items.append(f"新增監控：{name_lookup.get(sid, sid)}")
+    for sid in sorted(old_ids - new_ids):
+        items.append(f"移除監控：{old_name_lookup.get(sid, sid)}")
+
+    return {"since": prev_date, "items": items[:5]}
+
+
+def _read_prev_daily(path: str = os.path.join(OUT_DIR, "daily.json")) -> Optional[Dict]:
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
 
 
 # ---------- daily.json ----------
@@ -443,6 +662,8 @@ def build_daily(profile: Dict, results: Dict[str, Dict], meta: Dict, market_bloc
         res = results[sid]
         tracked.append(build_tracked_entry(sid, res))
         alerts.extend(build_alerts_for_stock(sid, res.get("name", sid), res["primary_decision"]))
+    exposure_guidance = build_exposure_guidance(market_block["risk_temp"])
+    events = build_events(results)
     return {
         "meta": meta,
         "market": market_block,
@@ -452,9 +673,11 @@ def build_daily(profile: Dict, results: Dict[str, Dict], meta: Dict, market_bloc
         # 股票清單），保守回空陣列，不得編造清單內容，見模組尾端說明。
         "watch": [],
         "alerts_snapshot": alerts,
-        "exposure_guidance": build_exposure_guidance(market_block["risk_temp"]),
-        "events": build_events(results),
+        "exposure_guidance": exposure_guidance,
+        "events": events,
         "track_stats": build_track_stats(),
+        "today_command": build_today_command(results, exposure_guidance, events,
+                                             meta.get("data_date")),
     }
 
 
@@ -630,7 +853,7 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
                     "market": "TWSE", "is_core_holding": is_core},
         "price": {
             "close": _num(dec.get("as_of_price")),
-            "change_pct": None,  # 已知缺口：見模組尾端說明
+            "change_pct": _num(dec.get("change_pct")),  # 契約 v1.5：真值
             "ma20": _num(t_ev.get("MA20")),
             "ma60": _num(t_ev.get("MA60")),
         },
@@ -818,15 +1041,22 @@ def backfill_recommendation_log(log_path: str = RECOMMENDATION_LOG,
 
 
 # ---------- 組裝入口 ----------
-def build_all(data_dir: str = DATA_DIR,
-             market_inputs: Optional[Dict] = None) -> Tuple[Dict, Dict[str, Dict], List[Tuple[str, str]]]:
+_UNSET = object()  # build_all 的 prev_daily 哨兵：區分「沒傳→讀磁碟現有 daily.json」與「顯式傳 None→視為首次無前檔」
+
+
+def build_all(data_dir: str = DATA_DIR, market_inputs: Optional[Dict] = None,
+             prev_daily=_UNSET) -> Tuple[Dict, Dict[str, Dict], List[Tuple[str, str]]]:
     """回 (daily_dict, {stock_id: stock_detail_dict}, skipped)。
-    market_inputs=None → 打網路抓；測試可傳固定 dict 全離線跑。"""
+    market_inputs=None → 打網路抓；測試可傳固定 dict 全離線跑。
+    prev_daily：delta（規格 v1.5）比較基準，預設讀 public/data/daily.json（寫入前的舊檔，
+    見 build_delta 冪等說明）；測試可顯式傳 dict 或 None 離線控制。"""
     profile = load_profile()
     stock_files = discover_stock_files(data_dir)
     results, skipped = load_stock_results(stock_files)
     if market_inputs is None:
         market_inputs = fetch_market_inputs()
+    if prev_daily is _UNSET:
+        prev_daily = _read_prev_daily()
     # data_date：行情資料日優先；抓不到（如假日跑批、市場 API 失敗）時 fallback 用所有個股
     # as_of_date 的最大值（最後一根日 K 日期），而不是無腦用「今天」（大檢查・邏輯組
     # data_date fallback）。兩者皆無 → build_meta 內部才退今天，但 main() 會據此跳過 log 寫入。
@@ -834,6 +1064,7 @@ def build_all(data_dir: str = DATA_DIR,
     meta = build_meta(sources=["FinMind", "yfinance"], data_date=resolved_date)
     market_block = build_market_block(market_inputs)
     daily = build_daily(profile, results, meta, market_block)
+    daily["delta"] = build_delta(prev_daily, daily, results)
     # 個股 advice 要跟大盤 exposure_guidance 一致（見 _build_advice_and_defense docstring）：
     # 直接重用 daily 已算好的那份，不重算一次（同一份 risk_temp 只該有一個真結果）。
     market_new_position = daily["exposure_guidance"]["new_position"]
@@ -900,9 +1131,8 @@ if __name__ == "__main__":
 
 
 # ---------- 已知缺口（契約 vs 引擎現況，非本模組能補；回報時一併說明）----------
-# 1. price.change_pct / tracked[].change_pct：引擎（analyze_tw.technical()）目前只輸出
-#    最新收盤，不含前一日收盤或日漲跌%，故本模組一律回 null（符合契約硬規則 3：缺資料
-#    給 null、不編數字）。若要補齊，需在 analyze_tw.py 補算（不在本次授權可動檔案內）。
+# 1. price.change_pct / tracked[].change_pct：契約 v1.5 已補（analyze_tw.daily_change_pct
+#    由日線倒數兩根算真值，寫進 decision.change_pct，本模組直接透傳）。
 # 2. daily.watch：目前 repo 內無「有等待條件但無完整報告」的股票清單資料源，回空陣列。
 # 3. context.lights.color / valuation.band 為 null（na／資料不足）時：app/src/types/
 #    contract.ts 的 Zod LightSchema.color、ValuationSchema.band 目前宣告非 nullable
