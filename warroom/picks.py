@@ -706,15 +706,21 @@ def _rank_move(sid: str, cur_rank: int, roster: Optional[Dict]) -> str:
     return "−"
 
 
-def _tenure_of(sid: str, roster: Optional[Dict]) -> int:
-    """連續入榜天數：上一份 roster 有此 sid → 前值+1，否則 1（今日新進）。"""
+def _tenure_of(sid: str, roster: Optional[Dict], data_date: Optional[str] = None) -> int:
+    """連續入榜天數：上一份 roster 有此 sid 且日期不同 → 前值+1；
+    同一 data_date 重跑（盤後多次 rebuild）→ 沿用前值不遞增（冪等，2026-07-19 抓到
+    同日跑三次變「3 日留任」的 bug）；不在上一份 → 1（今日新進）。"""
     prev = ((roster or {}).get("picks") or {}).get(sid) or {}
-    return int(prev.get("tenure_days", 0)) + 1
+    prev_days = int(prev.get("tenure_days", 0))
+    if prev_days and data_date and (roster or {}).get("date") == data_date:
+        return prev_days
+    return prev_days + 1
 
 
 def build_pools_block(scored: List[Dict], new_position: str, generated_from: str,
                       max_new_ids: Optional[set] = None,
-                      roster: Optional[Dict] = None) -> Tuple[Dict, List[str], Dict]:
+                      roster: Optional[Dict] = None,
+                      data_date: Optional[str] = None) -> Tuple[Dict, List[str], Dict]:
     """組 v1.6 daily.picks 分艙區塊（actionable/on_deck/research）＋新面孔機制。
     回 (picks_block, selected_ids, new_roster)。
 
@@ -772,7 +778,7 @@ def build_pools_block(scored: List[Dict], new_position: str, generated_from: str
                 m, s, fw, note = item
             sid = m["id"]
             card = build_pick_card(m, fw, s, new_position,
-                                   tenure_days=_tenure_of(sid, roster),
+                                   tenure_days=_tenure_of(sid, roster, data_date),
                                    rank_move=_rank_move(sid, rank, roster),
                                    status_note=note)
             cards.append(card)
@@ -989,7 +995,8 @@ def _fetch_light(sid: str, fetch_fn, counter: List[int]) -> Tuple[Dict, Dict, Di
 def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
                    profile: Dict, fetch_fn=None, analyze_fn=None,
                    opportunities: Optional[List[Dict]] = None,
-                   universe: Optional[List[Dict]] = None) -> Tuple[Dict, Dict, Dict]:
+                   universe: Optional[List[Dict]] = None,
+                   data_date: Optional[str] = None) -> Tuple[Dict, Dict, Dict]:
     """打網路組 picks（放 build_snapshots.main()）。純函式部分全抽出，這裡只負責 IO。
     - fetch_fn：預設 finmind_cache.cached_fetch（可注入假 loader 測）。
     - analyze_fn：預設 analyze_tw.analyze（被選新股跑完整分析產 stocks/<id>.json）。
@@ -1058,7 +1065,7 @@ def generate_picks(exposure_guidance: Dict, results: Dict[str, Dict],
     picks_block, _selected, new_roster = build_pools_block(
         scored, new_position,
         generated_from="tw-stock-screener opportunities + FinMind",
-        max_new_ids=allow_ids, roster=roster)
+        max_new_ids=allow_ids, roster=roster, data_date=data_date)
 
     stats = {"finmind_calls": counter[0] + analyze_calls,
              "scoring_calls": counter[0], "analyze_calls": analyze_calls,

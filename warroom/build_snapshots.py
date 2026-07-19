@@ -1124,7 +1124,8 @@ def main() -> None:
     results_for_picks, _ = load_stock_results(discover_stock_files(DATA_DIR))
     try:
         picks_input, picks_results, picks_stats = _picks_mod.generate_picks(
-            exposure_guidance, results_for_picks, profile)
+            exposure_guidance, results_for_picks, profile,
+            data_date=market_inputs.get("trade_date"))
         print(f"[build_snapshots] picks：候選 {picks_stats['pool_size']} 檔"
               f"（opp 來源={picks_stats['opp_source']}），FinMind 呼叫估 "
               f"{picks_stats['finmind_calls']} 次（評分 {picks_stats['scoring_calls']}"
