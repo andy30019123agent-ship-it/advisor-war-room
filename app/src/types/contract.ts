@@ -41,10 +41,12 @@ export const ShortScenarioSchema = z.object({
 export const ShortScenariosOkSchema = z.object({
   status: z.literal('ok'),
   horizon: z.string(),
+  // key_levels 改 optional：market_battle.scenarios 刻意不重複放（在 market_battle 上層），
+  // 必填會讓整組被 .catch(null) 靜默吞掉、大盤作戰區全域隱形（2026-07-19 prod 實測抓到）。
   key_levels: z.object({
     supports: z.array(z.number()),
     resistances: z.array(z.number()),
-  }),
+  }).optional(),
   scenarios: z.array(ShortScenarioSchema),
   prob_note: z.string(),
   disclaimer: z.string(),
