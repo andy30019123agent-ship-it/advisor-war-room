@@ -404,3 +404,30 @@ serverless 代理 TWSE MIS 即時報價（純 stdlib；瀏覽器直打 MIS 有 C
 ### App 行為
 
 開啟/切前景時對「持股＋監控＋當前查詢股」抓 /api/quote 刷新現價與距防守 %；顯示「盤中 HH:MM」徽章與收盤價區別；盤外自動退回快照收盤（徽章維持「MM-DD 收盤」）。分析結論不因盤中價重算（收盤級決策設計不變）。K 線漲跌用色**沿用全站綠漲紅跌**（與台股看盤軟體紅漲相反——為 App 內一致性，圖上加一次性小註「綠漲紅跌」）。
+
+---
+
+## v1.8 增補（2026-07-19 傍晚，Andy 拍板：首頁大盤作戰區四件全做）
+
+### daily.json 新增 `market_battle`（整組可 null）
+
+```jsonc
+"market_battle": {
+  "ohlc": [ { "d": "2026-07-17", "o": ..., "h": ..., "l": ..., "c": 42671.3, "v": null } ],  // TAIEX 60 交易日（v 無資料給 null）
+  "key_levels": { "supports": [41500, 40800], "resistances": [43800, 45600] },  // 近期低點/月線/季線挑 ≤3 個，間距 ≥1.5%
+  "scenarios": { /* 與個股 short_scenarios 同構：status/horizon/scenarios[3]/prob_note/disclaimer */ },
+  "flow": {
+    "foreign_streak": { "direction": "sell", "days": 7, "latest_yi": -519.0 },  // 外資連 N 日、最新一日億元
+    "leading_sectors": ["軍工航太", "封測"],       // tw_sectors 領先族群 top2；無資料空陣列
+    "us_overnight": [ { "id": "SPX", "change_pct": -1.0 }, { "id": "SOX", "change_pct": -1.6 } ]
+  },
+  "forecast_range_m1": [40200, 45100]              // GBM on TAIEX，1 個月 70% 區間；樣本不足 null
+}
+```
+
+### 生成規則
+
+- 大盤劇本＝複用 short_scenarios 引擎，映射：技術燈=TAIEX vs MA20/60/120 結構（多頭排列 green／跌破月季線 red／其餘 yellow）；籌碼燈=外資連買賣（連買≥3 green／連賣≥3 red／else yellow）；「大盤 status」修正項改用 VIX 單日 ±8% 與美股 SOX 方向；關鍵位=近 20 日低、MA20/60/120、近 60 日高，沿用 ≥2% 間距去重與 ≤15% 錨點；核心持股/部位語言不適用——action 改「曝險語言」（維持防禦／可回補試單／降曝險）。
+- flow.foreign_streak 由 FinMind institutional 近 10 日合計；leading_sectors 讀 data/tw_sectors.json 排名前 2。
+- forecast_range_m1＝forecast.py GBM 引擎餵 TAIEX 序列（drift=0 同規則）取 m1 p15/p85。
+- 前端「大盤作戰區」插在今日頁指令卡之後、我的持股之前：K 線（複用 CandleChart，疊 key_levels）＋劇本卡（複用 ShortScenarios 元件、機率條同語言）＋flow 一行卡＋區間一句話（附「零漂移模擬」註）。
