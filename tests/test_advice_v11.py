@@ -265,6 +265,49 @@ class TestCoreHoldingNoEngineDataAdvice(unittest.TestCase):
                             "核心持股：定期定額照常，僅基本面長期失效才調整。")
         self.assertGreater(len(adv["holder"]["plan"]), 0)
 
+    # ---- 大檢查・核心分支漏閘門：核心持股＋資料不足的提前 return 分支也套 market_banned ----
+    def test_core_holding_missing_data_market_banned_blocks_nonholder_entry(self):
+        # 0050 型：核心持股缺基本面資料，但大盤禁止新增部位 → nonholder 不該還在講
+        # 「可等...分批布局」（那是新增部位），要收斂成跟一般 nonholder 一樣的暫不進場語言，
+        # plan 的 act 也不得再是「分批布局，定期定額為主」。
+        adv = build_advice(action="續抱", reason_codes=["fundamental_data_missing", "trend_ok"],
+                           price=180.0, defense_price=165.0, tech_facts=["收盤 180.0", "MA20 178.0"],
+                           entry_condition=None, is_core_holding=True,
+                           market_new_position="禁止新增部位")
+        non = adv["nonholder"]
+        self.assertIn("大盤禁新倉", non["action_text"])
+        self.assertNotIn("分批布局，不追高", non["action_text"])
+        acts = " ".join(p["act"] for p in non["plan"])
+        self.assertNotIn("分批布局，定期定額為主", acts)
+        # holder 版（定期定額照常）不受影響——既有核心持股紀律不因新增部位限制被改寫
+        self.assertEqual(adv["holder"]["action_text"],
+                         "核心持股：定期定額照常，僅基本面長期失效才調整。")
+        self.assertEqual(adv["holder"]["plan"], [])
+
+    def test_core_holding_missing_data_market_banned_no_entry_still_says_banned(self):
+        # 連進場條件都算不出來（tech_facts 空）＋大盤禁新倉：仍要講「暫不進場（大盤禁新倉）」，
+        # 不能落回舊的「資料不足，維持既定定期定額計畫」（那句沒反映大盤閘門）。
+        adv = build_advice(action="觀望", reason_codes=["data_insufficient"],
+                           price=180.0, defense_price=None, tech_facts=[],
+                           entry_condition=None, is_core_holding=True,
+                           market_new_position="禁止新增部位")
+        non = adv["nonholder"]
+        self.assertIn("大盤禁新倉", non["action_text"])
+        self.assertEqual(non["plan"], [])
+
+    def test_core_holding_missing_data_market_unrestricted_keeps_original_text(self):
+        # 大盤可正常布局／沒有 market_new_position 資訊 → 維持原本核心持股分批布局文案，
+        # 不被本次修法影響到既有行為。
+        for mnp in (None, "可正常布局"):
+            adv = build_advice(action="續抱", reason_codes=["fundamental_data_missing", "trend_ok"],
+                               price=180.0, defense_price=165.0,
+                               tech_facts=["收盤 180.0", "MA20 178.0"],
+                               entry_condition=None, is_core_holding=True,
+                               market_new_position=mnp)
+            non = adv["nonholder"]
+            self.assertIn("分批布局，不追高", non["action_text"])
+            self.assertNotIn("大盤禁新倉", non["action_text"])
+
 
 # ---------- defense_explain ----------
 class TestDefenseExplain(unittest.TestCase):

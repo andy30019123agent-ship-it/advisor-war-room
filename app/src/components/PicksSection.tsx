@@ -21,7 +21,7 @@ function ChevronGlyph() {
   )
 }
 
-function PickCard({ pick, onSelectStock }: { pick: Pick; onSelectStock: (id: string) => void }) {
+function PickCard({ pick, gateOn, onSelectStock }: { pick: Pick; gateOn: boolean; onSelectStock: (id: string) => void }) {
   return (
     <details className="pick-card">
       <summary>
@@ -48,7 +48,11 @@ function PickCard({ pick, onSelectStock }: { pick: Pick; onSelectStock: (id: str
       <div className="pick-body">
         {pick.entry_zone && (
           <div className="pick-entry-zone">
-            分批佈局區 {formatPrice(pick.entry_zone[0])}-{formatPrice(pick.entry_zone[1])}
+            {/* 禁新倉時（gateOn）這區間不是「可以進場佈局」，是「等解禁前先盯著看」——
+               收合 summary 已經誠實講「等解禁」，展開後的區間 label 不能還喊「佈局」，
+               不然使用者會覺得矛盾（大檢查・picks 卡矛盾）。 */}
+            {gateOn ? '觀察區 ' : '分批佈局區 '}
+            {formatPrice(pick.entry_zone[0])}-{formatPrice(pick.entry_zone[1])}
           </div>
         )}
         <div className="pick-meta-row">
@@ -84,8 +88,16 @@ export function PicksSection({ daily, collapsed, onSelectStock }: {
     swing: picks?.swing.length ?? 0,
     long: picks?.long.length ?? 0,
   }
-  const defaultTab: Tab = counts.short > 0 ? 'short' : counts.swing > 0 ? 'swing' : 'long'
-  const [tab, setTab] = useState<Tab>(defaultTab)
+  // tab 卡死修復（大檢查）：daily 一開始是 undefined（counts 全 0）→ autoTab 落在 'long'；
+  // useState(defaultTab) 只吃「第一次 render」的值，之後 daily 非同步載入、counts 變了也
+  // 不會重算，tab 就卡死在 long，即使 short 明明有資料。改成 derived：manualTab 為 null（使用者
+  // 還沒手動點過任何 tab）時，tab 每次 render 都跟著當下 counts 重算「第一個有資料的分組」；
+  // 使用者一旦手動點過 tab（selectTab），manualTab 落地，之後永遠尊重手動選擇、不再被
+  // counts 變化蓋掉。
+  const autoTab: Tab = counts.short > 0 ? 'short' : counts.swing > 0 ? 'swing' : 'long'
+  const [manualTab, setManualTab] = useState<Tab | null>(null)
+  const tab: Tab = manualTab ?? autoTab
+  const selectTab = (t: Tab) => setManualTab(t)
   const [forceExpand, setForceExpand] = useState(false)
 
   if (!picks) return null
@@ -127,7 +139,7 @@ export function PicksSection({ daily, collapsed, onSelectStock }: {
               type="button"
               key={t}
               className={`picks-tab ${tab === t ? 'active' : ''}`}
-              onClick={() => setTab(t)}
+              onClick={() => selectTab(t)}
             >
               {TAB_LABEL[t]}
               <span className="n">（{counts[t]}）</span>
@@ -142,7 +154,7 @@ export function PicksSection({ daily, collapsed, onSelectStock }: {
         ) : (
           <div className="picks-list">
             {list.map((p) => (
-              <PickCard key={p.id} pick={p} onSelectStock={onSelectStock} />
+              <PickCard key={p.id} pick={p} gateOn={gateOn} onSelectStock={onSelectStock} />
             ))}
           </div>
         )}

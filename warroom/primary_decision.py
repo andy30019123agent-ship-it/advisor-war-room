@@ -450,6 +450,8 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
     - "僅限試單"：空手若原本因為 action=="加碼" 會看到 20/40/60 萬階梯，收斂回 10 萬
       試單額度，其餘 action（本來就是 10 萬起）不受影響。"""
     codes = reason_codes or []
+    # 提前算 market_banned（原本只在下面主路徑算），核心持股提前 return 分支也要用（見下）。
+    market_banned = market_new_position == "禁止新增部位"
     # 核心持股且引擎沒有真正資料可判讀（ETF/特殊標的常態缺基本面，primary_code 落在
     # fundamental_data_missing／data_insufficient——見 decide_action 層 1）：不套波段防守
     # 模板（0050 這類標的沒有波段層可言，跌破某條均線算出的「防守價」對定期定額投資人
@@ -461,7 +463,18 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
         holder = {"action_text": core_text, "plan": []}
         entry = _nonholder_entry(price, tech_facts, entry_condition,
                                  _executable_anchors(price, tech_facts, defense_price))
-        if entry:
+        if market_banned:
+            # 核心持股的空手版本（定期定額分批布局）同樣是「新增部位」，大盤禁新倉時要
+            # 跟一般 nonholder 閘門同源收斂（大檢查・核心分支漏閘門）：不得出現任何分批
+            # 布局／定期定額的「進場」語言，清掉佈局 act，改講暫不進場。
+            if entry:
+                banned_text = f"暫不進場（大盤禁新倉），{entry['trigger']}後再評估。"
+                nonholder = {"action_text": banned_text,
+                            "plan": [{"trigger": entry["trigger"], "act": banned_text[:-1]}]}
+            else:
+                nonholder = {"action_text": "暫不進場（大盤禁新倉），資料亦不足，維持觀望。",
+                            "plan": []}
+        elif entry:
             nonholder = {"action_text": f"核心持股：可等{entry['trigger']}分批布局，不追高。",
                         "plan": [{"trigger": entry["trigger"], "act": "分批布局，定期定額為主"}]}
         else:
@@ -476,7 +489,7 @@ def build_advice(*, action, reason_codes, price, defense_price, tech_facts,
     # holder 的「加碼／回補」也是「新增部位」，同樣要過大盤 new_position 閘門（大檢查・
     # 邏輯組 Y5）：禁新倉 → 不加碼/不回補、維持既有；僅限試單 → 縮到 10 萬。與劇本層
     # bull action、nonholder 版同一個大盤閘門同源，不再只擋 nonholder。
-    market_banned = market_new_position == "禁止新增部位"
+    # （market_banned 已在函式頂端算過，核心持股提前 return 分支也共用同一個值。）
     trial_only = market_new_position == "僅限試單"
 
     # ---- holder ----

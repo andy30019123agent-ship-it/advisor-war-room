@@ -65,38 +65,99 @@ export function sortedByTime(entries: JournalEntry[]): JournalEntry[] {
   return [...entries].sort((a, b) => (sortKey(a) < sortKey(b) ? -1 : sortKey(a) > sortKey(b) ? 1 : 0))
 }
 
-// 幫一筆賣出配對「對應買進」：同代號、成交時間在這筆賣出（含同天但 created_at 較早）
-// 之前，取時間上最近的一筆買進。這是簡化配對（不是嚴格 FIFO 庫存追蹤），找不到就回
-// null，代表這筆賣出的損益無法判斷（例如日誌只補記了賣出、沒有補買進成本）。
-export function findMatchingBuy(allEntries: JournalEntry[], sell: JournalEntry): JournalEntry | null {
-  const buys = sortedByTime(allEntries.filter((e) => e.stock_id === sell.stock_id && e.side === 'buy'))
-  const before = buys.filter((b) => sortKey(b) <= sortKey(sell))
-  return before.length > 0 ? before[before.length - 1] : null
+// 單筆賣出配到的其中一筆買進批次（FIFO 消耗庫存的其中一段）。
+export interface FifoMatchLot {
+  buy: JournalEntry
+  qty: number // 這筆賣出從這筆買進批次吃掉的股數
 }
 
 export interface SellWithPnl {
   sell: JournalEntry
-  buy: JournalEntry | null
-  isLoss: boolean | null // null＝配不到對應買進，無法判斷盈虧
-  pnlAmt: number | null
+  buy: JournalEntry | null // FIFO 配到的第一筆（最舊）買進；相容舊介面／畫面顯示用，完整明細見 matches
+  matches: FifoMatchLot[] // 依 FIFO 順序配到的買進批次（可能跨多筆買進）
+  matchedQty: number // 有配到成本的股數
+  orphanQty: number // 賣超庫存、配不到成本的股數（不算損益、不進連敗判定）
+  isLoss: boolean | null // matchedQty=0（整筆 orphan）時無法判斷 → null
+  pnlAmt: number | null // 只計 matched 部位的損益；matchedQty=0 時 null
 }
 
-// allEntries：拿來配對買進的完整母體（可以包含週期範圍外的買進）。
-// sellsSubset：要計算的賣出子集，預設＝allEntries 裡全部的賣出。
+interface FifoLot {
+  entry: JournalEntry
+  remaining: number
+}
+
+// 全域 FIFO 模擬：依股票代號分組，依時間序逐筆處理買/賣——買進推入庫存佇列，賣出從佇列
+// 最舊的批次開始依序吃（先進先出），可能一筆賣出跨吃好幾筆不同價位的買進。賣出數量超過
+// 當下庫存的部分記為 orphan（配不到買進成本，例如日誌只補記了賣出、沒有補買進，或補記
+// 順序有誤造成賣超）——orphan 部位不算損益、也不計入連敗判定。用 allEntries 的完整時間序
+// 模擬（不只看 sellsSubset），確保子集之外的買賣也會正確消耗/佔用庫存。
+function computeFifoMatches(allEntries: JournalEntry[]): Map<string, SellWithPnl> {
+  const bySid = new Map<string, JournalEntry[]>()
+  for (const e of sortedByTime(allEntries)) {
+    const list = bySid.get(e.stock_id)
+    if (list) list.push(e)
+    else bySid.set(e.stock_id, [e])
+  }
+
+  const result = new Map<string, SellWithPnl>()
+  for (const entries of bySid.values()) {
+    const queue: FifoLot[] = []
+    for (const e of entries) {
+      if (e.side === 'buy') {
+        queue.push({ entry: e, remaining: e.qty })
+        continue
+      }
+      let need = e.qty
+      const matches: FifoMatchLot[] = []
+      while (need > 0 && queue.length > 0) {
+        const lot = queue[0]
+        const take = Math.min(need, lot.remaining)
+        matches.push({ buy: lot.entry, qty: take })
+        lot.remaining -= take
+        need -= take
+        if (lot.remaining <= 0) queue.shift()
+      }
+      const matchedQty = e.qty - need
+      const orphanQty = need
+      const pnlAmt = matchedQty > 0
+        ? matches.reduce((sum, m) => sum + (e.price - m.buy.price) * m.qty, 0)
+        : null
+      result.set(e.id, {
+        sell: e,
+        buy: matches.length > 0 ? matches[0].buy : null,
+        matches,
+        matchedQty,
+        orphanQty,
+        isLoss: matchedQty > 0 ? (pnlAmt as number) < 0 : null,
+        pnlAmt,
+      })
+    }
+  }
+  return result
+}
+
+// 幫一筆賣出配對「對應買進」：per-stock FIFO 消耗庫存下，這筆賣出吃到的第一筆（最舊）
+// 買進批次。找不到（庫存已空、整筆 orphan）就回 null。
+export function findMatchingBuy(allEntries: JournalEntry[], sell: JournalEntry): JournalEntry | null {
+  return computeFifoMatches(allEntries).get(sell.id)?.buy ?? null
+}
+
+// allEntries：拿來模擬 FIFO 庫存的完整母體（含週期範圍外的買賣，確保消耗順序正確）。
+// sellsSubset：要回傳結果的賣出子集，預設＝allEntries 裡全部的賣出。
 export function pairSells(allEntries: JournalEntry[], sellsSubset?: JournalEntry[]): SellWithPnl[] {
   const sells = sortedByTime(sellsSubset ?? allEntries.filter((e) => e.side === 'sell'))
-  return sells.map((sell) => {
-    const buy = findMatchingBuy(allEntries, sell)
-    if (!buy) return { sell, buy: null, isLoss: null, pnlAmt: null }
-    return { sell, buy, isLoss: sell.price < buy.price, pnlAmt: (sell.price - buy.price) * sell.qty }
+  const matches = computeFifoMatches(allEntries)
+  return sells.map((sell) => matches.get(sell.id) ?? {
+    sell, buy: null, matches: [], matchedQty: 0, orphanQty: sell.qty, isLoss: null, pnlAmt: null,
   })
 }
 
 // ---------- 連敗保護 ----------
 
-// 連續停損筆數：從時間序最新的賣出往回數，遇到「配對得到買進且虧損」的賣出就繼續數；
-// 配不到對應買進（isLoss=null）視為中斷——資料不全時無法確認虧損，保守起見不算進連
-// 敗，但也不能假裝沒事繼續往前數，直接中斷計數。
+// 連續停損筆數：從時間序最新的賣出往回數，遇到「FIFO 配對得到成本且虧損」的賣出就繼續數；
+// 配不到成本（isLoss=null，含整筆 orphan＝賣超庫存的部分）視為中斷——資料不全或賣超時
+// 無法確認虧損，保守起見不算進連敗，但也不能假裝沒事繼續往前數，直接中斷計數。isLoss 已
+// 是 FIFO 損益的結果（見 computeFifoMatches），這裡不用再處理配對細節。
 export function getLossStreak(entries: JournalEntry[]): number {
   const sells = pairSells(entries) // 已經是時間升冪
   let streak = 0

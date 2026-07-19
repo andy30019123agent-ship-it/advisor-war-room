@@ -6,10 +6,19 @@ import { useEffect, useRef } from 'react'
 // DOM 後，用原生 input setter 寫代號＋dispatch input 事件（讓 React 的受控 state 跟著更新、
 // submit 按鈕解除 disabled），下一輪再對 form 呼叫 requestSubmit() 觸發它既有的 submit()。
 // 全程不改 StockSearch.tsx 一行程式碼；等雙邊工作合併、檔案解鎖後，可以換回正規的 prop。
+// 台股代號格式＝4-6 碼數字（與 App.tsx 的 readDeepLinkStock 同一條規則）；這裡再守一次是
+// defense-in-depth——stockId 不只可能來自已驗證過的 deeplink query param，將來也可能被其
+// 他呼叫端（如未來的 prop 化 navigateToStock）傳進未經驗證的字串，不合法就不觸碰 DOM。
+const STOCK_ID_RE = /^\d{4,6}$/
+
 export function DeepLinkBridge({ stockId, onDone }: { stockId: string; onDone: () => void }) {
   const doneRef = useRef(false)
 
   useEffect(() => {
+    if (!STOCK_ID_RE.test(stockId)) {
+      onDone()
+      return
+    }
     doneRef.current = false
     let cancelled = false
     let attempts = 0

@@ -11,9 +11,15 @@ import { DeepLinkBridge } from './components/DeepLinkBridge'
 // D 包・deeplink（契約 v1.5「App 行為」節）：/?stock=2330 開啟即進查股票並載入該股，
 // 讓 TG 警報訊息可以直達分析結果。只在初次載入讀一次 query param（不用 history/router，
 // 這支 App 本來就沒有路由套件）。
+// 台股代號格式＝4-6 碼數字；query param 是使用者可控輸入（URL 可被任意分享/竄改），
+// 不驗證就直接塞進 DeepLinkBridge 模擬送出表單，格式不對的字串也會被當代號打進查詢——
+// 不合法一律忽略（回 null，等同沒有 deeplink），DeepLinkBridge 也同樣守一次（大檢查）。
+const STOCK_ID_RE = /^\d{4,6}$/
+
 function readDeepLinkStock(): string | null {
   if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('stock')
+  const raw = new URLSearchParams(window.location.search).get('stock')
+  return raw && STOCK_ID_RE.test(raw) ? raw : null
 }
 
 export type TabId = 'today' | 'holdings' | 'search' | 'track'

@@ -32,7 +32,8 @@ scoring 這裡命中快取＝0 次新呼叫。被選新股才另跑完整 analyz
   + 營收 YoY 為正（revenue_yoy>0）：          +15
   → 取分 ≥65、前 3 檔。
 
-長線 long_score（營收/獲利品質 + 估值分位 + 安全邊際）：
+長線 long_score（營收動能 + 估值分位 + 殖利率 + 風險扣分；不含 EPS/ROE——本引擎未抓財報三表，
+  勿與 warroom/valuation.py 的估值模型或 warroom/fundamentals.py 的財報品質分混為一談）：
   + 營收 YoY 為正：             +15
   + 近 3 月均 YoY 為正：        +15；且 avg3_yoy 幅度 clamp(avg3,0,20)/20*10 額外最高 +10
   + PER 歷史分位 <50%：clamp(0.5-per_pctile,0,0.5)/0.5*20（越低越加分，最高 +20）
