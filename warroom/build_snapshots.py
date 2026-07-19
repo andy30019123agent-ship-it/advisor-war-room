@@ -870,6 +870,11 @@ def build_stock_detail(stock_id: str, res: Dict, profile: Dict, meta: Dict,
         # v1.4：短線劇本推演，整組由 warroom/short_scenarios.py 在 analyze 階段算好（含機率
         # 查表），這裡只把 bull 的大盤新倉閘門重跑到權威 exposure new_position（見上 Y7 說明）。
         "short_scenarios": short_scenarios,
+        # v1.7：K 線疊層（近60交易日日K，整組可為 null）＋中長線方向判讀（不為 null，見
+        # warroom/primary_decision.build_mid_long_reads docstring），兩者皆由 analyze_tw.py
+        # 在 analyze 階段算好，這裡單純透傳，不重算。
+        "ohlc": res.get("ohlc"),
+        "mid_long_reads": res.get("mid_long_reads"),
     }
 
 

@@ -4,7 +4,7 @@
   "title": "stocks/<id>.json（單股完整分析）",
   "description": "對應 docs/contracts/data-contract-v1.md 的 stocks/<id>.json 區塊。",
   "type": "object",
-  "required": ["meta", "profile", "price", "primary_decision", "context", "evidence", "track", "forecast", "short_scenarios"],
+  "required": ["meta", "profile", "price", "primary_decision", "context", "evidence", "track", "forecast", "short_scenarios", "ohlc", "mid_long_reads"],
   "additionalProperties": false,
   "properties": {
     "meta": {
@@ -325,6 +325,33 @@
           }
         }
       ]
+    },
+    "ohlc": {
+      "type": ["array", "null"],
+      "minItems": 20,
+      "maxItems": 60,
+      "items": {
+        "type": "object",
+        "required": ["d", "o", "h", "l", "c", "v"],
+        "additionalProperties": false,
+        "properties": {
+          "d": { "type": "string" },
+          "o": { "type": "number" },
+          "h": { "type": "number" },
+          "l": { "type": "number" },
+          "c": { "type": "number" },
+          "v": { "type": "integer" }
+        }
+      }
+    },
+    "mid_long_reads": {
+      "type": ["object", "null"],
+      "required": ["swing", "mid"],
+      "additionalProperties": false,
+      "properties": {
+        "swing": { "$ref": "#/definitions/mid_long_read_entry" },
+        "mid": { "$ref": "#/definitions/mid_long_read_entry" }
+      }
     }
   },
   "definitions": {
@@ -430,6 +457,25 @@
       "properties": {
         "color": { "type": ["string", "null"], "enum": ["green", "yellow", "red", null] },
         "facts": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "mid_long_read_entry": {
+      "type": "object",
+      "required": ["bias", "path_text", "flip_condition", "basis"],
+      "additionalProperties": false,
+      "properties": {
+        "bias": {
+          "type": "string",
+          "enum": ["偏多", "中性偏多", "中性", "中性偏空", "偏空"]
+        },
+        "path_text": { "type": "string" },
+        "flip_condition": { "type": "string" },
+        "basis": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 2,
+          "maxItems": 3
+        }
       }
     }
   }

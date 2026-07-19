@@ -23,23 +23,18 @@ function parsePricePathText(text: string): PathChip[] {
     .map((seg) => {
       const numMatch = seg.match(/[\d,]+(\.\d+)?/)
       const number = numMatch ? numMatch[0] : seg
+      // 取「句中最早出現」的動詞當主動詞——不能先掃多方清單，
+      // 否則「下探 2,094…守穩才反彈」會被句尾的「反彈」搶走（2026-07-19 實測抓到動詞對調）。
       let verb: string | null = null
       let sentiment: 'up' | 'down' | null = null
+      let best = Infinity
       for (const v of BULLISH_VERBS) {
-        if (seg.includes(v)) {
-          verb = v
-          sentiment = 'up'
-          break
-        }
+        const i = seg.indexOf(v)
+        if (i !== -1 && i < best) { best = i; verb = v; sentiment = 'up' }
       }
-      if (!verb) {
-        for (const v of BEARISH_VERBS) {
-          if (seg.includes(v)) {
-            verb = v
-            sentiment = 'down'
-            break
-          }
-        }
+      for (const v of BEARISH_VERBS) {
+        const i = seg.indexOf(v)
+        if (i !== -1 && i < best) { best = i; verb = v; sentiment = 'down' }
       }
       let rest = seg
       if (numMatch) rest = rest.replace(numMatch[0], '')

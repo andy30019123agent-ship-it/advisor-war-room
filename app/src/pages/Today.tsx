@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchDaily, SchemaMismatchError } from '../lib/api'
 import { loadHoldings } from '../lib/holdings'
+import { loadWatchlist } from '../lib/watchlist'
+import { useQuotes, isLiveQuote, type QuotesMap } from '../lib/quotes'
 import { FreshnessBadge } from '../components/FreshnessBadge'
+import { LiveQuoteBadge } from '../components/LiveQuoteBadge'
 import { IconSearch, IconChevron, IconPlus } from '../components/icons'
 import type { TabId } from '../App'
 import type { Daily, TrackedStock } from '../types/contract'
@@ -81,6 +84,20 @@ export function Today({
     queryKey: ['daily'],
     queryFn: fetchDaily,
   })
+
+  // 盤中現價即時化（契約 v1.7 App 行為節）：對「持股∪監控」刷新（Today 頁沒有「當前查詢
+  // 股」這回事）。data 還沒回來時各清單先當空陣列，等 daily 到位後 quoteIds 自然變多，
+  // useQuery 的 queryKey 會跟著換、重新抓一次——Hook 呼叫順序仍然固定不變（Rules of Hooks），
+  // 不因為 isLoading/isError 提前 return 而受影響。
+  const quoteIds = Array.from(
+    new Set([
+      ...loadHoldings().map((h) => h.id),
+      ...(data?.tracked.map((t) => t.id) ?? []),
+      ...(data?.watch.map((w) => w.id) ?? []),
+      ...loadWatchlist(),
+    ])
+  )
+  const { data: quotes } = useQuotes(quoteIds)
 
   if (isLoading) {
     return (
@@ -175,8 +192,10 @@ export function Today({
           <div className="list-card">
             {holdings.map((h) => {
               const t = tracked.find((x) => x.id === h.id)
-              const currentPrice = t?.close ?? null
-              const changePct = t?.change_pct ?? null
+              const quote = quotes?.[h.id]
+              const live = isLiveQuote(quote)
+              const currentPrice = live ? quote.price : (t?.close ?? null)
+              const changePct = live ? quote.change_pct : (t?.change_pct ?? null)
               const defensePrice = t?.decision.defense_price ?? null
               const distPct =
                 currentPrice != null && defensePrice != null && currentPrice !== 0
@@ -196,8 +215,11 @@ export function Today({
                         <span className="name">{h.name || h.id}</span>
                         <span className="code mono">{h.id}</span>
                       </div>
-                      <div className={`row-price mono ${pctClass(changePct)}`}>
-                        {currentPrice != null ? currentPrice.toLocaleString() : '—'}
+                      <div className="row-price-block">
+                        {live && <LiveQuoteBadge at={quote.at} />}
+                        <div className={`row-price mono ${pctClass(changePct)}`}>
+                          {currentPrice != null ? currentPrice.toLocaleString() : '—'}
+                        </div>
                       </div>
                     </div>
                     <div className="row-tags">
@@ -217,7 +239,7 @@ export function Today({
       )}
 
       {alerts_snapshot.length > 0 && (
-        <MonitoringSection alerts={alerts_snapshot} tracked={tracked} onNavigateStock={onNavigateStock} />
+        <MonitoringSection alerts={alerts_snapshot} tracked={tracked} quotes={quotes} onNavigateStock={onNavigateStock} />
       )}
 
       {!!events && events.length > 0 && (
@@ -386,10 +408,12 @@ function LegacyCommandCard({
 function MonitoringSection({
   alerts,
   tracked,
+  quotes,
   onNavigateStock,
 }: {
   alerts: AlertSnapshot[]
   tracked: TrackedStock[]
+  quotes: QuotesMap | undefined
   onNavigateStock: (id: string) => void
 }) {
   const grouped: { id: string; name: string; alerts: AlertSnapshot[] }[] = []
@@ -406,7 +430,9 @@ function MonitoringSection({
         <div className="list-card">
           {grouped.map((g) => {
             const t = tracked.find((x) => x.id === g.id)
-            const currentPrice = t?.close ?? null
+            const quote = quotes?.[g.id]
+            const live = isLiveQuote(quote)
+            const currentPrice = live ? quote.price : (t?.close ?? null)
             const distances = g.alerts
               .map((a) => (currentPrice != null && currentPrice !== 0 ? Math.abs((currentPrice - a.price) / currentPrice) * 100 : null))
               .filter((d): d is number => d != null)
@@ -421,7 +447,10 @@ function MonitoringSection({
                       <span className="name">{g.name}</span>
                       <span className="code mono">{g.id}</span>
                     </div>
-                    {minDist != null && <span className="monitor-distance mono">距觸發 {minDist.toFixed(1)}%</span>}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {live && <LiveQuoteBadge at={quote.at} />}
+                      {minDist != null && <span className="monitor-distance mono">距觸發 {minDist.toFixed(1)}%</span>}
+                    </span>
                   </div>
                   <div className="row-tags">
                     {g.alerts.map((a, i) => (

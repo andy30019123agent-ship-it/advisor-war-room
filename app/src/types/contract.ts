@@ -463,6 +463,37 @@ export const ShortScenariosSchema = z.discriminatedUnion('status', [
 export type ShortScenario = z.infer<typeof ShortScenarioSchema>
 export type ShortScenarios = z.infer<typeof ShortScenariosSchema>
 
+// ---------- v1.7 增補（docs/contracts/data-contract-v1.md「v1.7 增補」節）----------
+// ohlc：過去 60 交易日日 K（K 線疊層圖用）；mid_long_reads：中長線方向判讀（波段/中期）。
+// 兩者整組可為 null（缺資料／樣本不足），前端 graceful degrade（契約硬規則 3）。
+
+export const OhlcCandleSchema = z.object({
+  d: z.string(),
+  o: z.number(),
+  h: z.number(),
+  l: z.number(),
+  c: z.number(),
+  v: z.number(),
+})
+
+export type OhlcCandle = z.infer<typeof OhlcCandleSchema>
+
+export const MidLongReadSchema = z.object({
+  bias: StanceSchema,
+  path_text: z.string(),
+  flip_condition: z.string(),
+  basis: z.array(z.string()),
+})
+
+export type MidLongRead = z.infer<typeof MidLongReadSchema>
+
+export const MidLongReadsSchema = z.object({
+  swing: MidLongReadSchema,
+  mid: MidLongReadSchema,
+})
+
+export type MidLongReads = z.infer<typeof MidLongReadsSchema>
+
 export const StockDetailSchema = z.object({
   meta: MetaSchema,
   profile: z.object({
@@ -486,6 +517,9 @@ export const StockDetailSchema = z.object({
   forecast: ForecastSchema.nullable().optional().catch(null),
   // 同樣 .catch(null)：引擎還沒補上這欄位、或格式對不上時退化成 null，不拖垮整份解析。
   short_scenarios: ShortScenariosSchema.nullable().optional().catch(null),
+  // v1.7：ohlc 缺資料整組 null（K 線疊層圖顯示「K 線資料準備中」小卡）。
+  ohlc: z.array(OhlcCandleSchema).nullable().optional().catch(null),
+  mid_long_reads: MidLongReadsSchema.nullable().optional().catch(null),
 })
 
 export type StockDetail = z.infer<typeof StockDetailSchema>

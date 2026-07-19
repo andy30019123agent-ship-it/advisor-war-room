@@ -135,6 +135,41 @@ def daily_change_pct(pdf):
     return round((last / prev - 1) * 100, 2)
 
 
+def build_ohlc(pdf, n=60):
+    """契約 v1.7 ohlc：近 n（預設 60）交易日日 K，K 線圖用。pdf 需已依 date 排序（呼叫端
+    已排序過，這裡防禦性地再排一次）；欄位對齊 FinMind taiwan_stock_daily
+    （open/max/min/close/Trading_Volume，同 technical() 的欄名 fallback 寫法）。
+    數值 round 到小數 1 位（同 MA 系列精度），volume 轉整數；任一根 OHLC 缺值就跳過該根
+    不編數字。有效根數 <20 → 整組回 None（契約：資料不足 null 整組）；20~59 根照實際
+    根數給（不硬湊 60），只有 ≥60 根時才截斷取最後 60 根。"""
+    if pdf is None or len(pdf) == 0:
+        return None
+    df = pdf.sort_values("date").reset_index(drop=True)
+    o_c = "open" if "open" in df.columns else None
+    h_c = "max" if "max" in df.columns else "high" if "high" in df.columns else None
+    l_c = "min" if "min" in df.columns else "low" if "low" in df.columns else None
+    c_c = "close" if "close" in df.columns else None
+    v_c = "Trading_Volume" if "Trading_Volume" in df.columns else None
+    if not all((o_c, h_c, l_c, c_c)):
+        return None
+    out = []
+    for _, row in df.tail(n).iterrows():
+        o = pd.to_numeric(row[o_c], errors="coerce")
+        h = pd.to_numeric(row[h_c], errors="coerce")
+        l = pd.to_numeric(row[l_c], errors="coerce")
+        c = pd.to_numeric(row[c_c], errors="coerce")
+        if any(pd.isna(x) for x in (o, h, l, c)):
+            continue
+        v = pd.to_numeric(row[v_c], errors="coerce") if v_c else None
+        out.append({
+            "d": str(row["date"])[:10],
+            "o": round(float(o), 1), "h": round(float(h), 1),
+            "l": round(float(l), 1), "c": round(float(c), 1),
+            "v": int(v) if v is not None and pd.notna(v) else 0,
+        })
+    return out if len(out) >= 20 else None
+
+
 def prior_n_high_low(df, hi_c, lo_c, n=20):
     """前 n 個「完整」交易日的高低點（不含當日，shift(1) 後再 tail(n)）。
     用於突破/停損參考：避免當日本身即創高時，「破近20日高」永遠不成立、也避免 lookahead。
@@ -513,13 +548,25 @@ def _decide(stock_id, d, res, flags):
                "invalidation": {}, "stop": {"price": None},
                "note": "日線資料缺，決策降級", "as_of_price": None, "change_pct": None,
                "disclaimer": "資料不足，僅供參考。"}
+        res["ohlc"] = None
         _attach_primary(res, dec, None, None, market_light,
                         {"yoy_negative": False, "below_6m_2months": False},
                         {"sell_streak_ge3": False, "ratio_gt_15pct": False}, None, None)
+        try:
+            from warroom.primary_decision import build_mid_long_reads
+            ctx = res.get("context") or {}
+            res["mid_long_reads"] = build_mid_long_reads(
+                price=None, tech_facts=[], defense_price=None, entry_condition=None,
+                timeframes=ctx.get("timeframes") or {}, valuation=None, reason_codes=[],
+                rev_yoy=None, rev_avg3_yoy=None, rev_avg12_yoy=None,
+                industry=None, ma_structure=None)
+        except Exception:
+            res["mid_long_reads"] = None
         return dec
 
     pdf = price_df.sort_values("date").reset_index(drop=True)
     price = float(pd.to_numeric(pdf["close"], errors="coerce").iloc[-1])
+    res["ohlc"] = build_ohlc(pdf)
 
     # PER/PBR 序列
     per_series, per_current, pbr_series, pbr_current = [], None, [], None
@@ -651,6 +698,35 @@ def _decide(stock_id, d, res, flags):
         )
     except Exception:
         res["short_scenarios"] = None
+
+    # 中長線方向判讀（規格 v1.7）：bias 直接引 primary 的 timeframes stance（禁另算，見
+    # warroom/primary_decision.build_mid_long_reads docstring）；path_text/flip_condition
+    # 沿用已算好的 t_ev（防守/MA錨，≤15% 規則同 short_scenarios/advice）；mid 的 basis
+    # 用估值 band＋營收 YoY/加速度（picks.metrics_from_revenue 同口徑）＋產業別。任何例外
+    # 都降級成 None，不讓整檔 build 失敗。
+    try:
+        from warroom.primary_decision import build_mid_long_reads
+        from warroom.picks import metrics_from_revenue
+        primary = res["primary_decision"]
+        ctx = res.get("context") or {}
+        tech_facts = ((ctx.get("lights") or {}).get("technical") or {}).get("facts") or []
+        rev_metrics = metrics_from_revenue(d.get("rev"))
+        res["mid_long_reads"] = build_mid_long_reads(
+            price=price,
+            tech_facts=tech_facts,
+            defense_price=primary.get("defense_price"),
+            entry_condition=primary.get("entry_condition"),
+            timeframes=ctx.get("timeframes") or {},
+            valuation=valuation,
+            reason_codes=primary.get("reason_codes") or [],
+            rev_yoy=rev_metrics.get("revenue_yoy"),
+            rev_avg3_yoy=rev_metrics.get("avg3_yoy"),
+            rev_avg12_yoy=rev_metrics.get("avg12_yoy"),
+            industry=stock_industry(stock_id),
+            ma_structure=t_ev.get("排列"),
+        )
+    except Exception:
+        res["mid_long_reads"] = None
     return dec
 
 

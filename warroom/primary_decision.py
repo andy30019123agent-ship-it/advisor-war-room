@@ -596,6 +596,170 @@ def build_defense_explain(defense_price, stop_info):
             f"跌破代表波段結構破壞。")
 
 
+# ---------- v1.7：中長線方向判讀 mid_long_reads ----------
+_BIAS_LEAN = {"偏多": "up", "中性偏多": "up", "中性": "neutral",
+             "中性偏空": "down", "偏空": "down"}
+
+_FALLBACK_SUPPORT_PCT = 0.95
+_FALLBACK_RESIST_PCT = 1.05
+
+_NO_PRICE_PATH_TEXT = "資料不足，暫無法判讀走勢路徑。"
+_NO_PRICE_FLIP_TEXT = "資料不足，暫無法判斷翻轉條件。"
+
+
+def _mid_long_anchors(price, tech_facts, defense_price, entry_condition):
+    """既有關鍵位（防守價/MA20/60/120/entry 錨），沿用 _executable_anchors 的 ≤15% 規則；
+    entry 錨（未與既有錨重疊時）併入，供 path_text/flip_condition 的目標價取用。"""
+    anchors = _executable_anchors(price, tech_facts, defense_price)
+    ec = entry_condition or {}
+    ep = ec.get("price")
+    if ep is not None and _anchor_executable(ep, price) and \
+       all(abs(ep - a["price"]) > 1e-9 for a in anchors):
+        anchors.append({"label": "進場錨", "price": float(ep),
+                        "side": "below" if ep < price else "above"})
+    return anchors
+
+
+def _nearest_or_fallback_price(anchors, side, fallback_label, price, fallback_pct):
+    cands = sorted([a for a in anchors if a["side"] == side],
+                   key=lambda a: a["price"], reverse=(side == "below"))
+    if cands:
+        return cands[0]["label"], cands[0]["price"]
+    return fallback_label, round(price * fallback_pct, 1)
+
+
+def _direction_read(bias, price, tech_facts, defense_price, entry_condition):
+    """依 stance 方向與現價位置，從既有關鍵位組 path_text/flip_condition（沿用劇本層
+    ≤15% 錨點規則，見 _mid_long_anchors）。price 缺（None/非正）→ 安全降級成一句話，
+    不編數字。偏空→「可能先回測 X，守住才…」；偏多→「回測 Y 不破後挑戰 Z」；
+    中性→區間震盪語言。flip_condition 一律指向相反方向的下一個 stance。"""
+    if price is None or price <= 0:
+        return _NO_PRICE_PATH_TEXT, _NO_PRICE_FLIP_TEXT
+
+    lean = _BIAS_LEAN.get(bias, "neutral")
+    anchors = _mid_long_anchors(price, tech_facts, defense_price, entry_condition)
+    s_label, s_val = _nearest_or_fallback_price(anchors, "below", "近期支撐",
+                                                price, _FALLBACK_SUPPORT_PCT)
+    r_label, r_val = _nearest_or_fallback_price(anchors, "above", "近期壓力",
+                                                price, _FALLBACK_RESIST_PCT)
+
+    if lean == "down":
+        path_text = f"可能先回測 {s_label} {_fmt_price(s_val)}，不破且法人止賣才有反轉條件"
+        flip_condition = f"站回 {r_label} {_fmt_price(r_val)} 且連 2 日買超 → 轉中性偏多"
+    elif lean == "up":
+        path_text = f"回測 {s_label} {_fmt_price(s_val)} 不破後，可挑戰 {r_label} {_fmt_price(r_val)}"
+        flip_condition = f"跌破 {s_label} {_fmt_price(s_val)} 且連 2 日賣超 → 轉中性偏空"
+    else:
+        path_text = (f"多在 {s_label} {_fmt_price(s_val)} 與 {r_label} {_fmt_price(r_val)} "
+                    f"間震盪，等三燈或大盤訊號轉向再判斷")
+        flip_condition = f"站回 {r_label} {_fmt_price(r_val)} 且連 2 日買超 → 轉中性偏多"
+    return path_text, flip_condition
+
+
+# swing basis：由 reason_codes 挑最多 3 條（trend/valuation/chips 各挑一，優先序見下），
+# 刻意不收 fundamental_* ——那是 mid basis 的主場（估值＋營收），避免兩邊講同一件事。
+_SWING_BASIS_ORDER = [
+    "trend_weak", "trend_ok", "trend_mixed",
+    "valuation_very_expensive", "valuation_expensive", "valuation_fair", "valuation_cheap",
+    "chips_broken", "chips_weak", "chips_ok",
+]
+_SWING_BASIS_PHRASE = {
+    "trend_ok": "月線結構偏多", "trend_mixed": "均線糾結、結構未定", "trend_weak": "月線結構空方",
+    "valuation_cheap": "估值便宜", "valuation_fair": "估值合理",
+    "valuation_expensive": "估值偏貴", "valuation_very_expensive": "估值很貴",
+    "chips_ok": "外資籌碼偏多", "chips_weak": "外資籌碼偏弱", "chips_broken": "外資連賣",
+}
+
+
+def _swing_basis(reason_codes) -> List[str]:
+    codes = reason_codes or []
+    seen_kind, out = set(), []
+    for code in _SWING_BASIS_ORDER:
+        if code not in codes:
+            continue
+        kind = code.split("_")[0]
+        if kind in seen_kind:
+            continue
+        seen_kind.add(kind)
+        out.append(_SWING_BASIS_PHRASE[code])
+        if len(out) == 3:
+            break
+    _fallbacks = ["資料有限，依現有燈號研判", "建議搭配三燈與大盤訊號綜合判斷"]
+    while len(out) < 2:
+        out.append(_fallbacks[len(out) % len(_fallbacks)])
+    return out
+
+
+def _mid_basis(valuation, rev_yoy, rev_avg3_yoy, rev_avg12_yoy, industry, ma_structure) -> List[str]:
+    """mid basis：估值 band（含 PER 分位可用時）＋營收 YoY/加速度（近3月均−近12月均）＋
+    產業別或月線結構，恰 3 條、含數字更好（缺資料一律講「資料不足」，不編）。"""
+    val = valuation or {}
+    band = val.get("band")
+    per_pctile = val.get("current_percentile")
+    if band:
+        val_text = (f"估值{band}（PER 分位 {per_pctile*100:.0f}%）" if per_pctile is not None
+                   else f"估值{band}")
+    else:
+        val_text = "估值資料不足"
+
+    if rev_yoy is not None:
+        if rev_avg3_yoy is not None and rev_avg12_yoy is not None:
+            accel = rev_avg3_yoy - rev_avg12_yoy
+            trend = "動能轉強" if accel > 0 else "動能放緩" if accel < 0 else "動能持平"
+            rev_text = f"營收 YoY {rev_yoy:+.1f}%，近3月{trend}（加速度 {accel:+.1f}pp）"
+        else:
+            rev_text = f"營收 YoY {rev_yoy:+.1f}%"
+    else:
+        rev_text = "營收資料不足"
+
+    if industry:
+        structure_text = f"產業別：{industry}"
+    elif ma_structure:
+        structure_text = f"月線結構{ma_structure}"
+    else:
+        structure_text = "產業與月線結構資料不足"
+
+    return [val_text, rev_text, structure_text]
+
+
+def build_mid_long_reads(*, price, tech_facts, defense_price, entry_condition,
+                         timeframes, valuation, reason_codes,
+                         rev_yoy=None, rev_avg3_yoy=None, rev_avg12_yoy=None,
+                         industry=None, ma_structure=None) -> Dict:
+    """契約 v1.7 mid_long_reads：波段（swing）＋中期（mid）方向判讀。bias 直接引用
+    timeframes 對應 stance（禁另算——見契約規則：『bias 派生自 primary_decision 的
+    timeframes stance』），path_text/flip_condition 依 stance 方向與現價位置，從既有
+    關鍵位（defense/MA 系列/entry 錨，≤15% 規則，見 _mid_long_anchors）組模板；swing
+    basis 引 reason_codes 短語（技術/估值/籌碼），mid basis 用估值 band＋營收趨勢
+    （YoY/加速度）＋產業或月線結構（2-3 條含數字）。純規則、不打網路；缺資料一律安全
+    降級成一句話或『資料不足』，不編數字，整組不回 None（跟 forecast/short_scenarios
+    不同——bias 永遠拿得到，contract 沒有標示這欄可整組 null）。"""
+    tf = timeframes or {}
+    swing_stance = (tf.get("swing") or {}).get("stance") or "中性"
+    mid_stance = (tf.get("mid") or {}).get("stance") or "中性"
+
+    swing_path, swing_flip = _direction_read(swing_stance, price, tech_facts,
+                                             defense_price, entry_condition)
+    mid_path, mid_flip = _direction_read(mid_stance, price, tech_facts,
+                                         defense_price, entry_condition)
+
+    return {
+        "swing": {
+            "bias": swing_stance,
+            "path_text": swing_path,
+            "flip_condition": swing_flip,
+            "basis": _swing_basis(reason_codes),
+        },
+        "mid": {
+            "bias": mid_stance,
+            "path_text": mid_path,
+            "flip_condition": mid_flip,
+            "basis": _mid_basis(valuation, rev_yoy, rev_avg3_yoy, rev_avg12_yoy,
+                                industry, ma_structure),
+        },
+    }
+
+
 def generate_roles(codes, lights_facts, action):
     """§3.5 升級：六角色（技術/基本/籌碼分析師、風控長、魔鬼代言人、投資長）依 reason_codes
     ＋facts 產「有立場的完整句子」——支持寫為何站這邊（含數字）、反對寫這角色擔心什麼、

@@ -14,6 +14,11 @@ import { GlossaryCard } from '../components/GlossaryCard'
 import { PicksSection } from '../components/PicksSection'
 import { TrackButton } from '../components/TrackButton'
 import { JournalEntryFormModal } from '../components/JournalEntryFormModal'
+import { CandleChart } from '../components/CandleChart'
+import { MidLongReads } from '../components/MidLongReads'
+import { LiveQuoteBadge } from '../components/LiveQuoteBadge'
+import { loadWatchlist } from '../lib/watchlist'
+import { useQuotes, isLiveQuote } from '../lib/quotes'
 import type { Daily, StockDetail } from '../types/contract'
 
 export function StockSearch() {
@@ -248,6 +253,16 @@ function StockDetailView({
   const isHolder = loadHoldings().some((h) => h.id === profile.id)
   const suppressPosition = gateBanned && !isHolder
 
+  // 盤中現價即時化（契約 v1.7 App 行為節）：對「持股∪監控∪當前查詢股」刷新，這裡查詢股
+  // 就是 profile.id。stale=false 才覆蓋顯示；分析結論（primary_decision 等）不因盤中價
+  // 重算——只換上面這一格數字＋徽章。
+  const quoteIds = Array.from(new Set([...loadHoldings().map((h) => h.id), ...loadWatchlist(), profile.id]))
+  const { data: quotes } = useQuotes(quoteIds)
+  const quote = quotes?.[profile.id]
+  const live = isLiveQuote(quote)
+  const displayClose = live ? quote.price : price.close
+  const displayChangePct = live ? quote.change_pct : price.change_pct
+
   // C 包・冷靜期落地（契約 v1.6 執行鏈路節）：連續停損 streak≥2 部位金額減半＋「冷靜期」
   // amber badge；≥3 用「暫停新倉」red badge 取代金額。只在真的有部位金額可顯示時才套用
   // （suppressPosition／空手時本來就沒有金額，套冷靜期沒有意義）。
@@ -268,8 +283,9 @@ function StockDetailView({
               {profile.name} <span className="code mono" style={{ fontSize: 13, color: 'var(--text-soft)' }}>{profile.id}</span>
             </span>
             <span className="row-price-block">
-              <span className={`row-price mono ${pctClass(price.change_pct)}`}>{formatNumber(price.close)}</span>
-              <span className={`row-change mono ${pctClass(price.change_pct)}`}>今日 {fmtPct(price.change_pct)}</span>
+              {live && <LiveQuoteBadge at={quote.at} />}
+              <span className={`row-price mono ${pctClass(displayChangePct)}`}>{formatNumber(displayClose)}</span>
+              <span className={`row-change mono ${pctClass(displayChangePct)}`}>今日 {fmtPct(displayChangePct)}</span>
             </span>
           </div>
           <div className="decision-action">{pd.action}</div>
@@ -343,7 +359,21 @@ function StockDetailView({
         </div>
       </div>
 
+      <CandleChart
+        ohlc={detail.ohlc}
+        ma60={price.ma60}
+        defensePrice={pd.defense_price}
+        entryPrice={pd.entry_condition?.price ?? null}
+        keyLevels={
+          detail.short_scenarios?.status === 'ok'
+            ? [...detail.short_scenarios.key_levels.supports, ...detail.short_scenarios.key_levels.resistances]
+            : []
+        }
+      />
+
       <ShortScenarios data={detail.short_scenarios} close={price.close} />
+
+      <MidLongReads data={detail.mid_long_reads} />
 
       <ForecastFan forecast={detail.forecast} />
 

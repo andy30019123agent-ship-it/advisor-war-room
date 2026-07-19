@@ -6,7 +6,9 @@ import { loadTotalCapital, saveTotalCapital } from '../lib/settings'
 import { formatShares, SHARES_PER_LOT } from '../lib/shares'
 import { fmtPct, pctClass } from '../lib/format'
 import { loadJournal, type JournalEntry } from '../lib/journal'
+import { useQuotes, isLiveQuote } from '../lib/quotes'
 import { FreshnessBadge } from '../components/FreshnessBadge'
+import { LiveQuoteBadge } from '../components/LiveQuoteBadge'
 import { StreakAlertBanner } from '../components/StreakAlertBanner'
 import { JournalEntryFormModal } from '../components/JournalEntryFormModal'
 import { JournalListModal } from '../components/JournalListModal'
@@ -45,6 +47,9 @@ export function Holdings() {
   const [showJournalList, setShowJournalList] = useState(false)
 
   const { data: daily } = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
+
+  // 盤中現價即時化（契約 v1.7 App 行為節）：持股頁的「持股」就是這裡的 quoteIds 全體。
+  const { data: quotes } = useQuotes(holdings.map((h) => h.id))
 
   const trackedIds = new Set((daily?.tracked ?? []).map((t) => t.id))
   // 核心持股語意（速修 1.）：daily.core_holdings 是「核心配置」清單（目前 2330/0050），跟
@@ -149,8 +154,10 @@ export function Holdings() {
     const live = !isQueued ? detailById.get(h.id) : undefined
     const detail = live?.data as StockDetail | undefined
 
-    const currentPrice = tracked?.close ?? detail?.price.close ?? null
-    const changePct = tracked?.change_pct ?? detail?.price.change_pct ?? null
+    const quote = quotes?.[h.id]
+    const liveQuote = isLiveQuote(quote)
+    const currentPrice = liveQuote ? quote.price : (tracked?.close ?? detail?.price.close ?? null)
+    const changePct = liveQuote ? quote.change_pct : (tracked?.change_pct ?? detail?.price.change_pct ?? null)
     const pnlPct =
       currentPrice != null && h.costPrice > 0 ? ((currentPrice - h.costPrice) / h.costPrice) * 100 : null
 
@@ -188,6 +195,7 @@ export function Holdings() {
       isLiveLoading: !!live?.isLoading,
       isLiveError: !!live?.isError,
       isQueued,
+      liveQuoteAt: liveQuote ? quote.at : null,
     }
   })
 
@@ -338,6 +346,7 @@ export function Holdings() {
                           <span className="skeleton skeleton-line" style={{ width: 48, height: 19, marginBottom: 0 }} />
                         ) : (
                           <div className="row-price-block">
+                            {e.liveQuoteAt && <LiveQuoteBadge at={e.liveQuoteAt} />}
                             <div className={`row-price mono ${pnlClass === 'up' ? 'up' : pnlClass === 'down' ? 'down' : ''}`}>
                               {e.currentPrice != null ? e.currentPrice.toLocaleString() : '—'}
                             </div>
