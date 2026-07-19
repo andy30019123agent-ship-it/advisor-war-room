@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-07-17",
-    "generated_at": "2026-07-19T14:53:05+08:00",
+    "generated_at": "2026-07-19T15:06:20+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -55,17 +55,6 @@
   ],
   "tracked": [
     {
-      "id": "2207",
-      "name": "和泰車",
-      "close": 486.0,
-      "change_pct": -1.42,
-      "decision": {
-        "action": "試單",
-        "readable_reason": "因為基本面沒惡化，所以小量試單；但均線轉弱／糾結，僅守長期均線是風險。",
-        "defense_price": 447.1
-      }
-    },
-    {
       "id": "2330",
       "name": "台積電",
       "close": 2290.0,
@@ -90,22 +79,6 @@
   ],
   "watch": [],
   "alerts_snapshot": [
-    {
-      "id": "2207",
-      "name": "和泰車",
-      "type": "defense",
-      "price": 447.1,
-      "direction": "below",
-      "source": "tracked"
-    },
-    {
-      "id": "2207",
-      "name": "和泰車",
-      "type": "entry",
-      "price": 493.0,
-      "direction": "above",
-      "source": "tracked"
-    },
     {
       "id": "2330",
       "name": "台積電",
@@ -147,6 +120,14 @@
       "source": "picks"
     },
     {
+      "id": "2207",
+      "name": "和泰車",
+      "type": "entry",
+      "price": 493.0,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
       "id": "2382",
       "name": "廣達",
       "type": "entry",
@@ -167,14 +148,6 @@
       "name": "華南金",
       "type": "entry",
       "price": 39.9,
-      "direction": "above",
-      "source": "picks"
-    },
-    {
-      "id": "2317",
-      "name": "鴻海",
-      "type": "entry",
-      "price": 246.2,
       "direction": "above",
       "source": "picks"
     }
@@ -294,6 +267,28 @@
       ],
       "research": [
         {
+          "id": "2207",
+          "name": "和泰車",
+          "close": 486.0,
+          "score": 92.0,
+          "confidence": 74,
+          "action_summary": "大盤禁新倉，觀察區 486.0-498.0，等大盤解禁再佈局",
+          "entry_zone": [
+            486.0,
+            498.0
+          ],
+          "defense_price": 447.1,
+          "invalidation": "跌破 447.1 或營收連 2 月轉負或估值回到高分位",
+          "reasons": [
+            "營收 YoY +51.2%，近 3 月均 +32.8%",
+            "PER 落在歷史 5% 分位",
+            "殖利率 4.1%"
+          ],
+          "sector": "汽車",
+          "tenure_days": 1,
+          "rank_move": "↑"
+        },
+        {
           "id": "2382",
           "name": "廣達",
           "close": 325.5,
@@ -313,7 +308,7 @@
           ],
           "sector": "電子代工",
           "tenure_days": 1,
-          "rank_move": "−"
+          "rank_move": "↓"
         },
         {
           "id": "3034",
@@ -335,29 +330,7 @@
           ],
           "sector": "AI/半導體",
           "tenure_days": 1,
-          "rank_move": "−"
-        },
-        {
-          "id": "2207",
-          "name": "和泰車",
-          "close": 486.0,
-          "score": 70.0,
-          "confidence": 59,
-          "action_summary": "大盤禁新倉，觀察區 486.0-498.0，等大盤解禁再佈局",
-          "entry_zone": [
-            486.0,
-            498.0
-          ],
-          "defense_price": 447.1,
-          "invalidation": "跌破 447.1 或營收連 2 月轉負或估值回到高分位",
-          "reasons": [
-            "營收 YoY +51.2%，近 3 月均 +32.8%",
-            "PER 落在歷史 5% 分位",
-            "殖利率 4.1%"
-          ],
-          "sector": "汽車",
-          "tenure_days": 1,
-          "rank_move": "−"
+          "rank_move": "↓"
         },
         {
           "id": "2880",
@@ -380,34 +353,14 @@
           "sector": "金融",
           "tenure_days": 1,
           "rank_move": "−"
-        },
-        {
-          "id": "2317",
-          "name": "鴻海",
-          "close": 234.0,
-          "score": 69.4,
-          "confidence": 59,
-          "action_summary": "大盤禁新倉，觀察區 234.0-246.2，等大盤解禁再佈局",
-          "entry_zone": [
-            234.0,
-            246.2
-          ],
-          "defense_price": 215.3,
-          "invalidation": "跌破 215.3 或營收連 2 月轉負或估值回到高分位",
-          "reasons": [
-            "營收 YoY +52.1%，近 3 月均 +40.5%",
-            "PER 落在歷史 83% 分位",
-            "殖利率 3.1%"
-          ],
-          "sector": "電子代工",
-          "tenure_days": 1,
-          "rank_move": "−"
         }
       ]
     },
     "roster_changes": {
       "new": [],
-      "dropped": [],
+      "dropped": [
+        "2317"
+      ],
       "stay_note": null
     }
   }
