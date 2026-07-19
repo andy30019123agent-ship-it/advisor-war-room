@@ -336,3 +336,40 @@ public/data/stocks/<id>.json    單股完整分析（追蹤清單每檔一份；
 - 核心持股（is_core_holding）在持股頁顯示核心語言（「定期定額照常」），不套波段防守模板。
 - C 包・交易日誌全存 localStorage（`journal` key：{date, stock_id, action, price, qty, followed_advice, note}）；連敗保護＝前端規則（journal 連續 2 筆停損 → 部位建議顯示減半＋警示；3 筆 → 建議只觀察）；週五覆盤卡與分層戰績由前端從 journal＋track 計算。
 - track_stats 擴充（引擎）：per timeframe 分層（short/swing/long 各自 n 與 hit_rate，樣本 <5 null）。
+
+---
+
+## v1.6 增補（2026-07-19 下午，Andy 拍板：選股大腦 2.0＋執行鏈路閉環）
+
+### daily.picks 結構升級（分艙；取代 v1.5 的 short/swing/long 平鋪——前端同步改，舊欄位不再輸出）
+
+```jsonc
+"picks": {
+  "generated_from": "...", "gate": "禁止新增部位",
+  "note": "...",
+  "pools": {
+    "actionable": [],               // 今日可操作（gate 允許時才有；卡片含完整操作資訊）
+    "on_deck": [                    // 解禁後優先（強勢波段/短線候選，禁新倉時不消失、標「等解禁」）
+      { ...pick, "horizon": "swing", "status_note": "等大盤解禁", ... }
+    ],
+    "research": [ ...pick ]         // 長線研究名單
+  },
+  "roster_changes": {               // 新面孔機制（與上一份 picks 比）
+    "new": ["2317"], "dropped": ["1101"],
+    "stay_note": "和泰車 連續 3 日留任（波段結構未變）"   // 連任 ≥3 日時給一句留任原因；無變化日 null
+  }
+}
+```
+
+pick 新增欄位：`tenure_days`（連續入榜天數）、`sector`（族群名，來自 tw_sectors 對應）、`rank_move`（↑↓−）。操作數字（defense/entry_zone/invalidation）一律引用該股 stocks json 的 primary_decision（v1.6 一致性原則，已由一致性修復落實）。
+
+### 評分 v2（引擎規則，揭露於 picks.py docstring）
+
+- 長線：估值＋殖利率合計權重上限 40%；新增品質因子（營收加速度=近3月YoY-近12月YoY、毛利率趨勢與 ROE 有資料才計、無資料不虛high）；金融股（產業=金融保險）估值改 PBR 分位路徑；技術紅燈（跌破全部均線）扣分；估值 warning 存在時 cap 分數 ≤70。
+- 輪動席位：讀 data/tw_sectors.json 領先族群——on_deck 保留 1-2 席給領先族群最強分者；落後族群非深度價值（估值分位 <30%）降權 10%。
+- 短線/波段評分沿用 v1.5。
+
+### 執行鏈路（P1 包）
+
+- **picks 進場監控**：picks 各池標的的 entry 錨點當日直接寫進 `alerts_snapshot`（type=entry、source="picks"），不必等加入 tracked——到價即 TG 提醒。alerts_snapshot entry 加 `source` 欄位（"tracked"|"picks"）。
+- **前端**：精選卡「＋監控」按鈕（POST /api/track，同查股頁）；查股頁分析結果加「記一筆」按鈕（預填代號/名稱/現價 開 journal 表單）；連敗冷靜期作用於下單建議顯示——streak≥2 時 StockSearch/精選卡的部位/試單金額顯示減半並標「冷靜期」、≥3 顯示「暫停新倉」。
