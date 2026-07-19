@@ -365,7 +365,7 @@ function StockDetailView({
         defensePrice={pd.defense_price}
         entryPrice={pd.entry_condition?.price ?? null}
         keyLevels={
-          detail.short_scenarios?.status === 'ok'
+          detail.short_scenarios?.status === 'ok' && detail.short_scenarios.key_levels
             ? [...detail.short_scenarios.key_levels.supports, ...detail.short_scenarios.key_levels.resistances]
             : []
         }
