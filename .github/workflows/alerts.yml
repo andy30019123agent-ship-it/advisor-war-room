@@ -1,10 +1,20 @@
 name: 到價提醒（TG）
 
+# 【為什麼是 long-running loop 而不是 */15 cron】
+# 原設計 cron: "*/15 1-5 * * 1-5" 期望盤中每 15 分跑一次（約 20 次/日），
+# 實測 2026-07-20~22 每天只真的跑到 2 次——GitHub 對高頻 schedule 會大量丟棄
+# （官方文件明示 schedule 不保證準時、負載高時會延遲或跳過），高頻 cron 首當其衝。
+# 改成：一天只靠 schedule 觸發「開場」，job 內自己 sleep-loop 撐完整個盤中時段。
+# 公開 repo 的 Actions 分鐘數免費，長時間 job 不花錢（6 小時 job 上限內）。
 on:
   schedule:
-    # 台北平日 09:00-13:30，每 15 分（UTC 01:00-05:59, Mon-Fri）；
-    # 程式內 is_trading_window() 再精準過濾到 09:00-13:30。
-    - cron: "*/15 1-5 * * 1-5"
+    # 三個保險觸發點（UTC）：08:50 / 09:20 / 10:30 台北時間。
+    # 單一觸發若被 GitHub 丟棄就整天沒警報，所以多開幾個入口；
+    # 已有 loop 在跑時，後到的會被 concurrency 排隊，等前一個結束時已過 13:30，
+    # 迴圈條件不成立會立刻結束，不會重複發送。
+    - cron: "50 0 * * 1-5"
+    - cron: "20 1 * * 1-5"
+    - cron: "30 2 * * 1-5"
   workflow_dispatch: {}
 
 permissions:
@@ -17,7 +27,8 @@ concurrency:
 jobs:
   alerts:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 最早 08:50 起跑、最晚撐到 13:30 收盤＝4h40m，加緩衝取 320 分（< GitHub 6 小時上限）。
+    timeout-minutes: 320
     steps:
       - uses: actions/checkout@v4
 
@@ -25,21 +36,41 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: 執行到價提醒
+      - name: 盤中每 15 分執行到價提醒
         env:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
-        run: python3 -m warroom.alerts
-
-      - name: 提交去重狀態檔（避免重複發送）
         run: |
-          if [ -n "$(git status --porcelain data/alerts_state.json)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add data/alerts_state.json
-            git commit -m "chore: 更新到價提醒去重狀態"
-            git push
-          else
-            echo "state 無變化，略過 commit。"
-          fi
+          set -u
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 收盤時間（台北 13:30）換算成 epoch；之後全部用 epoch 比較，免處理時區字串。
+          END_EPOCH=$(TZ=Asia/Taipei date -d "$(TZ=Asia/Taipei date +%F) 13:30:00" +%s)
+          echo "台北現在時間：$(TZ=Asia/Taipei date '+%F %H:%M:%S')，本輪將執行到 13:30 收盤。"
+
+          ROUND=0
+          while [ "$(date +%s)" -le "$END_EPOCH" ]; do
+            ROUND=$((ROUND + 1))
+            echo "===== 第 $ROUND 輪 $(TZ=Asia/Taipei date '+%H:%M:%S') ====="
+            # 單輪失敗（網路抖動／FinMind 額度）不讓整個 job 掛掉，下一輪自然重試。
+            python3 -m warroom.alerts || echo "⚠️ 本輪執行失敗，等下一輪重試。"
+
+            # 有真的發出提醒才會動到 state；動到就立刻 commit，避免 job 中途被砍
+            # 導致去重狀態丟失、隔輪重複轟炸。push 前先 rebase：盤中 /api/track
+            # 可能同時寫 tracked_stocks.json，不 rebase 會 non-fast-forward 失敗。
+            if [ -n "$(git status --porcelain data/alerts_state.json)" ]; then
+              git add data/alerts_state.json
+              git commit -m "chore: 更新到價提醒去重狀態"
+              git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || echo "⚠️ rebase 失敗"
+              git push || echo "⚠️ push 失敗，狀態留在本地，下一輪再試"
+            fi
+
+            # 對齊到下一個 15 分整點，避免每輪執行耗時累積造成漂移。
+            NEXT=$(( ( $(date +%s) / 900 + 1 ) * 900 ))
+            [ "$NEXT" -gt "$END_EPOCH" ] && break
+            sleep $(( NEXT - $(date +%s) ))
+          done
+
+          echo "收盤，本日提醒迴圈結束，共執行 $ROUND 輪。"
