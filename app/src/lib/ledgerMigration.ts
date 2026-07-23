@@ -38,6 +38,8 @@ export function journalToTrade(e: JournalEntry): TradeEvent {
     tax: calcTax(e.stock_id, e.side, e.price, e.qty),
     followed_advice: e.followed_advice,
     note: e.note,
+    // 舊日誌一律標 legacy：期初部位已經是它們的結果，再計入庫存就是重複計算。
+    legacy: true,
   }
 }
 

@@ -36,6 +36,14 @@ export interface TradeEvent {
   tax: number // 證交稅：只有賣出才有
   followed_advice: boolean
   note?: string
+  /**
+   * 遷移進來的舊日誌。**一律不計入庫存與現金**，只供連敗保護與週覆盤。
+   * 為什麼不能只靠 `date < opening.date` 判斷：遷移當天若舊日誌也有當天的買賣，
+   * 舊 holdings 已經包含它的結果，日期比較不會排除它 → 同一筆被算兩次
+   * （股數變兩倍、現金再扣一次）。未來日期的舊日誌同理。旗標才分得清「這是既有
+   * 部位的來源」還是「遷移後真的又交易了一筆」。
+   */
+  legacy?: true
 }
 
 // 使用者直接改「現金餘額」時記下差額。不覆寫 opening.cash——覆寫會破壞「全量重播必然

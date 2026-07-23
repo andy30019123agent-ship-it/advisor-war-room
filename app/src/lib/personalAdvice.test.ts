@@ -286,3 +286,58 @@ describe('組合層減碼分配', () => {
     expect(alloc.C).toBeCloseTo(100_000, 6) // 50% − 40% = 10% × 100 萬
   })
 })
+
+// ---------- Codex code review 2026-07-23 挑出的問題，逐條迴歸 ----------
+
+describe('修復：長期標記不得放寬引擎風控（Codex #2）', () => {
+  it('引擎 exit 時，長期部位一樣要全部出場', () => {
+    const r = personalInstruction(
+      input({
+        position: pos({ stock_id: '2330', name: '台積電', tag: 'long', shares: 1000, avgCost: 900 }),
+        price: 1000,
+        engine: engine({ position_delta: 'exit' }),
+      })
+    )
+    expect(r.action).toBe('sell')
+    expect(r.qty).toBe(1000)
+    expect(r.ruleId).toBe('ENGINE_EXIT')
+  })
+
+  it('長期部位仍豁免「個人成本停損線」（那是我們自己加的，不是引擎的）', () => {
+    const r = personalInstruction(
+      input({ position: pos({ tag: 'long', shares: 1000, avgCost: 100 }), price: 80, engine: engine({ position_delta: 'hold' }) })
+    )
+    expect(r.action).not.toBe('sell')
+  })
+})
+
+describe('修復：加碼要預留手續費（Codex #4）', () => {
+  it('買進股數不會把預算用光到現金跌破最低水位', () => {
+    const p = portfolio({ cash: 200_000, totalMarketValue: 0, totalAssets: 200_000 })
+    const r = personalInstruction(
+      input({
+        engine: engine({ position_delta: 'increase', defense_price: 50, position: { tier_amount: 999_999_999, lots: 1, odd_shares: 0 } }),
+        position: null,
+        price: 100,
+        portfolio: p,
+        guidance: { ...guidance, max_equity_pct: 100, min_cash_pct: 0 },
+      })
+    )
+    const cost = r.qty * 100 + Math.max(20, Math.round(r.qty * 100 * 0.001425 * 0.6))
+    expect(r.action).toBe('buy')
+    expect(cost).toBeLessThanOrEqual(200_000)
+  })
+})
+
+describe('修復：曝險不確定時不加碼（Codex #7）', () => {
+  it('有持股缺報價時擋下加碼', () => {
+    const r = personalInstruction(
+      input({
+        engine: engine({ position_delta: 'increase', defense_price: 50 }),
+        portfolio: portfolio({ missingPriceIds: ['3008'] }),
+      })
+    )
+    expect(r.action).not.toBe('buy')
+    expect(r.reasons.join()).toContain('缺報價')
+  })
+})

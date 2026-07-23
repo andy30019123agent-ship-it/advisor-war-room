@@ -8,6 +8,7 @@
 //    defense_price / exposure_guidance），禁止解析 advice.plan 的中文字串來抓數字——那是
 //    自由文字，拿正規表示式去撈必然在某天悄悄撈錯。
 
+import { DEFAULT_SETTINGS, calcFee, type LedgerSettings } from './ledger.ts'
 import type { StreakAlert } from './journal'
 import type { Portfolio, Position } from './portfolio'
 import type { ExposureGuidance, PrimaryDecision } from '../types/contract'
@@ -38,6 +39,8 @@ export interface AdviceInput {
   allocation: number
   /** 目標資金規模（使用者設定），只用於集中度紅線與級距對照 */
   totalCapital: number
+  /** 手續費設定，算加碼股數時要預留費用 */
+  feeSettings?: LedgerSettings
 }
 
 // 單檔集中度紅線：單檔市值超過總資產這個比例就要求減碼（沿用既有 Holdings 頁的 40%）。
@@ -135,6 +138,7 @@ function degradedInstruction(input: AdviceInput, reason: string): Instruction {
  */
 export function personalInstruction(input: AdviceInput): Instruction {
   const { engine, position, price, portfolio, guidance, streak, allocation, totalCapital } = input
+  const feeSettings = input.feeSettings ?? DEFAULT_SETTINGS
 
   // ── 0. 資料完整性閘門 ──────────────────────────────────────────
   // 缺現價就不產生可執行數量。禁止拿成本價冒充現價算單——那會生出一張永遠不會成交、
@@ -188,19 +192,34 @@ export function personalInstruction(input: AdviceInput): Instruction {
     }
   }
 
-  // ── 2. 停損（只作用於波段部位）────────────────────────────────
-  // 長期部位（0050／2330）不吃停損——對定期定額部位喊「跌破防守價賣一半」是誤導。
+  // ── 2a. 引擎明確出場：**長期部位也要照做** ─────────────────────
+  // 「只能收緊不能放寬」是雙向的：長期標記可以豁免我自己訂的成本停損線（那是我加的），
+  // 但不能把引擎的 exit 改成續抱（那是引擎的風控）。否則只要把一檔標成長期，就等於
+  // 關掉它的出場訊號——那是最危險的放寬。
+  if (shares > 0 && position && engine.position_delta === 'exit') {
+    return {
+      ...base,
+      instruction: `引擎已轉為出場；限價 ${limitPrice} 元賣出全部 ${fmt(shares)} 股。${isLong ? '（此為引擎風控，長期部位一樣適用）' : ''}${priceNote}`,
+      action: 'sell',
+      qty: shares,
+      ruleId: 'ENGINE_EXIT',
+      reasons: ['引擎 position_delta = exit，個人化層不得放寬引擎風控'],
+    }
+  }
+
+  // ── 2b. 個人停損（只作用於波段部位）───────────────────────────
+  // 長期部位（0050／2330）不吃這裡的成本停損——對定期定額部位喊「跌破防守價賣一半」是誤導。
   if (shares > 0 && position && !isLong) {
     const personalStop = position.avgCost * PERSONAL_STOP_RATIO
     const deepStop = position.avgCost * PERSONAL_DEEP_STOP_RATIO
     const effectiveStop = Math.max(engine.defense_price ?? 0, personalStop)
-    if (price < deepStop || engine.position_delta === 'exit') {
+    if (price < deepStop) {
       return {
         ...base,
-        instruction: `現價 ${limitPrice} 元${price < deepStop ? `低於成本停損線 ${Math.round(deepStop)} 元` : '且引擎已轉為出場'}；限價 ${limitPrice} 元賣出全部 ${fmt(shares)} 股。${priceNote}`,
+        instruction: `現價 ${limitPrice} 元低於成本停損線 ${Math.round(deepStop)} 元；限價 ${limitPrice} 元賣出全部 ${fmt(shares)} 股。${priceNote}`,
         action: 'sell',
         qty: shares,
-        ruleId: price < deepStop ? 'DEEP_STOP' : 'ENGINE_EXIT',
+        ruleId: 'DEEP_STOP',
         reasons: [`成本 ${Math.round(position.avgCost)} 元，深度停損線 ${Math.round(deepStop)} 元`],
       }
     }
@@ -249,6 +268,11 @@ export function personalInstruction(input: AdviceInput): Instruction {
   if (engine.position_delta === 'increase' || engine.position_delta === 'small_entry') {
     const blockers: string[] = []
     if (guidance?.new_position === '禁止新增部位') blockers.push('引擎風控：禁止新增部位')
+    // 有持股缺報價時，總市值是用成本估的——成本可能遠低於現價，曝險就被低估，
+    // 依它算出的「曝險餘裕」會放行不該發生的加碼。寧可不買，也不要用不確定的水位下單。
+    if (portfolio.missingPriceIds.length > 0) {
+      blockers.push(`有 ${portfolio.missingPriceIds.length} 檔持股缺報價，目前曝險不確定`)
+    }
     if (streak.level === 'red') blockers.push(`連續 ${streak.streak} 筆停損，冷靜期暫停新倉`)
     if (engine.defense_price != null && price < engine.defense_price) blockers.push('現價已跌破引擎防守價')
     const anchor = engine.entry_condition?.price ?? null
@@ -279,7 +303,15 @@ export function personalInstruction(input: AdviceInput): Instruction {
     let budget = Math.min(...budgets)
     if (guidance?.new_position === '僅限試單') budget = Math.min(budget, totalCapital * 0.1)
 
-    let buyQty = budget > 0 ? Math.floor(budget / limitPrice) : 0
+    // 預算要先扣掉手續費才換算股數。直接 floor(budget / price) 會把全部預算用光買股票，
+    // 手續費就從「最低現金水位」那一格挖出去——完成後現金低於下限、曝險高於上限，
+    // 等於這條規則自己違反了它剛剛檢查過的限制。小額單受最低 20 元影響更明顯。
+    let buyQty = 0
+    if (budget > 0) {
+      const rough = Math.floor(budget / limitPrice)
+      const fee = rough > 0 ? calcFee(limitPrice, rough, feeSettings) : 0
+      buyQty = Math.max(0, Math.floor((budget - fee) / limitPrice))
+    }
     const halved = streak.level === 'amber' && buyQty > 0
     if (halved) buyQty = Math.floor(buyQty / 2)
 

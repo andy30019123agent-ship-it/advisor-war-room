@@ -10,7 +10,7 @@
 // 這裡刻意寫出 .ts 副檔名：scripts/test-journal.mjs 用 Node 的 TS type-stripping 直接跑
 // 這支檔案，而 type-stripping 不解析無副檔名的相對匯入（tsconfig 已開
 // allowImportingTsExtensions，Vite 與 tsc 都吃得下）。改成無副檔名會讓那支腳本壞掉。
-import { loadLedger, makeTrade, saveLedger, type TradeEvent } from './ledger.ts'
+import { loadLedger, makeTrade, saveLedger, type Ledger, type TradeEvent } from './ledger.ts'
 
 export type JournalSide = 'buy' | 'sell'
 
@@ -58,8 +58,35 @@ export function tradeToJournalEntry(e: TradeEvent): JournalEntry {
 
 export function loadJournal(): JournalEntry[] {
   const ledger = loadLedger()
-  if (!ledger) return []
-  return ledger.events.filter((e): e is TradeEvent => e.type === 'trade').map(tradeToJournalEntry)
+  return ledger ? journalFromLedger(ledger) : []
+}
+
+// 純函式版本：呼叫端已經有 ledger 時直接用這支，不要再讀一次 localStorage——
+// 讀 localStorage 的版本對 React 來說是「沒有輸入的函式」，依賴關係看不出來，
+// 帳本更新後畫面可能繼續用舊的連敗狀態。
+export function journalFromLedger(ledger: Ledger): JournalEntry[] {
+  const trades = ledger.events.filter((e): e is TradeEvent => e.type === 'trade').map(tradeToJournalEntry)
+
+  // 期初部位要補一筆合成買單，否則賣掉遷移進來的持股時 FIFO 配不到成本 → 被判成孤兒單 →
+  // 不算虧損 → 連敗保護整個失效（連停三檔期初持股，streak 仍是 0，red 冷靜期被繞過）。
+  // 只有這裡（連敗／週覆盤）需要它；derivePortfolio 走的是 opening.positions 本身，
+  // 不讀這份清單，所以不會重複計算。
+  const opening: JournalEntry[] = ledger.opening.positions
+    .filter((p) => p?.stock_id && p.shares > 0)
+    .map((p) => ({
+      id: `opening_${p.stock_id}`,
+      date: ledger.opening.date,
+      stock_id: p.stock_id,
+      name: p.name || p.stock_id,
+      side: 'buy' as JournalSide,
+      price: p.cost_price,
+      qty: p.shares,
+      followed_advice: true,
+      note: '期初部位（遷移建立）',
+      created_at: '0000-01-01T00:00:00.000Z', // 排在所有事件之前，確保後續賣出配得到它
+    }))
+
+  return [...opening, ...trades]
 }
 
 export function genJournalId(): string {

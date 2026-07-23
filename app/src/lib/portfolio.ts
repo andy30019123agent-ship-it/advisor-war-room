@@ -109,15 +109,19 @@ export function derivePortfolio(ledger: Ledger, quotes: QuoteMap = {}): Portfoli
       continue
     }
 
-    // 遷移切點之前的交易只供覆盤（連敗保護、週覆盤），不計入庫存與現金——期初部位／期初
+    // 遷移進來的舊交易只供覆盤（連敗保護、週覆盤），不計入庫存與現金——期初部位／期初
     // 現金已經包含了它們的結果，再算一次就是重複計算。這是「不做對帳畫面也不會算錯」的保證。
-    if (e.date < ledger.opening.date) continue
+    // 用 legacy 旗標而非日期比較：遷移當天（或未來日期）的舊日誌用日期擋不掉。
+    if (e.legacy || e.date < ledger.opening.date) {
+      nameById.set(e.stock_id, e.name || nameById.get(e.stock_id) || e.stock_id)
+      continue
+    }
 
     nameById.set(e.stock_id, e.name || nameById.get(e.stock_id) || e.stock_id)
-    cash += tradeCashFlow(e)
 
     const lots = lotsById.get(e.stock_id) ?? []
     if (e.side === 'buy') {
+      cash += tradeCashFlow(e)
       // 手續費攤進每股成本，這樣 avgCost 跟券商 App 的成本才對得起來。
       lots.push({ date: e.date, price: (e.price * e.qty + e.fee) / e.qty, remaining: e.qty })
       lotsById.set(e.stock_id, lots)
@@ -135,8 +139,18 @@ export function derivePortfolio(ledger: Ledger, quotes: QuoteMap = {}): Portfoli
       need -= take
       if (lot.remaining <= 0) lots.shift()
     }
+    const matchedQty = e.qty - need
+
+    // 賣超時只認「真的有庫存可賣」的那部分現金與費稅。全額入帳會憑空生出現金，
+    // 那筆假現金會被加碼規則當成可動用資金，直接叫使用者拿不存在的錢去買股票——
+    // 只顯示 issue 擋不住它。寧可少認，也不要讓錯誤的錢流進決策。
+    const ratio = e.qty > 0 ? matchedQty / e.qty : 0
+    const feeShare = e.fee * ratio
+    const taxShare = e.tax * ratio
+    cash += e.price * matchedQty - feeShare - taxShare
+
     // 賣出成本（手續費＋證交稅）計入已實現損益，才是真的口袋差額。
-    realized -= e.fee + e.tax
+    realized -= feeShare + taxShare
     realizedById.set(e.stock_id, (realizedById.get(e.stock_id) ?? 0) + realized)
     lotsById.set(e.stock_id, lots)
     if (need > 0) {

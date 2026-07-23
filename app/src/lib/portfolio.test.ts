@@ -207,3 +207,50 @@ describe('長期／波段標記', () => {
     expect(p.positions.find((x) => x.stock_id === '2454')?.tag).toBe('swing')
   })
 })
+
+// ---------- Codex code review 2026-07-23 挑出的問題，逐條迴歸 ----------
+
+describe('修復：遷移進來的舊交易一律不計入庫存（Codex #1）', () => {
+  it('遷移「當天」的舊日誌也不會重複計算（日期比較擋不掉，要靠 legacy 旗標）', () => {
+    const l = ledgerWith(
+      [trade({ stock_id: '2330', side: 'buy', price: 900, qty: 1000, date: '2026-07-23', fee: 0, legacy: true } as never)],
+      {
+        opening: {
+          date: '2026-07-23',
+          cash: 500_000,
+          positions: [{ stock_id: '2330', name: '台積電', shares: 1000, cost_price: 900 }],
+        },
+      }
+    )
+    const p = derivePortfolio(l)
+    expect(p.positions[0].shares).toBe(1000) // 不是 2000
+    expect(p.cash).toBe(500_000) // 沒有被再扣一次
+  })
+
+  it('未來日期的舊日誌一樣不計入', () => {
+    const l = ledgerWith(
+      [trade({ stock_id: '2330', side: 'buy', price: 900, qty: 1000, date: '2099-01-01', fee: 0, legacy: true } as never)],
+      { opening: { date: '2026-07-23', cash: 0, positions: [{ stock_id: '2330', name: '台積電', shares: 1000, cost_price: 900 }] } }
+    )
+    expect(derivePortfolio(l).positions[0].shares).toBe(1000)
+  })
+})
+
+describe('修復：賣超不得產生憑空現金（Codex #3）', () => {
+  it('只認配得到庫存的那部分現金與費稅', () => {
+    const l = ledgerWith(
+      [
+        trade({ stock_id: '2454', side: 'buy', price: 100, qty: 100, date: '2026-02-01', fee: 0 }),
+        // 庫存只有 100 股，卻記錄賣出 1000 股
+        trade({ stock_id: '2454', side: 'sell', price: 200, qty: 1000, date: '2026-02-10', fee: 1000, tax: 600 }),
+      ],
+      { opening: { date: '2026-01-01', cash: 0, positions: [] } }
+    )
+    const p = derivePortfolio(l)
+    // 賣出只認 100 股：200×100 − 費稅的 1/10 = 19,840；扣掉先前買進的 10,000 → 9,840。
+    // 修好之前這裡會是 9,840 + 900 股的假賣款，那筆錢會被加碼規則當成可動用現金。
+    expect(p.cash).toBeCloseTo(20_000 - 160 - 10_000, 6)
+    expect(p.realizedPnl).toBeCloseTo((200 - 100) * 100 - 160, 6)
+    expect(p.issues.some((i) => i.kind === 'oversell')).toBe(true)
+  })
+})

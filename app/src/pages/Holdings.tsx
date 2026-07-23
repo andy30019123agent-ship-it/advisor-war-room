@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail } from '../lib/api'
 import { loadTotalCapital, saveTotalCapital } from '../lib/settings'
 import { formatShares } from '../lib/shares'
 import { fmtPct, pctClass } from '../lib/format'
-import { loadJournal, getStreakAlert, type JournalEntry } from '../lib/journal'
+import { journalFromLedger, getStreakAlert } from '../lib/journal'
 import { useQuotes, isLiveQuote } from '../lib/quotes'
 import { useLedger } from '../lib/useLedger'
 import { derivePortfolio, type QuoteMap } from '../lib/portfolio'
@@ -32,7 +32,9 @@ const MAX_LIVE_TOTAL = 8
 export function Holdings() {
   const { ledger, setCash, setTag, refresh } = useLedger()
   const [totalCapital, setTotalCapital] = useState<number>(() => loadTotalCapital())
-  const [journal, setJournal] = useState<JournalEntry[]>(() => loadJournal())
+  // journal 直接由帳本推導，不另存一份 state：另存會在別的分頁寫入帳本後失去同步——
+  // 持股數字更新了、連敗狀態卻還是舊的，畫面就會一邊說「暫停新倉」一邊叫你加碼。
+  const journal = useMemo(() => journalFromLedger(ledger), [ledger])
   const [quickJournalSeed, setQuickJournalSeed] = useState<{ stock_id: string; name: string } | null>(null)
   const [showJournalList, setShowJournalList] = useState(false)
   const [showNewTrade, setShowNewTrade] = useState(false)
@@ -120,15 +122,20 @@ export function Holdings() {
   // 超額曝險只算一次再分配到個股——不然每張卡各自算「賣掉全部超額」，照做會砍三倍。
   const allocation = allocatePortfolioRisk(portfolio, guidance, engineByStock)
 
-  function handleJournalChanged(entries: JournalEntry[]) {
-    setJournal(entries)
-    refresh() // 交易寫進帳本後，持股/現金/曝險立刻重算——這就是 Andy 要的「連動」
+  function handleJournalChanged() {
+    // 交易已寫進帳本，重讀一次帳本即可——持股/現金/曝險/連敗全部跟著重算，
+    // 這就是 Andy 要的「連動」。不需要各自維護一份 journal state。
+    refresh()
   }
 
   function handleCapitalChange(n: number) {
     setTotalCapital(n)
     saveTotalCapital(n)
   }
+
+  // 有持股缺報價時，市值是用成本估的——可能高估也可能低估，曝險跟著不準。
+  // 未實現損益已經整筆排除缺價部位並標註，市值與曝險也要同樣誠實標示。
+  const estimated = portfolio.missingPriceIds.length > 0
 
   const cashUnset = ledger.opening.cash === 0 && !ledger.events.some((e) => e.type === 'cash_adjust')
 
@@ -174,10 +181,15 @@ export function Holdings() {
                     hint={portfolio.missingPriceIds.length > 0 ? '（部分持股缺報價未計入）' : undefined}
                   />
                   <Stat label="已實現損益" value={signed(portfolio.realizedPnl)} tone={tone(portfolio.realizedPnl)} />
-                  <Stat label="持股市值" value={fmtMoney(portfolio.totalMarketValue)} />
+                  <Stat
+                    label="持股市值"
+                    value={fmtMoney(portfolio.totalMarketValue)}
+                    hint={estimated ? '（含缺報價部位以成本估算）' : undefined}
+                  />
                   <Stat
                     label="股票曝險"
                     value={portfolio.exposurePct != null ? `${portfolio.exposurePct.toFixed(1)}%` : '—'}
+                    hint={estimated ? '（不精確，缺報價）' : undefined}
                   />
                   <Stat label="現金水位" value={portfolio.cashPct != null ? `${portfolio.cashPct.toFixed(1)}%` : '—'} />
                 </div>
@@ -244,6 +256,7 @@ export function Holdings() {
                   streak,
                   allocation: allocation[p.stock_id] ?? 0,
                   totalCapital,
+                  feeSettings: ledger.settings,
                 })
 
                 return (
