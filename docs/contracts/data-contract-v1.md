@@ -431,3 +431,47 @@ serverless 代理 TWSE MIS 即時報價（純 stdlib；瀏覽器直打 MIS 有 C
 - flow.foreign_streak 由 FinMind institutional 近 10 日合計；leading_sectors 讀 data/tw_sectors.json 排名前 2。
 - forecast_range_m1＝forecast.py GBM 引擎餵 TAIEX 序列（drift=0 同規則）取 m1 p15/p85。
 - 前端「大盤作戰區」插在今日頁指令卡之後、我的持股之前：K 線（複用 CandleChart，疊 key_levels）＋劇本卡（複用 ShortScenarios 元件、機率條同語言）＋flow 一行卡＋區間一句話（附「零漂移模擬」註）。
+
+## v1.9 增補（2026-07-23，Andy 拍板：帳本制持倉＋個人化操作建議）
+
+引擎 JSON **完全不變**；本節記錄純前端的 localStorage 契約，作為 App 側的權威來源。
+設計依據：`docs/superpowers/specs/2026-07-23-portfolio-ledger-and-personal-advice-design.md`。
+
+### 帳本 v2（`advisor-war-room:ledger:v2`）
+
+取代原本兩份各自為政的 `:holdings`（手填持股）與 `:journal`（交易日誌）——那兩個 key
+**保留不刪不改**，只在首次載入時被 `ensureLedger()` 讀進帳本一次（冪等）。
+
+- `schema_version: 2`
+- `opening: { date, cash, positions[] }` —— `date` 是遷移切點；**早於 `opening.date` 的交易事件
+  不計入庫存與現金**（期初部位已含其結果，再算一次就是重複計算），但仍供連敗保護與週覆盤使用。
+- `events[]` —— `TradeEvent`（買賣，含自動算好的 `fee`/`tax`）與 `CashAdjustEvent`（手動調整現金
+  記成 delta，不覆寫 `opening.cash`，否則會破壞重播正確性）。
+- `tags: Record<stock_id, 'long' | 'swing'>` —— `long`（預設 0050、2330）不吃停損與減碼規則。
+- 持股是投影不是儲存：`derivePortfolio(ledger, quotes)` 全量重播事件得出股數、加權成本、
+  已實現／未實現損益、現金、曝險、異常清單。編輯／刪除歷史交易一律重播，不做增量回沖。
+
+### 費稅（台股，系統自動）
+
+```
+fee = max(fee_min, round(price × qty × 0.001425 × fee_discount))   // 買賣各一次，預設六折、最低 20
+tax = round(price × qty × (ETF 0.001 : 一般股 0.003))               // 只有賣出
+買進現金流出 = price × qty + fee ；賣出現金流入 = price × qty − fee − tax
+```
+
+手續費計入持有成本；證交稅計入賣出減項。ETF 以代號 `^00` 粗篩。
+
+### 曝險口徑變更
+
+`exposurePct` 分母改為**實際總資產（現金＋持股市值）**，不再用手填的 `total_capital`。
+`total_capital` 退化為「目標資金規模」，僅用於 `僅限試單` 的 10% 上限對照。
+
+### 個人化決策層優先序
+
+`personalInstruction()` 依序判定，第一個命中者勝：
+`0 資料完整性閘門 → 1 組合風控 → 1b 禁新倉閘門 → 2 停損（僅 swing）→ 3 減碼（僅 swing）→ 4 加碼 → 5 續抱`
+
+硬規則：**只能收緊，不能放寬引擎風控**；**只讀結構化欄位運算**（`position.tier_amount`／
+`position_delta`／`entry_condition.price`／`defense_price`／`exposure_guidance`），
+禁止解析 `advice.plan` 的中文字串。超額曝險由 `allocatePortfolioRisk()` 統一分配，
+避免每張持股卡各自減碼導致砍過頭。連敗保護必須真的覆寫數量（red → 0 股、amber → 減半）。

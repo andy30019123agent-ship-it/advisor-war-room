@@ -578,5 +578,6 @@ export const StockDetailSchema = z.object({
   mid_long_reads: MidLongReadsSchema.nullable().optional().catch(null),
 })
 
+export type PrimaryDecision = z.infer<typeof PrimaryDecisionSchema>
 export type StockDetail = z.infer<typeof StockDetailSchema>
 export type TrackEntry = z.infer<typeof TrackEntrySchema>

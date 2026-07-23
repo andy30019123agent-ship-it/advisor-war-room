@@ -1,112 +1,95 @@
 import { useEffect, useState } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchDaily, fetchStockDetail } from '../lib/api'
-import { loadHoldings, saveHolding, deleteHolding, type Holding } from '../lib/holdings'
 import { loadTotalCapital, saveTotalCapital } from '../lib/settings'
-import { formatShares, SHARES_PER_LOT } from '../lib/shares'
+import { formatShares } from '../lib/shares'
 import { fmtPct, pctClass } from '../lib/format'
-import { loadJournal, type JournalEntry } from '../lib/journal'
+import { loadJournal, getStreakAlert, type JournalEntry } from '../lib/journal'
 import { useQuotes, isLiveQuote } from '../lib/quotes'
+import { useLedger } from '../lib/useLedger'
+import { derivePortfolio, type QuoteMap } from '../lib/portfolio'
+import { allocatePortfolioRisk, personalInstruction } from '../lib/personalAdvice'
 import { FreshnessBadge } from '../components/FreshnessBadge'
 import { LiveQuoteBadge } from '../components/LiveQuoteBadge'
 import { StreakAlertBanner } from '../components/StreakAlertBanner'
 import { JournalEntryFormModal } from '../components/JournalEntryFormModal'
 import { JournalListModal } from '../components/JournalListModal'
-import { IconEmptyBriefcase, IconPlus, IconTrash, IconClose, IconChevron } from '../components/icons'
-import type { Daily, StockDetail } from '../types/contract'
+import { IconEmptyBriefcase, IconPlus, IconChevron } from '../components/icons'
+import type { PrimaryDecision, StockDetail } from '../types/contract'
 
-// 單檔集中度紅線（規格 4.）：單檔市值超過總資金這個比例就提醒集中風險，跟
-// exposure_guidance.max_equity_pct（整體曝險上限）是兩件事，各自獨立判定。
-const CONCENTRATION_LIMIT_PCT = 40
-
-// 自加持股若不在追蹤清單（daily.tracked）裡，daily.json 沒有它的現價/決策，
-// 改即時打 fetchStockDetail（fallback /api/analyze 現算）補上。staleTime 拉到
-// 「當日」等級，同一天內切分頁/重渲染不重打 API，只有隔天或手動重整才會再抓。
-// 追蹤清單內的持股也一併走 fetchStockDetail（同一支函式會自動選走快速的靜態檔），
-// 為的是拿到 primary_decision.advice（持有/空手雙版建議＋計畫階梯，v1.1）——daily.json
-// 的 tracked[].decision 只有縮影，沒有 advice。
+// 自加持股若不在追蹤清單（daily.tracked）裡，daily.json 沒有它的現價/決策，改即時打
+// fetchStockDetail（fallback /api/analyze 現算）補上。staleTime 拉到「當日」等級，同一天內
+// 切分頁/重渲染不重打 API。追蹤清單內的持股也走 fetchStockDetail（同一支函式會自動選走
+// 快速的靜態檔），為的是拿到完整 primary_decision——個人化建議要讀 tier_amount／
+// position_delta／entry_condition，daily.json 的 tracked[].decision 只有縮影。
 const STALE_TIME_TODAY = 12 * 60 * 60 * 1000
 
-// 非追蹤持股的即時分析：最多同時 2 個併發、總數最多 8 檔（超過排隊）。追蹤清單內的持股
-// 讀的是預算好的靜態檔（快、不耗 FinMind 額度），不受這個併發池限制。持股清單沒上限，
-// 一次全打會同時炸出多支 /api/analyze 冷查（各自最久 20 幾秒），互搶時間又吃 FinMind 額度
-// （聯測 2026-07-18 #3）。
+// 非追蹤持股的即時分析：最多同時 2 個併發、總數最多 8 檔（超過排隊）。一次全打會同時炸出
+// 多支 /api/analyze 冷查（各自最久 20 幾秒），互搶時間又吃 FinMind 額度（聯測 2026-07-18 #3）。
 const MAX_LIVE_CONCURRENT = 2
 const MAX_LIVE_TOTAL = 8
 
 export function Holdings() {
-  const [holdings, setHoldings] = useState<Holding[]>(() => loadHoldings())
-  const [editing, setEditing] = useState<Holding | null>(null)
-  const [showForm, setShowForm] = useState(false)
+  const { ledger, setCash, setTag, refresh } = useLedger()
   const [totalCapital, setTotalCapital] = useState<number>(() => loadTotalCapital())
-
-  // C 包・交易日誌（規格 1.）：quickJournalSeed＝從某檔持股卡按「記一筆」帶入的預填；
-  // showJournalList＝頂部「交易日誌」入口開的全列表。
   const [journal, setJournal] = useState<JournalEntry[]>(() => loadJournal())
   const [quickJournalSeed, setQuickJournalSeed] = useState<{ stock_id: string; name: string } | null>(null)
   const [showJournalList, setShowJournalList] = useState(false)
+  const [showNewTrade, setShowNewTrade] = useState(false)
 
   const { data: daily } = useQuery({ queryKey: ['daily'], queryFn: fetchDaily })
 
-  // 盤中現價即時化（契約 v1.7 App 行為節）：持股頁的「持股」就是這裡的 quoteIds 全體。
-  const { data: quotes } = useQuotes(holdings.map((h) => h.id))
+  // 先用「沒有報價」的投影拿到持股清單（要有清單才知道該查哪些報價），拿到報價後再算一次
+  // 完整投影。兩次都是純函式，成本可忽略。
+  const skeleton = derivePortfolio(ledger)
+  const heldIds = skeleton.positions.map((p) => p.stock_id)
+
+  const { data: quotes } = useQuotes(heldIds)
 
   const trackedIds = new Set((daily?.tracked ?? []).map((t) => t.id))
-  // 核心持股語意（速修 1.）：daily.core_holdings 是「核心配置」清單（目前 2330/0050），跟
-  // daily.tracked（波段監控清單）是兩件事——2330 兩邊都在、0050 只在核心清單。純核心（核心
-  // 但不在 tracked）不套波段的防守價／劇本語言，避免像新手體驗報告點名的「0050 被叫去砍波段部位」。
-  const coreHoldingsMap = new Map((daily?.core_holdings ?? []).map((c) => [c.id, c]))
-  const untrackedHoldings = holdings.filter((h) => !trackedIds.has(h.id))
-  const liveEligible = untrackedHoldings.slice(0, MAX_LIVE_TOTAL)
-  const queuedIds = new Set(untrackedHoldings.slice(MAX_LIVE_TOTAL).map((h) => h.id))
-  const liveEligibleIndex = new Map(liveEligible.map((h, i) => [h.id, i]))
+  const untracked = heldIds.filter((id) => !trackedIds.has(id))
+  const liveEligible = untracked.slice(0, MAX_LIVE_TOTAL)
+  const queuedIds = new Set(untracked.slice(MAX_LIVE_TOTAL))
+  const liveEligibleIndex = new Map(liveEligible.map((id, i) => [id, i]))
 
-  // 併發池：settledIds 記錄「已經有結果（成功或失敗）」的持股。某檔一結算，佇列裡排在
-  // 它後面、還沒開始跑的下一檔就補上這個併發名額——不是死板地固定跑前兩個，而是同時最多
-  // 兩個在飛行中。只算非追蹤持股（追蹤持股走靜態檔，不進池）。
+  // 併發池：某檔一結算，佇列裡排在它後面、還沒開始跑的下一檔就補上這個併發名額。
   const [settledIds, setSettledIds] = useState<Set<string>>(new Set())
 
   const detailQueries = useQueries({
-    queries: holdings.map((h) => {
-      if (trackedIds.has(h.id)) {
-        // 追蹤清單內：靜態檔，快，daily 一到就能打，不受併發池限制。
+    queries: heldIds.map((id) => {
+      if (trackedIds.has(id)) {
         return {
-          queryKey: ['stock', h.id],
-          queryFn: () => fetchStockDetail(h.id, trackedIds),
+          queryKey: ['stock', id],
+          queryFn: () => fetchStockDetail(id, trackedIds),
           enabled: !!daily,
           staleTime: STALE_TIME_TODAY,
           retry: 1,
         }
       }
-      const idx = liveEligibleIndex.get(h.id)
+      const idx = liveEligibleIndex.get(id)
       if (idx === undefined) {
-        // 排隊中（超過 MAX_LIVE_TOTAL）：query 存在但 enabled 永遠 false，不打 API。
-        return {
-          queryKey: ['stock', h.id],
-          queryFn: () => fetchStockDetail(h.id, trackedIds),
-          enabled: false,
-        }
+        return { queryKey: ['stock', id], queryFn: () => fetchStockDetail(id, trackedIds), enabled: false }
       }
-      const pendingAhead = liveEligible.slice(0, idx).filter((h2) => !settledIds.has(h2.id)).length
+      const pendingAhead = liveEligible.slice(0, idx).filter((other) => !settledIds.has(other)).length
       return {
-        queryKey: ['stock', h.id],
-        queryFn: () => fetchStockDetail(h.id, trackedIds),
-        enabled: !!daily && (settledIds.has(h.id) || pendingAhead < MAX_LIVE_CONCURRENT),
+        queryKey: ['stock', id],
+        queryFn: () => fetchStockDetail(id, trackedIds),
+        enabled: !!daily && (settledIds.has(id) || pendingAhead < MAX_LIVE_CONCURRENT),
         staleTime: STALE_TIME_TODAY,
         retry: 1,
       }
     }),
   })
-  const detailById = new Map(holdings.map((h, i) => [h.id, detailQueries[i]]))
+  const detailById = new Map(heldIds.map((id, i) => [id, detailQueries[i]]))
 
   useEffect(() => {
     setSettledIds((prev) => {
       let next: Set<string> | null = null
-      liveEligible.forEach((h) => {
-        const q = detailById.get(h.id)
-        if (q && (q.isSuccess || q.isError) && !prev.has(h.id)) {
+      liveEligible.forEach((id) => {
+        const q = detailById.get(id)
+        if (q && (q.isSuccess || q.isError) && !prev.has(id)) {
           if (!next) next = new Set(prev)
-          next.add(h.id)
+          next.add(id)
         }
       })
       return next ?? prev
@@ -114,31 +97,32 @@ export function Holdings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detailQueries])
 
-  function openNew() {
-    setEditing({ id: '', name: '', shares: 0, costPrice: 0 })
-    setShowForm(true)
+  // 真正拿來算的報價：盤中即時價優先，退回 daily.tracked 收盤價，再退回即時分析的收盤價。
+  const quoteMap: QuoteMap = {}
+  const priceIsLive: Record<string, boolean> = {}
+  for (const id of heldIds) {
+    const q = quotes?.[id]
+    const live = isLiveQuote(q)
+    const detail = detailById.get(id)?.data as StockDetail | undefined
+    const tracked = daily?.tracked.find((t) => t.id === id)
+    quoteMap[id] = live ? q.price : (tracked?.close ?? detail?.price.close ?? null)
+    priceIsLive[id] = live
   }
 
-  function openEdit(h: Holding) {
-    setEditing(h)
-    setShowForm(true)
-  }
+  const portfolio = derivePortfolio(ledger, quoteMap)
+  const streak = getStreakAlert(journal)
+  const guidance = daily?.exposure_guidance ?? null
 
-  function handleSave(h: Holding) {
-    const next = saveHolding(h)
-    setHoldings(next)
-    setShowForm(false)
-    setEditing(null)
+  const engineByStock: Record<string, PrimaryDecision | null | undefined> = {}
+  for (const id of heldIds) {
+    engineByStock[id] = (detailById.get(id)?.data as StockDetail | undefined)?.primary_decision
   }
+  // 超額曝險只算一次再分配到個股——不然每張卡各自算「賣掉全部超額」，照做會砍三倍。
+  const allocation = allocatePortfolioRisk(portfolio, guidance, engineByStock)
 
-  function handleDelete(id: string) {
-    const next = deleteHolding(id)
-    setHoldings(next)
-    // 刪除後彈窗要跟著關：不關的話 editing 還指著剛刪的舊資料，isNew 判斷
-    // （holdings.every(id 不在清單) ）會被算成 true，彈窗變身「新增持股」還殘留舊欄位值，
-    // 使用者按儲存等於把剛刪的持股用同一個 id 加回來（07-18 聯測 bug #7）。
-    setShowForm(false)
-    setEditing(null)
+  function handleJournalChanged(entries: JournalEntry[]) {
+    setJournal(entries)
+    refresh() // 交易寫進帳本後，持股/現金/曝險立刻重算——這就是 Andy 要的「連動」
   }
 
   function handleCapitalChange(n: number) {
@@ -146,84 +130,7 @@ export function Holdings() {
     saveTotalCapital(n)
   }
 
-  // 每檔持股彙整一次（現價／損益／建議文案／計畫階梯），組合總覽卡與清單共用同一份計算。
-  const enriched = holdings.map((h) => {
-    const tracked = daily?.tracked.find((t) => t.id === h.id)
-    const isTracked = trackedIds.has(h.id)
-    const isQueued = !isTracked && queuedIds.has(h.id)
-    const live = !isQueued ? detailById.get(h.id) : undefined
-    const detail = live?.data as StockDetail | undefined
-
-    const quote = quotes?.[h.id]
-    const liveQuote = isLiveQuote(quote)
-    const currentPrice = liveQuote ? quote.price : (tracked?.close ?? detail?.price.close ?? null)
-    const changePct = liveQuote ? quote.change_pct : (tracked?.change_pct ?? detail?.price.change_pct ?? null)
-    const pnlPct =
-      currentPrice != null && h.costPrice > 0 ? ((currentPrice - h.costPrice) / h.costPrice) * 100 : null
-
-    const coreEntry = coreHoldingsMap.get(h.id)
-    const isCore = !!coreEntry
-    // 純核心：在核心清單但不在波段監控清單（例如 0050）。這種持股不套用波段的
-    // 防守價／持有建議／計畫階梯——那些是 detail.primary_decision 針對波段給的，
-    // 對定期定額核心部位講「跌破防守價賣一半」是誤導（07-19 新手體驗報告點名的矛盾）。
-    const isPureCore = isCore && !isTracked
-
-    const advice = detail?.primary_decision.advice
-    const action = detail?.primary_decision.action ?? tracked?.decision.action
-    const actionText = advice?.holder.action_text
-    const plan = advice?.holder.plan ?? []
-    const defensePrice = detail?.primary_decision.defense_price ?? tracked?.decision.defense_price ?? null
-
-    // 用來算組合總覽：現價未知時退回成本價估市值，避免曝險被低估成 0（優於直接漏算）。
-    const marketValue = (currentPrice ?? h.costPrice) * h.shares
-    const costBasis = h.costPrice * h.shares
-
-    return {
-      holding: h,
-      currentPrice,
-      changePct,
-      pnlPct,
-      isCore,
-      isPureCore,
-      coreEntry,
-      action,
-      actionText,
-      plan,
-      defensePrice,
-      marketValue,
-      costBasis,
-      isLiveLoading: !!live?.isLoading,
-      isLiveError: !!live?.isError,
-      isQueued,
-      liveQuoteAt: liveQuote ? quote.at : null,
-    }
-  })
-
-  // 曝險用市值：現價未知時退回成本價估市值，避免曝險被低估成 0（優於直接漏算）。
-  const totalMarketValue = enriched.reduce((sum, e) => sum + e.marketValue, 0)
-
-  // 總損益：跟曝險用不同的分母——缺現價的部位若沿用成本價退回，等於默默假設它「損益 0」，
-  // 會把總損益算低／算高而不自知。改成只用「確定有現價」的部位算總損益，缺價的部位整筆
-  // 排除，並在旁邊標「（部分持股缺報價未計入）」，寧可少算也不要算錯又不吭聲。
-  const pricedEntries = enriched.filter((e) => e.currentPrice != null)
-  const hasMissingPrice = enriched.length > pricedEntries.length
-  const pricedMarketValue = pricedEntries.reduce((sum, e) => sum + (e.currentPrice as number) * e.holding.shares, 0)
-  const pricedCost = pricedEntries.reduce((sum, e) => sum + e.costBasis, 0)
-  const totalPnlAmt = pricedEntries.length > 0 ? pricedMarketValue - pricedCost : null
-  const totalPnlPct = totalPnlAmt != null && pricedCost > 0 ? (totalPnlAmt / pricedCost) * 100 : null
-
-  const exposurePct = totalCapital > 0 ? (totalMarketValue / totalCapital) * 100 : null
-  const cashPct = exposurePct != null ? Math.max(0, 100 - exposurePct) : null
-  const maxEquityPct = daily?.exposure_guidance?.max_equity_pct ?? null
-  const overExposed = maxEquityPct != null && exposurePct != null && exposurePct > maxEquityPct
-
-  // 單檔集中度（規格 4.）：跟整體曝險超標是兩件事，各自獨立判定、獨立顯示。
-  const concentrationWarnings =
-    totalCapital > 0
-      ? enriched
-          .map((e) => ({ name: e.holding.name || e.holding.id, id: e.holding.id, pct: (e.marketValue / totalCapital) * 100 }))
-          .filter((c) => c.pct > CONCENTRATION_LIMIT_PCT)
-      : []
+  const cashUnset = ledger.opening.cash === 0 && !ledger.events.some((e) => e.type === 'cash_adjust')
 
   return (
     <main className="screen">
@@ -242,194 +149,186 @@ export function Holdings() {
         </button>
       </div>
 
-      {holdings.length === 0 ? (
+      {portfolio.positions.length === 0 ? (
         <div className="empty-state">
           <IconEmptyBriefcase />
           <div className="title">還沒有持股紀錄</div>
-          <div className="desc">
-            新增第一筆持股，追蹤損益和每檔的最新建議。
-          </div>
+          <div className="desc">記一筆買進，持股、成本、現金和曝險就會自動算出來。</div>
           <div className="group" style={{ width: '100%', padding: '8px 0 0' }}>
-            <button type="button" className="btn-primary" onClick={openNew}>
-              <IconPlus /> 新增持股
+            <button type="button" className="btn-primary" onClick={() => setShowNewTrade(true)}>
+              <IconPlus /> 記一筆交易
             </button>
           </div>
         </div>
       ) : (
         <>
           <div className="group">
-            <div className={`summary-card${overExposed ? ' warn' : ''}`}>
+            <div className="summary-card">
               <div className="summary-inner">
                 <div className="portfolio-grid">
-                  <div className="stat">
-                    <span className="stat-label">總市值</span>
-                    <span className="stat-value mono">{Math.round(totalMarketValue).toLocaleString()}</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">總損益</span>
-                    <span
-                      className={`stat-value mono ${totalPnlAmt != null && totalPnlAmt > 0 ? 'up' : totalPnlAmt != null && totalPnlAmt < 0 ? 'down' : ''}`}
-                    >
-                      {totalPnlAmt == null
-                        ? '—'
-                        : `${totalPnlAmt > 0 ? '+' : ''}${Math.round(totalPnlAmt).toLocaleString()}${
-                            totalPnlPct != null ? ` (${totalPnlPct > 0 ? '+' : ''}${totalPnlPct.toFixed(1)}%)` : ''
-                          }`}
-                    </span>
-                    {hasMissingPrice && (
-                      <span style={{ fontSize: 11, color: 'var(--text-soft)' }}>（部分持股缺報價未計入）</span>
-                    )}
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">股票曝險</span>
-                    <span className="stat-value mono">{exposurePct != null ? `${exposurePct.toFixed(1)}%` : '—'}</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">現金水位</span>
-                    <span className="stat-value mono">{cashPct != null ? `${cashPct.toFixed(1)}%` : '—'}</span>
-                  </div>
+                  <Stat label="總資產" value={fmtMoney(portfolio.totalAssets)} />
+                  <Stat
+                    label="未實現損益"
+                    value={portfolio.unrealizedPnl == null ? '—' : signed(portfolio.unrealizedPnl)}
+                    tone={tone(portfolio.unrealizedPnl)}
+                    hint={portfolio.missingPriceIds.length > 0 ? '（部分持股缺報價未計入）' : undefined}
+                  />
+                  <Stat label="已實現損益" value={signed(portfolio.realizedPnl)} tone={tone(portfolio.realizedPnl)} />
+                  <Stat label="持股市值" value={fmtMoney(portfolio.totalMarketValue)} />
+                  <Stat
+                    label="股票曝險"
+                    value={portfolio.exposurePct != null ? `${portfolio.exposurePct.toFixed(1)}%` : '—'}
+                  />
+                  <Stat label="現金水位" value={portfolio.cashPct != null ? `${portfolio.cashPct.toFixed(1)}%` : '—'} />
                 </div>
               </div>
-              {overExposed && (
-                <>
-                  <div className="hairline" />
-                  <div className="exposure-warn">超過建議上限 {maxEquityPct}%</div>
-                </>
+              <div className="hairline" />
+              <div className="capital-row">
+                <span className="capital-label">現金餘額</span>
+                <NumberInput value={Math.round(portfolio.cash)} onChange={setCash} suffix="元" />
+              </div>
+              {cashUnset && (
+                <div className="exposure-warn">
+                  還沒設定現金餘額——曝險與可加碼金額要有它才準，點上面的數字填入。
+                </div>
               )}
-              {concentrationWarnings.length > 0 && (
-                <>
-                  <div className="hairline" />
-                  {concentrationWarnings.map((c) => (
-                    <div className="exposure-warn" key={c.id}>
-                      {c.name} 佔比 {c.pct.toFixed(1)}%，超過 {CONCENTRATION_LIMIT_PCT}% 集中風險
-                    </div>
-                  ))}
-                </>
-              )}
+              {portfolio.issues.map((issue, i) => (
+                <div className="exposure-warn" key={i}>
+                  {issue.message}
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="group">
             <div className="list-card">
               <div className="capital-row">
-                <span className="capital-label">總資金設定</span>
-                <CapitalInput value={totalCapital} onChange={handleCapitalChange} />
+                <span className="capital-label">目標資金規模</span>
+                <NumberInput value={totalCapital} onChange={handleCapitalChange} suffix="元" />
+              </div>
+              <div style={{ padding: '0 16px 12px', fontSize: 11, color: 'var(--text-soft)' }}>
+                曝險與現金水位已改用實際總資產（現金＋市值）計算；這個數字只用於試單上限對照。
               </div>
             </div>
           </div>
 
           <div className="search-wrap">
-            <button type="button" className="btn-primary" onClick={openNew}>
-              <IconPlus /> 新增持股
+            <button type="button" className="btn-primary" onClick={() => setShowNewTrade(true)}>
+              <IconPlus /> 記一筆交易
             </button>
           </div>
+
           <div className="group-title">我的持股</div>
           <div className="group">
             <div className="list-card">
-              {enriched.map((e) => {
-                const h = e.holding
-                const pnlClass = e.pnlPct == null ? 'flat' : e.pnlPct > 0 ? 'up' : e.pnlPct < 0 ? 'down' : 'flat'
+              {portfolio.positions.map((p) => {
+                const detailQuery = queuedIds.has(p.stock_id) ? undefined : detailById.get(p.stock_id)
+                const detail = detailQuery?.data as StockDetail | undefined
+                const price = quoteMap[p.stock_id]
+                const pnlPct = price != null && p.avgCost > 0 ? ((price - p.avgCost) / p.avgCost) * 100 : null
+                const pnlKlass = pnlPct == null ? 'flat' : pnlPct > 0 ? 'up' : pnlPct < 0 ? 'down' : 'flat'
+                const quote = quotes?.[p.stock_id]
+                const live = isLiveQuote(quote)
+                const changePct = live
+                  ? quote.change_pct
+                  : (daily?.tracked.find((t) => t.id === p.stock_id)?.change_pct ?? detail?.price.change_pct ?? null)
+
+                const advice = personalInstruction({
+                  engine: detail?.primary_decision,
+                  position: p,
+                  price: price ?? null,
+                  priceIsLive: priceIsLive[p.stock_id],
+                  priceDate: daily?.meta.data_date,
+                  portfolio,
+                  guidance,
+                  streak,
+                  allocation: allocation[p.stock_id] ?? 0,
+                  totalCapital,
+                })
+
                 return (
-                  <div className="list-row" key={h.id}>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(h)}
-                      style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
-                    >
-                      <div className="row-top">
-                        <div className="row-name">
-                          <span className="name">{h.name || h.id}</span>
-                          {e.isCore && <span className="badge core">核心</span>}
-                          <span className="code mono">{h.id}</span>
-                        </div>
-                        {e.isLiveLoading ? (
-                          <span className="skeleton skeleton-line" style={{ width: 48, height: 19, marginBottom: 0 }} />
-                        ) : (
-                          <div className="row-price-block">
-                            {e.liveQuoteAt && <LiveQuoteBadge at={e.liveQuoteAt} />}
-                            <div className={`row-price mono ${pnlClass === 'up' ? 'up' : pnlClass === 'down' ? 'down' : ''}`}>
-                              {e.currentPrice != null ? e.currentPrice.toLocaleString() : '—'}
-                            </div>
-                            <span className={`row-change mono ${pctClass(e.changePct)}`}>今日 {fmtPct(e.changePct)}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="row-tags">
-                        <span className="pill neutral">
-                          {formatShares(h.shares)} ／ 成本 {h.costPrice.toLocaleString()}
+                  <div className="list-row" key={p.stock_id}>
+                    <div className="row-top">
+                      <div className="row-name">
+                        <span className="name">{p.name}</span>
+                        <span className={`badge${p.tag === 'long' ? ' core' : ''}`}>
+                          {p.tag === 'long' ? '長期' : '波段'}
                         </span>
-                        {!e.isLiveLoading && (
-                          <span className={`pnl ${pnlClass}`}>
-                            {e.pnlPct != null ? `${e.pnlPct > 0 ? '+' : ''}${e.pnlPct.toFixed(1)}%` : '—'}
-                          </span>
-                        )}
+                        <span className="code mono">{p.stock_id}</span>
                       </div>
-                      {e.isLiveLoading && (
-                        <div className="row-tags" style={{ marginTop: 8 }}>
-                          <span className="skeleton skeleton-line" style={{ width: 96, height: 22, marginBottom: 0 }} />
-                        </div>
-                      )}
-                      {e.isLiveError && (
-                        <div className="row-tags" style={{ marginTop: 8 }}>
-                          <span className="pill neutral">暫時抓不到分析（稍後自動重試）</span>
-                        </div>
-                      )}
-                      {e.isQueued && (
-                        <div className="row-tags" style={{ marginTop: 8 }}>
-                          <span className="pill neutral">分析排隊中</span>
-                        </div>
-                      )}
-                      {!e.isLiveLoading && !e.isLiveError && (
-                        e.isPureCore ? (
-                          // 純核心（核心但不追蹤波段，如 0050）：不講防守價／波段建議，
-                          // 改用 daily.core_holdings 自己的話術（跟今日首頁同一份資料，說法不打架）。
-                          <div className="row-tags" style={{ marginTop: 8 }}>
-                            <span className="pill">{e.coreEntry?.action ?? '定期定額照常'}</span>
-                            {e.coreEntry?.note && <span className="pill neutral">{e.coreEntry.note}</span>}
+                      {detailQuery?.isLoading ? (
+                        <span className="skeleton skeleton-line" style={{ width: 48, height: 19, marginBottom: 0 }} />
+                      ) : (
+                        <div className="row-price-block">
+                          {live && <LiveQuoteBadge at={quote.at} />}
+                          <div className={`row-price mono ${pnlKlass === 'up' ? 'up' : pnlKlass === 'down' ? 'down' : ''}`}>
+                            {price != null ? price.toLocaleString() : '—'}
                           </div>
-                        ) : (
-                          <>
-                            {e.actionText ? (
-                              <p className="holding-advice-text">{e.actionText}</p>
-                            ) : e.action ? (
-                              <div className="row-tags" style={{ marginTop: 8 }}>
-                                <span className="pill">{e.action}</span>
-                              </div>
-                            ) : null}
-                            {e.defensePrice != null && (
-                              <div className="row-tags" style={{ marginTop: 8 }}>
-                                <span className="pill stop">防守價 {e.defensePrice.toLocaleString()}</span>
-                              </div>
-                            )}
-                          </>
-                        )
+                          <span className={`row-change mono ${pctClass(changePct)}`}>今日 {fmtPct(changePct)}</span>
+                        </div>
                       )}
-                    </button>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                    </div>
+
+                    <div className="row-tags">
+                      <span className="pill neutral">
+                        {formatShares(p.shares)} ／ 均價 {Math.round(p.avgCost * 100) / 100}
+                      </span>
+                      <span className={`pnl ${pnlKlass}`}>
+                        {pnlPct != null ? `${pnlPct > 0 ? '+' : ''}${pnlPct.toFixed(1)}%` : '—'}
+                      </span>
+                      {p.weightPct != null && <span className="pill neutral">佔 {p.weightPct.toFixed(1)}%</span>}
+                    </div>
+
+                    {detailQuery?.isLoading ? (
+                      <div className="row-tags" style={{ marginTop: 8 }}>
+                        <span className="skeleton skeleton-line" style={{ width: 200, height: 22, marginBottom: 0 }} />
+                      </div>
+                    ) : (
+                      <>
+                        <p className="holding-advice-text">{advice.instruction}</p>
+                        <details className="plan-disclosure">
+                          <summary>
+                            為什麼
+                            <IconChevron />
+                          </summary>
+                          <div className="plan-list">
+                            <div className="plan-step">
+                              <span className="plan-trigger">規則</span>
+                              <span className="plan-act">→ {advice.ruleId}</span>
+                            </div>
+                            {advice.reasons.map((r, i) => (
+                              <div className="plan-step" key={`r${i}`}>
+                                <span className="plan-trigger">依據</span>
+                                <span className="plan-act">→ {r}</span>
+                              </div>
+                            ))}
+                            {Object.entries(advice.inputsUsed).map(([k, v]) => (
+                              <div className="plan-step" key={k}>
+                                <span className="plan-trigger">{k}</span>
+                                <span className="plan-act">→ {typeof v === 'number' ? v.toLocaleString() : v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      </>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                       <button
                         type="button"
                         className="journal-entry-btn"
-                        onClick={() => setQuickJournalSeed({ stock_id: h.id, name: h.name || h.id })}
+                        onClick={() => setTag(p.stock_id, p.tag === 'long' ? 'swing' : 'long')}
+                      >
+                        改為{p.tag === 'long' ? '波段' : '長期'}
+                      </button>
+                      <button
+                        type="button"
+                        className="journal-entry-btn"
+                        onClick={() => setQuickJournalSeed({ stock_id: p.stock_id, name: p.name })}
                       >
                         記一筆
                       </button>
                     </div>
-                    {!e.isPureCore && e.plan.length > 0 && (
-                      <details className="plan-disclosure">
-                        <summary>
-                          查看計畫階梯
-                          <IconChevron />
-                        </summary>
-                        <div className="plan-list">
-                          {e.plan.map((p, i) => (
-                            <div className="plan-step" key={i}>
-                              <span className="plan-trigger">{p.trigger}</span>
-                              <span className="plan-act">→ {p.act}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    )}
                   </div>
                 )
               })}
@@ -438,39 +337,51 @@ export function Holdings() {
         </>
       )}
 
-      {showForm && editing && (
-        <HoldingForm
-          initial={editing}
-          isNew={holdings.every((h) => h.id !== editing.id) || editing.id === ''}
-          daily={daily}
-          onCancel={() => {
-            setShowForm(false)
-            setEditing(null)
-          }}
-          onSave={handleSave}
-          onDelete={holdings.some((h) => h.id === editing.id) ? () => handleDelete(editing.id) : undefined}
-        />
-      )}
-
-      {quickJournalSeed && (
+      {(quickJournalSeed || showNewTrade) && (
         <JournalEntryFormModal
           seed={quickJournalSeed}
-          onClose={() => setQuickJournalSeed(null)}
-          onSaved={setJournal}
-          onDeleted={setJournal}
+          onClose={() => {
+            setQuickJournalSeed(null)
+            setShowNewTrade(false)
+          }}
+          onSaved={handleJournalChanged}
+          onDeleted={handleJournalChanged}
         />
       )}
 
       {showJournalList && (
-        <JournalListModal entries={journal} onClose={() => setShowJournalList(false)} onChange={setJournal} />
+        <JournalListModal entries={journal} onClose={() => setShowJournalList(false)} onChange={handleJournalChanged} />
       )}
     </main>
   )
 }
 
-// 總資金：非編輯態顯示格式化金額（按鈕），點下去變數字輸入；blur／Enter 才存檔，
-// 避免每個按鍵都寫 localStorage。
-function CapitalInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+function Stat({ label, value, tone, hint }: { label: string; value: string; tone?: string; hint?: string }) {
+  return (
+    <div className="stat">
+      <span className="stat-label">{label}</span>
+      <span className={`stat-value mono ${tone ?? ''}`}>{value}</span>
+      {hint && <span style={{ fontSize: 11, color: 'var(--text-soft)' }}>{hint}</span>}
+    </div>
+  )
+}
+
+function fmtMoney(n: number): string {
+  return Math.round(n).toLocaleString()
+}
+
+function signed(n: number | null): string {
+  if (n == null) return '—'
+  return `${n > 0 ? '+' : ''}${Math.round(n).toLocaleString()}`
+}
+
+function tone(n: number | null): string {
+  if (n == null || n === 0) return ''
+  return n > 0 ? 'up' : 'down'
+}
+
+// 非編輯態顯示格式化金額（按鈕），點下去變數字輸入；blur／Enter 才提交，避免每個按鍵都寫檔。
+function NumberInput({ value, onChange, suffix }: { value: number; onChange: (n: number) => void; suffix?: string }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(String(value))
 
@@ -480,18 +391,9 @@ function CapitalInput({ value, onChange }: { value: number; onChange: (n: number
 
   function commit() {
     const n = Number(draft)
-    if (!Number.isFinite(n) || n <= 0) {
+    if (!Number.isFinite(n) || n < 0) {
       setEditing(false)
       return
-    }
-    // 總資金 <10 萬或 >1 億：不擋，但先跳確認，避免手滑或誤解單位（07-19 新手體驗報告：
-    // 100 萬預設值從沒問過使用者，容易在不知情下用錯本金算出離譜的曝險/損益）。
-    if (n < 100_000 || n > 100_000_000) {
-      const ok = window.confirm(`總資金設定為 ${n.toLocaleString()} 元，金額看起來不太合理，確定要這樣設定嗎？`)
-      if (!ok) {
-        setEditing(false)
-        return
-      }
     }
     onChange(n)
     setEditing(false)
@@ -500,8 +402,6 @@ function CapitalInput({ value, onChange }: { value: number; onChange: (n: number
   if (editing) {
     return (
       <input
-        id="total-capital"
-        name="total-capital"
         className="capital-input"
         type="number"
         inputMode="numeric"
@@ -518,185 +418,7 @@ function CapitalInput({ value, onChange }: { value: number; onChange: (n: number
 
   return (
     <button type="button" className="capital-value" onClick={() => setEditing(true)}>
-      {value.toLocaleString()} 元
+      {value.toLocaleString()} {suffix}
     </button>
-  )
-}
-
-const STOCK_ID_RE = /^\d{4,6}$/
-const NAME_LOOKUP_DEBOUNCE_MS = 500
-
-function HoldingForm({
-  initial,
-  isNew,
-  daily,
-  onCancel,
-  onSave,
-  onDelete,
-}: {
-  initial: Holding
-  isNew: boolean
-  daily: Daily | undefined
-  onCancel: () => void
-  onSave: (h: Holding) => void
-  onDelete?: () => void
-}) {
-  const [id, setId] = useState(initial.id)
-  const [name, setName] = useState(initial.name)
-  // shares 一律用「實際股數」當單一事實來源；unit 只決定輸入框顯示／解讀的單位。
-  const [shares, setShares] = useState<number>(initial.shares || 0)
-  const [unit, setUnit] = useState<'lot' | 'share'>(
-    initial.shares > 0 && initial.shares % SHARES_PER_LOT !== 0 ? 'share' : 'lot'
-  )
-  const [costPrice, setCostPrice] = useState(initial.costPrice ? String(initial.costPrice) : '')
-  // 使用者只要手動動過名稱欄位一次，就不再自動覆蓋（找不到就留手動輸入，聯測 07-18 #9）。
-  const [nameEditedByUser, setNameEditedByUser] = useState(!isNew && initial.name.length > 0)
-
-  const sharesDisplay = shares > 0 ? String(unit === 'lot' ? shares / SHARES_PER_LOT : shares) : ''
-
-  function handleSharesInput(v: string) {
-    if (v.trim() === '') {
-      setShares(0)
-      return
-    }
-    const n = Number(v)
-    if (Number.isNaN(n)) return
-    setShares(unit === 'lot' ? Math.round(n * SHARES_PER_LOT) : Math.round(n))
-  }
-
-  const canSave = id.trim().length > 0 && shares > 0 && Number(costPrice) > 0
-  const trimmedId = id.trim()
-
-  // 代號輸入後先查 daily.json 的 tracked/watch（反正已載入，免打 API）帶名稱；查不到、格式又
-  // 合法時，debounce 後打一次即時分析拿 profile.name 補上（找不到就留手動輸入）。
-  useEffect(() => {
-    if (!isNew || nameEditedByUser || !trimmedId) return
-    const fromDaily =
-      daily?.tracked.find((t) => t.id === trimmedId)?.name ??
-      daily?.watch.find((w) => w.id === trimmedId)?.name
-    if (fromDaily) setName(fromDaily)
-  }, [trimmedId, daily, isNew, nameEditedByUser])
-
-  const knownInDaily = !!(
-    daily?.tracked.some((t) => t.id === trimmedId) || daily?.watch.some((w) => w.id === trimmedId)
-  )
-  const [debouncedId, setDebouncedId] = useState(trimmedId)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedId(trimmedId), NAME_LOOKUP_DEBOUNCE_MS)
-    return () => clearTimeout(timer)
-  }, [trimmedId])
-
-  // 原本只給「新增時自動帶名稱」用；輸入防呆（速修 2.）還需要「現價」拿來跟成本價比對，
-  // 新增/編輯都要能查，所以 enabled 拿掉 isNew/nameEditedByUser 限制——共用同一個
-  // queryKey（['stock', id]），已知代號（knownInDaily）不重打，快取也跟查股票頁共用。
-  const liveNameQuery = useQuery({
-    queryKey: ['stock', debouncedId],
-    // enabled 已排除 knownInDaily，這裡打的一定是不在追蹤清單裡的代號 → 傳空 Set 讓
-    // fetchStockDetail 直接跳過注定 404 的靜態檔、走 /api/analyze。
-    queryFn: () => fetchStockDetail(debouncedId, new Set<string>()),
-    enabled: !knownInDaily && STOCK_ID_RE.test(debouncedId),
-    staleTime: 5 * 60 * 1000,
-    retry: 0,
-  })
-  useEffect(() => {
-    if (liveNameQuery.data && isNew && !nameEditedByUser) {
-      setName(liveNameQuery.data.profile.name)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveNameQuery.data])
-
-  // 成本價與現價偏離過大提示（速修 2.）：現價先看 daily.tracked（已追蹤、免打 API），
-  // 查不到才退回上面那支即時查詢的 price.close。查不到現價就不比對，不硬跳警告。
-  const referencePrice = daily?.tracked.find((t) => t.id === trimmedId)?.close ?? liveNameQuery.data?.price.close ?? null
-  const costNum = Number(costPrice)
-  const costDeviationWarn =
-    referencePrice != null && referencePrice > 0 && costNum > 0 && Math.abs(costNum - referencePrice) / referencePrice > 0.5
-
-  function submit() {
-    if (!canSave) return
-    onSave({
-      id: id.trim(),
-      name: name.trim() || id.trim(),
-      shares,
-      costPrice: Number(costPrice),
-    })
-  }
-
-  return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="title">{isNew ? '新增持股' : '編輯持股'}</span>
-          <button type="button" className="icon-btn" onClick={onCancel} aria-label="關閉">
-            <IconClose />
-          </button>
-        </div>
-
-        <div className="field">
-          <label htmlFor="hf-id">股票代號</label>
-          <input id="hf-id" value={id} onChange={(e) => setId(e.target.value)} placeholder="例如 2330" disabled={!isNew} />
-        </div>
-        <div className="field">
-          <label htmlFor="hf-name">名稱</label>
-          <input
-            id="hf-name"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value)
-              setNameEditedByUser(true)
-            }}
-            placeholder={isNew && liveNameQuery.isLoading ? '查詢名稱中…' : '例如 台積電'}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="hf-shares">股數</label>
-          <div className="shares-row">
-            <input
-              id="hf-shares"
-              type="number"
-              inputMode="decimal"
-              value={sharesDisplay}
-              onChange={(e) => handleSharesInput(e.target.value)}
-              placeholder={unit === 'lot' ? '1' : '1000'}
-              style={{ flex: 1 }}
-            />
-            <div className="unit-toggle">
-              <button type="button" className={unit === 'lot' ? 'active' : ''} onClick={() => setUnit('lot')}>
-                張
-              </button>
-              <button type="button" className={unit === 'share' ? 'active' : ''} onClick={() => setUnit('share')}>
-                股
-              </button>
-            </div>
-          </div>
-          {shares > 0 && <div className="shares-hint">＝ {formatShares(shares)}</div>}
-        </div>
-        <div className="field">
-          <label htmlFor="hf-cost">成本價</label>
-          <input id="hf-cost" type="number" inputMode="decimal" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="2400" />
-          {costDeviationWarn && <p className="field-warn">成本價與現價差距大，確認一下？</p>}
-        </div>
-
-        <button type="button" className="btn-primary" onClick={submit} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.5 }}>
-          儲存
-        </button>
-
-        {onDelete && (
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
-            <button
-              type="button"
-              className="btn-danger-text"
-              onClick={() => {
-                if (window.confirm(`確定要刪除「${initial.name || initial.id}」這筆持股嗎？此操作無法復原。`)) {
-                  onDelete()
-                }
-              }}
-            >
-              <IconTrash /> 刪除這筆持股
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
   )
 }

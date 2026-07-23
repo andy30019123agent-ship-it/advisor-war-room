@@ -1,7 +1,16 @@
-// 交易日誌（C 包・勝率行為閉環，契約 v1.5「App 行為」節）：使用者自行記錄的買賣紀錄，
-// 全存 localStorage（不進資料契約檔案）。用途是把「模型的建議對不對」跟「使用者有沒有
-// 照建議操作」拆開看——覆盤時才分得清是模型錯還是自己手癢，同時用連續停損偵測擋散戶
-// 加碼攤平／報復性交易的自毀行為。
+// 交易日誌（C 包・勝率行為閉環，契約 v1.5「App 行為」節）：使用者自行記錄的買賣紀錄。
+// 用途是把「模型的建議對不對」跟「使用者有沒有照建議操作」拆開看——覆盤時才分得清是模型錯
+// 還是自己手癢，同時用連續停損偵測擋散戶加碼攤平／報復性交易的自毀行為。
+//
+// 2026-07-23 起「儲存」改接帳本 v2（ledger.ts）：日誌不再是獨立的一份資料，而是帳本裡
+// TradeEvent 的另一種視角。這正是「記一筆買賣持股卻沒動」的根治點——只要還有兩份各自
+// 儲存的資料，就一定會有一天對不上。下面的純邏輯（FIFO 配對、連敗、週覆盤）完全沒動。
+// 舊 key advisor-war-room:journal 保留不刪，由 ledgerMigration 一次性讀進帳本。
+
+// 這裡刻意寫出 .ts 副檔名：scripts/test-journal.mjs 用 Node 的 TS type-stripping 直接跑
+// 這支檔案，而 type-stripping 不解析無副檔名的相對匯入（tsconfig 已開
+// allowImportingTsExtensions，Vite 與 tsc 都吃得下）。改成無副檔名會讓那支腳本壞掉。
+import { loadLedger, makeTrade, saveLedger, type TradeEvent } from './ledger.ts'
 
 export type JournalSide = 'buy' | 'sell'
 
@@ -18,41 +27,78 @@ export interface JournalEntry {
   created_at: string // ISO 時間戳，新增當下產生，同一天多筆時用來排時間序
 }
 
-const STORAGE_KEY = 'advisor-war-room:journal'
+/** 舊 key。只有 ledgerMigration 會讀它做一次性遷移；一般流程不再讀寫。 */
+export const LEGACY_JOURNAL_KEY = 'advisor-war-room:journal'
 
-export function loadJournal(): JournalEntry[] {
+export function loadLegacyJournal(): JournalEntry[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(LEGACY_JOURNAL_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed
+    return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
   }
 }
 
-function persist(entries: JournalEntry[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
+export function tradeToJournalEntry(e: TradeEvent): JournalEntry {
+  return {
+    id: e.id,
+    date: e.date,
+    stock_id: e.stock_id,
+    name: e.name,
+    side: e.side,
+    price: e.price,
+    qty: e.qty,
+    followed_advice: e.followed_advice,
+    note: e.note,
+    created_at: e.created_at,
+  }
+}
+
+export function loadJournal(): JournalEntry[] {
+  const ledger = loadLedger()
+  if (!ledger) return []
+  return ledger.events.filter((e): e is TradeEvent => e.type === 'trade').map(tradeToJournalEntry)
 }
 
 export function genJournalId(): string {
   return `j_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+// 新增／編輯一筆交易＝寫進帳本。費稅由 makeTrade 依公式自動算（使用者不必輸入），
+// 編輯既有紀錄時沿用原本的 id 與 created_at，讓時間序與 FIFO 配對維持穩定。
 export function saveJournalEntry(entry: JournalEntry): JournalEntry[] {
-  const current = loadJournal()
-  const idx = current.findIndex((e) => e.id === entry.id)
-  const next = idx >= 0 ? [...current] : [...current, entry]
-  if (idx >= 0) next[idx] = entry
-  persist(next)
-  return next
+  const ledger = loadLedger()
+  if (!ledger) return []
+  const trade = makeTrade(
+    {
+      date: entry.date,
+      stock_id: entry.stock_id,
+      name: entry.name,
+      side: entry.side,
+      price: entry.price,
+      qty: entry.qty,
+      followed_advice: entry.followed_advice,
+      note: entry.note,
+    },
+    ledger.settings,
+    entry.created_at
+  )
+  trade.id = entry.id
+  const idx = ledger.events.findIndex((e) => e.id === entry.id)
+  const events = [...ledger.events]
+  if (idx >= 0) events[idx] = trade
+  else events.push(trade)
+  saveLedger({ ...ledger, events })
+  return loadJournal()
 }
 
 export function deleteJournalEntry(id: string): JournalEntry[] {
-  const next = loadJournal().filter((e) => e.id !== id)
-  persist(next)
-  return next
+  const ledger = loadLedger()
+  if (!ledger) return []
+  saveLedger({ ...ledger, events: ledger.events.filter((e) => e.id !== id) })
+  return loadJournal()
 }
 
 // 排序 key：date 優先，同天用 created_at 決勝，確保「連續停損」判定跟畫面顯示的
