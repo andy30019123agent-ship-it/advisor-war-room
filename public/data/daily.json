@@ -1,8 +1,8 @@
 {
   "meta": {
     "schema_version": 1,
-    "data_date": "2026-08-06",
-    "generated_at": "2026-08-06T17:33:49+08:00",
+    "data_date": "2026-08-07",
+    "generated_at": "2026-08-07T16:01:53+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -13,29 +13,29 @@
     "risk_temp": 5,
     "conclusion": "盤勢中性，維持既有部位觀察。",
     "taiex": {
-      "close": 44396.7,
-      "change_pct": -0.48
+      "close": 44225.9,
+      "change_pct": -0.38
     },
     "us": [
       {
         "id": "SPX",
         "name": "S&P 500",
-        "change_pct": -0.17
+        "change_pct": -0.18
       },
       {
         "id": "NDX",
         "name": "Nasdaq 100",
-        "change_pct": -0.83
+        "change_pct": -0.39
       },
       {
         "id": "SOX",
         "name": "費城半導體",
-        "change_pct": -1.4
+        "change_pct": 0.33
       },
       {
         "id": "VIX",
         "name": "VIX",
-        "change_pct": 0.76
+        "change_pct": 0.92
       }
     ]
   },
@@ -158,14 +158,6 @@
       "source": "tracked"
     },
     {
-      "id": "2061",
-      "name": "風青",
-      "type": "entry",
-      "price": 61.1,
-      "direction": "above",
-      "source": "picks"
-    },
-    {
       "id": "6446",
       "name": "藥華藥",
       "type": "entry",
@@ -174,10 +166,18 @@
       "source": "picks"
     },
     {
-      "id": "4707",
-      "name": "磐亞",
+      "id": "3577",
+      "name": "泓格",
       "type": "entry",
-      "price": 35.5,
+      "price": 149.1,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
+      "id": "6166",
+      "name": "凌華",
+      "type": "entry",
+      "price": 152.2,
       "direction": "above",
       "source": "picks"
     },
@@ -215,19 +215,19 @@
   },
   "events": [],
   "track_stats": {
-    "n": 153,
-    "closed": 103,
+    "n": 155,
+    "closed": 104,
     "hit_rate_5d": 0.615,
     "hit_rate_20d": null,
     "hit_rate_60d": null,
-    "note": "已結算 103 筆。命中率口徑：看多建議報酬為正、防禦（減碼）建議報酬不為正即算命中；觀望（無方向主張）不列入統計。",
+    "note": "已結算 104 筆。命中率口徑：看多建議報酬為正、防禦（減碼）建議報酬不為正即算命中；觀望（無方向主張）不列入統計。",
     "by_timeframe": {
       "short": {
         "n": 0,
         "hit_rate": null
       },
       "swing": {
-        "n": 153,
+        "n": 155,
         "hit_rate": null
       },
       "long": {
@@ -242,22 +242,11 @@
     "todos": []
   },
   "delta": {
-    "since": "2026-08-05",
-    "items": [
-      "風險溫度 2→5",
-      "大盤狀態 偏多進攻→中性"
-    ]
+    "since": "2026-08-06",
+    "items": []
   },
   "market_battle": {
     "ohlc": [
-      {
-        "d": "2026-05-13",
-        "o": 41795.9,
-        "h": 41795.9,
-        "l": 41014.5,
-        "c": 41374.5,
-        "v": null
-      },
       {
         "d": "2026-05-14",
         "o": 41496.2,
@@ -729,14 +718,23 @@
         "l": 44024.3,
         "c": 44396.7,
         "v": null
+      },
+      {
+        "d": "2026-08-07",
+        "o": 44450.2,
+        "h": 44827.1,
+        "l": 43941.6,
+        "c": 44225.9,
+        "v": null
       }
     ],
     "key_levels": {
       "supports": [
-        44231.2,
-        39806.5
+        43618.6,
+        39906.8
       ],
       "resistances": [
+        44278.8,
         48218.9
       ]
     },
@@ -746,56 +744,57 @@
       "scenarios": [
         {
           "id": "base",
-          "trigger": "收盤守住 44,231（MA60）",
+          "trigger": "收盤守住 43,619（MA20）",
           "price_path": [
-            44396.7,
-            44231.2,
-            48218.9
+            44225.9,
+            43618.6,
+            44278.8
           ],
-          "price_path_text": "44,397 → 回測 44,231（MA60）→ 反彈 48,219（近60日高）震盪",
-          "narrative": "指數在MA60與近60日高之間找方向，等外資動向與均線結構進一步確認再調整曝險。",
-          "invalidation": "收盤跌破 44,231 本劇本失效，切換劇本二。",
+          "price_path_text": "44,226 → 回測 43,619（MA20）→ 反彈 44,279（MA60）震盪",
+          "narrative": "指數在MA20與MA60之間找方向，等外資動向與均線結構進一步確認再調整曝險。",
+          "invalidation": "收盤跌破 43,619 本劇本失效，切換劇本二。",
           "action": {
             "stance": "hold",
             "text": "維持防禦，不因單一劇本加減碼"
           },
-          "probability_pct": 50,
-          "title": "劇本一・守住MA60"
+          "probability_pct": 40,
+          "title": "劇本一・守住MA20"
         },
         {
           "id": "risk",
-          "trigger": "收盤跌破 44,231（MA60）",
+          "trigger": "已跌破MA60 44,279，觀察能否止穩",
           "price_path": [
-            44396.7,
-            44231.2,
-            43675.0
+            44278.8,
+            44225.9,
+            43618.6
           ],
-          "price_path_text": "44,397 → 跌破 44,231（MA60）→ 下探 43,675（MA20），守穩才反彈",
+          "price_path_text": "已跌破 44,279（MA60）→ 現價 44,226 → 續探 43,619（MA20），守穩才反彈",
           "narrative": "跌破季線代表大盤結構轉弱，先降曝險保守以對，等止穩訊號再評估回補。",
-          "invalidation": "站回 44,231（MA60）本劇本失效，切換劇本一。",
+          "invalidation": "站回 44,279（MA60）本劇本失效，切換劇本一。",
           "action": {
             "stance": "reduce",
             "text": "降曝險，控制股票總部位比重"
           },
           "probability_pct": 35,
-          "title": "劇本二・跌破MA60，下探支撐"
+          "title": "劇本二・跌破MA60，觀察止穩"
         },
         {
           "id": "bull",
-          "trigger": "收盤站上 48,219（近60日高）且外資連 2 日買超",
+          "trigger": "收盤站上 44,279（MA60）且外資連 2 日買超",
           "price_path": [
-            44396.7,
+            44225.9,
+            44278.8,
             48218.9
           ],
-          "price_path_text": "44,397 → 挑戰 48,219（近60日高），站穩後再觀察下一關卡（近端無明確次一壓力）",
-          "narrative": "站上近60日高且外資買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
-          "invalidation": "站上 48,219 後量縮不過，本劇本失效，切換劇本一。",
+          "price_path_text": "44,226 → 挑戰 44,279（MA60）→ 突破後上看 48,219（近60日高）",
+          "narrative": "站上MA60且外資買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
+          "invalidation": "站上 44,279 後量縮不過，本劇本失效，切換劇本一。",
           "action": {
             "stance": "small_entry",
             "text": "可回補試單，不重壓"
           },
-          "probability_pct": 15,
-          "title": "劇本三・站上近60日高"
+          "probability_pct": 25,
+          "title": "劇本三・站上MA60"
         }
       ],
       "prob_note": "機率為規則估計（依三燈/籌碼/大盤查表），不是統計勝率，更不是保證。",
@@ -803,9 +802,9 @@
     },
     "flow": {
       "foreign_streak": {
-        "direction": "buy",
-        "days": 2,
-        "latest_yi": 20.2
+        "direction": "sell",
+        "days": 1,
+        "latest_yi": -407.2
       },
       "leading_sectors": [
         "軍工航太",
@@ -814,17 +813,17 @@
       "us_overnight": [
         {
           "id": "SPX",
-          "change_pct": -0.17
+          "change_pct": -0.18
         },
         {
           "id": "SOX",
-          "change_pct": -1.4
+          "change_pct": 0.33
         }
       ]
     },
     "forecast_range_m1": [
-      38843.3,
-      50247.75
+      38702.72,
+      50255.45
     ]
   },
   "picks": {
@@ -833,28 +832,6 @@
     "note": "大盤僅限試單：新倉每檔上限 10 萬、分批進場、嚴設防守價。",
     "pools": {
       "actionable": [
-        {
-          "id": "2061",
-          "name": "風青",
-          "close": 58.2,
-          "score": 85.0,
-          "confidence": 70,
-          "action_summary": "拉回布局區 57.4-58.2，跌破 53.5 停損（試單上限 10 萬）",
-          "entry_zone": [
-            57.4,
-            58.2
-          ],
-          "defense_price": 53.5,
-          "invalidation": "跌破 53.5 或營收 YoY 連 2 月轉負",
-          "reasons": [
-            "均線多頭排列（MA20 57 > MA60 49）",
-            "60 日 RS +170.7%",
-            "R/R 約 12.0（目標 86／防守 55.9）"
-          ],
-          "sector": null,
-          "tenure_days": 1,
-          "rank_move": "−"
-        },
         {
           "id": "6446",
           "name": "藥華藥",
@@ -874,26 +851,48 @@
             "R/R 約 2.0（目標 1570／防守 1146.9）"
           ],
           "sector": null,
+          "tenure_days": 2,
+          "rank_move": "↑"
+        },
+        {
+          "id": "3577",
+          "name": "泓格",
+          "close": 142.0,
+          "score": 85.0,
+          "confidence": 70,
+          "action_summary": "拉回布局區 135.1-142.0，跌破 130.6 停損（試單上限 10 萬）",
+          "entry_zone": [
+            135.1,
+            142.0
+          ],
+          "defense_price": 130.6,
+          "invalidation": "跌破 130.6 或營收 YoY 連 2 月轉負",
+          "reasons": [
+            "均線多頭排列（MA20 135 > MA60 133）",
+            "60 日 RS +42.6%",
+            "R/R 約 2.4（目標 176／防守 127.8）"
+          ],
+          "sector": null,
           "tenure_days": 1,
           "rank_move": "−"
         },
         {
-          "id": "4707",
-          "name": "磐亞",
-          "close": 33.85,
+          "id": "6166",
+          "name": "凌華",
+          "close": 145.0,
           "score": 85.0,
           "confidence": 70,
-          "action_summary": "拉回布局區 33.2-33.9，跌破 31.1 停損（試單上限 10 萬）",
+          "action_summary": "拉回布局區 135.0-145.0，跌破 133.4 停損（試單上限 10 萬）",
           "entry_zone": [
-            33.2,
-            33.9
+            135.0,
+            145.0
           ],
-          "defense_price": 31.1,
-          "invalidation": "跌破 31.1 或營收 YoY 連 2 月轉負",
+          "defense_price": 133.4,
+          "invalidation": "跌破 133.4 或營收 YoY 連 2 月轉負",
           "reasons": [
-            "均線多頭排列（MA20 33 > MA60 25）",
-            "60 日 RS +109.0%",
-            "R/R 約 6.4（目標 45／防守 32.1）"
+            "均線多頭排列（MA20 135 > MA60 133）",
+            "60 日 RS +42.9%",
+            "R/R 約 1.8（目標 174／防守 129.1）"
           ],
           "sector": null,
           "tenure_days": 1,
@@ -918,7 +917,7 @@
             "帶量突破 20 日高 176.0（量能 3.2×）"
           ],
           "sector": null,
-          "tenure_days": 1,
+          "tenure_days": 2,
           "rank_move": "−"
         }
       ],
@@ -943,7 +942,7 @@
             "殖利率 0.5%"
           ],
           "sector": null,
-          "tenure_days": 9,
+          "tenure_days": 10,
           "rank_move": "−"
         },
         {
@@ -965,27 +964,21 @@
             "殖利率 3.6%"
           ],
           "sector": null,
-          "tenure_days": 1,
+          "tenure_days": 2,
           "rank_move": "−"
         }
       ]
     },
     "roster_changes": {
       "new": [
-        "1709",
-        "2061",
-        "2464",
-        "4707",
-        "6446"
+        "3577",
+        "6166"
       ],
       "dropped": [
-        "1714",
-        "2887",
-        "3577",
-        "6166",
-        "6197"
+        "2061",
+        "4707"
       ],
-      "stay_note": "4916 連續 9 日留任（波段結構未變）"
+      "stay_note": "4916 連續 10 日留任（波段結構未變）"
     }
   }
 }

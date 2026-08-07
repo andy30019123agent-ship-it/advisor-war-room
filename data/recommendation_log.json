@@ -3038,13 +3038,13 @@
       "per_percentile": 0.96
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.047,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0063,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4000,146 +4000,6 @@
     }
   },
   {
-    "logged_at": "2026-08-06T17:24:35+08:00",
-    "date": "2026-08-06",
-    "stock_id": "2330",
-    "name": "台積電",
-    "price": 2365.0,
-    "rating": "續抱",
-    "fair_base": 2718.3,
-    "stop": 2175.8,
-    "rr": 1.87,
-    "confidence": 76,
-    "timeframe": "swing",
-    "factors": {
-      "fund_light": "amber",
-      "tech_light": "green",
-      "chip_light": "amber",
-      "per_percentile": 0.96
-    },
-    "outcome": {
-      "r5": null,
-      "r20": null,
-      "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
-    }
-  },
-  {
-    "logged_at": "2026-08-06T17:24:38+08:00",
-    "date": "2026-08-06",
-    "stock_id": "2454",
-    "name": "聯發科",
-    "price": 3920.0,
-    "rating": "觀望",
-    "fair_base": 1362.1,
-    "stop": 3606.4,
-    "rr": -8.16,
-    "confidence": 65,
-    "timeframe": "swing",
-    "factors": {
-      "fund_light": "amber",
-      "tech_light": "amber",
-      "chip_light": "amber",
-      "per_percentile": 0.97
-    },
-    "outcome": {
-      "r5": null,
-      "r20": null,
-      "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
-    }
-  },
-  {
-    "logged_at": "2026-08-06T17:24:41+08:00",
-    "date": "2026-08-06",
-    "stock_id": "3481",
-    "name": "群創",
-    "price": 50.0,
-    "rating": "觀望",
-    "fair_base": 2.1,
-    "stop": 42.5,
-    "rr": -6.39,
-    "confidence": 68,
-    "timeframe": "swing",
-    "factors": {
-      "fund_light": "amber",
-      "tech_light": "red",
-      "chip_light": "amber",
-      "per_percentile": 0.76
-    },
-    "outcome": {
-      "r5": null,
-      "r20": null,
-      "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
-    }
-  },
-  {
-    "logged_at": "2026-08-06T17:24:44+08:00",
-    "date": "2026-08-06",
-    "stock_id": "2303",
-    "name": "聯電",
-    "price": 121.5,
-    "rating": "觀望",
-    "fair_base": 97.4,
-    "stop": 103.3,
-    "rr": -1.32,
-    "confidence": 68,
-    "timeframe": "swing",
-    "factors": {
-      "fund_light": "amber",
-      "tech_light": "red",
-      "chip_light": "amber",
-      "per_percentile": 0.86
-    },
-    "outcome": {
-      "r5": null,
-      "r20": null,
-      "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
-    }
-  },
-  {
-    "logged_at": "2026-08-06T17:33:22+08:00",
-    "date": "2026-08-06",
-    "stock_id": "2464",
-    "name": "盟立",
-    "price": 178.0,
-    "rating": "試單",
-    "fair_base": null,
-    "stop": 153.1,
-    "rr": null,
-    "confidence": 30,
-    "timeframe": "swing",
-    "factors": {
-      "fund_light": "amber",
-      "tech_light": "amber",
-      "chip_light": "green",
-      "per_percentile": null
-    },
-    "outcome": {
-      "r5": null,
-      "r20": null,
-      "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
-    }
-  },
-  {
     "logged_at": "2026-08-06T17:33:30+08:00",
     "date": "2026-08-06",
     "stock_id": "2061",
@@ -4156,34 +4016,6 @@
       "tech_light": "green",
       "chip_light": "green",
       "per_percentile": null
-    },
-    "outcome": {
-      "r5": null,
-      "r20": null,
-      "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
-    }
-  },
-  {
-    "logged_at": "2026-08-06T17:33:40+08:00",
-    "date": "2026-08-06",
-    "stock_id": "6446",
-    "name": "藥華藥",
-    "price": 1290.0,
-    "rating": "試單",
-    "fair_base": 1830.1,
-    "stop": 1186.8,
-    "rr": 5.23,
-    "confidence": 92,
-    "timeframe": "swing",
-    "factors": {
-      "fund_light": "green",
-      "tech_light": "green",
-      "chip_light": "amber",
-      "per_percentile": 0.63
     },
     "outcome": {
       "r5": null,
@@ -4224,15 +4056,239 @@
     }
   },
   {
-    "logged_at": "2026-08-06T17:33:46+08:00",
+    "logged_at": "2026-08-07T15:53:31+08:00",
+    "date": "2026-08-06",
+    "stock_id": "2330",
+    "name": "台積電",
+    "price": 2365.0,
+    "rating": "續抱",
+    "fair_base": 2720.3,
+    "stop": 2175.8,
+    "rr": 1.88,
+    "confidence": 76,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.94
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T15:53:34+08:00",
+    "date": "2026-08-06",
+    "stock_id": "2454",
+    "name": "聯發科",
+    "price": 3920.0,
+    "rating": "觀望",
+    "fair_base": 1363.7,
+    "stop": 3606.4,
+    "rr": -8.15,
+    "confidence": 65,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.96
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T15:53:38+08:00",
+    "date": "2026-08-06",
+    "stock_id": "3481",
+    "name": "群創",
+    "price": 50.0,
+    "rating": "觀望",
+    "fair_base": 2.1,
+    "stop": 42.5,
+    "rr": -6.39,
+    "confidence": 68,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "red",
+      "chip_light": "amber",
+      "per_percentile": 0.78
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T15:53:41+08:00",
+    "date": "2026-08-06",
+    "stock_id": "2303",
+    "name": "聯電",
+    "price": 121.5,
+    "rating": "觀望",
+    "fair_base": 99.6,
+    "stop": 103.3,
+    "rr": -1.2,
+    "confidence": 50,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "red",
+      "chip_light": "amber",
+      "per_percentile": 0.86
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T16:01:38+08:00",
+    "date": "2026-08-06",
+    "stock_id": "2464",
+    "name": "盟立",
+    "price": 178.0,
+    "rating": "觀望",
+    "fair_base": 43.2,
+    "stop": 153.1,
+    "rr": -5.41,
+    "confidence": 68,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "green",
+      "per_percentile": 1.0
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T16:01:40+08:00",
+    "date": "2026-08-06",
+    "stock_id": "6446",
+    "name": "藥華藥",
+    "price": 1290.0,
+    "rating": "試單",
+    "fair_base": 1830.1,
+    "stop": 1186.8,
+    "rr": 5.23,
+    "confidence": 92,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.63
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T16:01:44+08:00",
+    "date": "2026-08-07",
+    "stock_id": "3577",
+    "name": "泓格",
+    "price": 142.0,
+    "rating": "試單",
+    "fair_base": 246.2,
+    "stop": 130.6,
+    "rr": 9.14,
+    "confidence": 92,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.29
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T16:01:46+08:00",
+    "date": "2026-08-06",
+    "stock_id": "6166",
+    "name": "凌華",
+    "price": 145.0,
+    "rating": "試單",
+    "fair_base": 271.8,
+    "stop": 133.4,
+    "rr": 10.93,
+    "confidence": 92,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.48
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-07T16:01:50+08:00",
     "date": "2026-08-06",
     "stock_id": "4916",
     "name": "事欣科",
     "price": 108.0,
     "rating": "試單",
-    "fair_base": 342.2,
+    "fair_base": 342.0,
     "stop": 99.4,
-    "rr": 27.23,
+    "rr": 27.21,
     "confidence": 100,
     "timeframe": "swing",
     "factors": {
@@ -4252,7 +4308,7 @@
     }
   },
   {
-    "logged_at": "2026-08-06T17:33:49+08:00",
+    "logged_at": "2026-08-07T16:01:53+08:00",
     "date": "2026-08-06",
     "stock_id": "1709",
     "name": "和益",
