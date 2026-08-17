@@ -631,7 +631,7 @@
     },
     "outcome": {
       "r5": 0.0163,
-      "r20": null,
+      "r20": 0.051,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -715,7 +715,7 @@
     },
     "outcome": {
       "r5": 0.0252,
-      "r20": null,
+      "r20": 0.0168,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -1697,8 +1697,8 @@
       "r5": -0.0097,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
+      "hit": "target",
+      "hit_days": 16,
       "max_drawdown": -0.0388,
       "ex_div_adjusted": true
     }
@@ -1781,8 +1781,8 @@
       "r5": -0.0264,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
+      "hit": "target",
+      "hit_days": 16,
       "max_drawdown": -0.0575,
       "ex_div_adjusted": true
     }
@@ -2229,9 +2229,9 @@
       "r5": 0.1594,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0531,
+      "hit": "stop",
+      "hit_days": 14,
+      "max_drawdown": -0.1212,
       "ex_div_adjusted": true
     }
   },
@@ -2509,9 +2509,9 @@
       "r5": 0.1134,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0703,
+      "hit": "stop",
+      "hit_days": 13,
+      "max_drawdown": -0.1372,
       "ex_div_adjusted": true
     }
   },
@@ -3323,7 +3323,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0398,
+      "max_drawdown": -0.0701,
       "ex_div_adjusted": true
     }
   },
@@ -3659,7 +3659,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0611,
+      "max_drawdown": -0.0907,
       "ex_div_adjusted": true
     }
   },
@@ -3881,9 +3881,9 @@
       "r5": -0.0144,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0719,
+      "hit": "stop",
+      "hit_days": 8,
+      "max_drawdown": -0.0827,
       "ex_div_adjusted": true
     }
   },
@@ -4354,13 +4354,13 @@
       "per_percentile": 0.94
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.0084,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0021,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4382,13 +4382,13 @@
       "per_percentile": 0.96
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.0227,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0379,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4410,13 +4410,13 @@
       "per_percentile": 0.76
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.021,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0507,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4438,13 +4438,13 @@
       "per_percentile": 0.83
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0122,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0244,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4466,13 +4466,13 @@
       "per_percentile": 0.95
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.155,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0244,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4494,13 +4494,13 @@
       "per_percentile": 0.89
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.0994,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0201,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4522,13 +4522,13 @@
       "per_percentile": 0.1
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.0352,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0021,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4550,13 +4550,13 @@
       "per_percentile": 0.96
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.1193,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": 0.0,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4578,13 +4578,13 @@
       "per_percentile": 0.01
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.0,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0288,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -4606,13 +4606,13 @@
       "per_percentile": 0.03
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.0331,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0211,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -5724,6 +5724,286 @@
       "tech_light": "amber",
       "chip_light": "amber",
       "per_percentile": 0.09
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:34:50+08:00",
+    "date": "2026-08-17",
+    "stock_id": "2330",
+    "name": "台積電",
+    "price": 2400.0,
+    "rating": "續抱",
+    "fair_base": 3255.8,
+    "stop": 2208.0,
+    "rr": 4.46,
+    "confidence": 88,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.72
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:34:53+08:00",
+    "date": "2026-08-17",
+    "stock_id": "2454",
+    "name": "聯發科",
+    "price": 4050.0,
+    "rating": "觀望",
+    "fair_base": 1426.9,
+    "stop": 3726.0,
+    "rr": -8.1,
+    "confidence": 68,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "green",
+      "per_percentile": 0.98
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:34:55+08:00",
+    "date": "2026-08-17",
+    "stock_id": "3481",
+    "name": "群創",
+    "price": 51.2,
+    "rating": "觀望",
+    "fair_base": 14.9,
+    "stop": 47.1,
+    "rr": -8.85,
+    "confidence": 65,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.7
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:34:58+08:00",
+    "date": "2026-08-17",
+    "stock_id": "2303",
+    "name": "聯電",
+    "price": 121.5,
+    "rating": "觀望",
+    "fair_base": 100.2,
+    "stop": 104.8,
+    "rr": -1.28,
+    "confidence": 50,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "red",
+      "chip_light": "amber",
+      "per_percentile": 0.85
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:40:43+08:00",
+    "date": "2026-08-17",
+    "stock_id": "3189",
+    "name": "景碩",
+    "price": 905.0,
+    "rating": "觀望",
+    "fair_base": 954.6,
+    "stop": 788.9,
+    "rr": 0.43,
+    "confidence": 72,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.62
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:40:45+08:00",
+    "date": "2026-08-17",
+    "stock_id": "5328",
+    "name": "華容",
+    "price": 65.1,
+    "rating": "觀望",
+    "fair_base": 36.2,
+    "stop": 59.9,
+    "rr": -5.56,
+    "confidence": 72,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.84
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:40:46+08:00",
+    "date": "2026-08-17",
+    "stock_id": "4939",
+    "name": "亞電",
+    "price": 60.4,
+    "rating": "試單",
+    "fair_base": 68.6,
+    "stop": 55.6,
+    "rr": 1.71,
+    "confidence": 80,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.54
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:40:48+08:00",
+    "date": "2026-08-17",
+    "stock_id": "1515",
+    "name": "力山",
+    "price": 34.2,
+    "rating": "觀望",
+    "fair_base": 37.1,
+    "stop": 31.5,
+    "rr": 1.04,
+    "confidence": 72,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.47
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:40:50+08:00",
+    "date": "2026-08-17",
+    "stock_id": "2305",
+    "name": "全友",
+    "price": 28.6,
+    "rating": "觀望",
+    "fair_base": 129.0,
+    "stop": 26.3,
+    "rr": 44.64,
+    "confidence": 70,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "red",
+      "chip_light": "amber",
+      "per_percentile": 0.0
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-08-17T15:40:52+08:00",
+    "date": "2026-08-17",
+    "stock_id": "1714",
+    "name": "和桐",
+    "price": 17.1,
+    "rating": "試單",
+    "fair_base": 31.7,
+    "stop": 15.2,
+    "rr": 7.46,
+    "confidence": 88,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.08
     },
     "outcome": {
       "r5": null,
