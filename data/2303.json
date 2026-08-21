@@ -15,49 +15,49 @@
   "technical": {
     "light": "red",
     "ev": {
-      "收盤": 115.5,
-      "MA20": 119.2,
-      "MA60": 138.7,
-      "MA120": 106.9,
-      "RSI14": 40.0,
-      "量能": "0.6×20日均量",
+      "收盤": 116.5,
+      "MA20": 118.6,
+      "MA60": 138.2,
+      "MA120": 107.4,
+      "RSI14": 41.0,
+      "量能": "0.4×20日均量",
       "排列": "空頭排列",
       "買入參考區": "MA120 107 · 近20日低 102",
-      "壓力參考位": "MA20 119 · MA60 139",
+      "壓力參考位": "MA20 119 · 近20日高 138",
       "備註": "—"
     }
   },
   "chips": {
-    "light": "amber",
+    "light": "red",
     "ev": {
-      "近5日法人淨額(張)": "-30,446",
-      "連續方向天數": "賣 2 天",
-      "最新日": "2026-08-19",
+      "近5日法人淨額(張)": "-30,881",
+      "連續方向天數": "賣 3 天",
+      "最新日": "2026-08-20",
       "備註": "新聞情緒分類待 LLM 團隊層補上"
     },
     "breakdown": {
-      "as_of": "2026-08-19",
+      "as_of": "2026-08-20",
       "groups": {
         "外資": {
-          "net_latest": 7800989,
-          "net_5d": 15485810,
-          "streak": 1,
+          "net_latest": 26734247,
+          "net_5d": 40305079,
+          "streak": 2,
           "dir": "買",
-          "ratio_20d_vol": 0.0458
+          "ratio_20d_vol": 0.1614
         },
         "投信": {
-          "net_latest": -20973000,
-          "net_5d": -48374110,
-          "streak": 1,
-          "dir": "賣",
-          "ratio_20d_vol": 0.1232
-        },
-        "自營": {
-          "net_latest": -5796260,
-          "net_5d": 2442427,
+          "net_latest": -28075072,
+          "net_5d": -66891240,
           "streak": 2,
           "dir": "賣",
-          "ratio_20d_vol": 0.034
+          "ratio_20d_vol": 0.1695
+        },
+        "自營": {
+          "net_latest": 436130,
+          "net_5d": -4294733,
+          "streak": 1,
+          "dir": "買",
+          "ratio_20d_vol": 0.0026
         }
       },
       "divergence": true,
@@ -72,15 +72,15 @@
       "src": "Google News"
     },
     {
-      "title": "黃崇仁夜奔台積求阻聯電整併 台灣半導體還有兩大經典收購攻防 - DIGITIMES",
-      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQanRzM283ZHQzaHB6N1I2UFNCY3FrQVlYU2JQQW5YYlo1M0FIS2w0OTRfT2pGanZVejI2SVpka2V6c2pkRWd6TFM1dS1Fd2NzNFhEZUJhRVZSblJTRUwwUU0wcGlHYWpQVGxiX2VjVXJzT0hoOXRsME9RSDJGVVMxVWppeG5hMmVMblJaUDBR?oc=5",
-      "date": "Fri, 07 Aug 2026 07:00:00 GMT",
-      "src": "Google News"
-    },
-    {
       "title": "聯電突圍遇襲！幕後兇手是「這群人」 百萬股東哭哭 - 自由財經",
       "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9WZmlycVpkVnBoT0s1NlhsNHBiWWVOaTZIVlVZSWlFNVYtRHh3emNXeVJzRkZxWDF6UzNpZE94QzllX3dpem84UjlaamlJU0ZFX2FMM0Fvek0tS215TXpV?oc=5",
       "date": "Fri, 14 Aug 2026 08:47:29 GMT",
+      "src": "Google News"
+    },
+    {
+      "title": "台積電大打矽光子 聯電用40奈米成熟製程，憑什麼交出量產晶圓？ - 天下雜誌",
+      "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9lZXh2UGY4MWE4RVJRYkg1TTRjQnZ4eVd1T0RKa2l3dnkzQ1JYWUxwblVsQlA2eE5RSG0xQVU3eHJkSTNVNFRzTjZRUGJrZw?oc=5",
+      "date": "Wed, 19 Aug 2026 11:11:00 GMT",
       "src": "Google News"
     },
     {
@@ -90,20 +90,20 @@
       "src": "Google News"
     },
     {
-      "title": "聯電發行40億CB競價拍賣　8月19日開始投標、底價100元 - ETtoday財經雲",
-      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1Ic1RPazE5TnJPcWhQMnpfWlBhQm94RXdGNzg5Q08xdkNTUUstWG9pOWdqLXoyU1FyMzhUdEtiX1Y4SUJKN2JfdXJ6UW5pVGFHWEHSAVBBVV95cUxNeHFFR0dxUmlMWVFzbGZIYjhJcGEwV1U2amZJQ0Z6SktFV3pyWUVmRV9PNkJXMG1ZQS1ja3ZjYllHc2R4Nk85SGpxRExydVhMdw?oc=5",
-      "date": "Tue, 18 Aug 2026 07:07:00 GMT",
+      "title": "AI商機從GPU外溢到成熟製程　聯電矽光子、世界先進電源管理成新受惠主軸 - 經濟日報",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBjT21MRHZjWVUxRlU3SXdiYUxsblJTRWdCUFZSNjNFZ0NYa1JKZWpHeE1xdUhXa2VmVzNWNlJONVNYeHcwZERyZXh5TndhTllNQmotcmVMa3Zfd9IBX0FVX3lxTE9LUVhpbjNXem4ta3dMdmt1SEcydWZuRXEwV3BDMV93bEZyVDRjaXBqQ3cybWxrM3k5MzFiT2R2bzBXNzZMM09Xd0xxb0JLOUw2V0d3TDhnV29zX1Y5UDdZ?oc=5",
+      "date": "Fri, 14 Aug 2026 15:40:01 GMT",
       "src": "Google News"
     },
     {
-      "title": "2303 聯電 - 外資今日買超第11名！！ 資料來源：https://jell... - 股市爆料同學會 - cmoney.tw",
-      "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5GYS1fY180UWdPZzR1SDRYVXVXT2RaZ1JJTnowMjJHdTRuYnBFUDN2UHBVMkZwSVdaZWM3NDRpdjB3SG9MbFFFR3ZIZ1NmdEY0ckNtUmluX2c?oc=5",
-      "date": "Tue, 11 Aug 2026 08:28:36 GMT",
+      "title": "不敗教主-陳重銘. . #聯電 股價跌得有點兇啊！6月底還有185元，現在只剩下115，70元不見了！ 聯電到底怎麼了，第二季賺了3.39元，上半年每股獲利4.68元，很漂亮啊！ 但是你要注意這個變數啦⋯⋯ - facebook.com",
+      "url": "https://news.google.com/rss/articles/CBMi0gZBVV95cUxPMVBIRTZsLTdDNFRXc1ZreEg5SGEzNXlFRzNnTkttVTNaRzFQdUZCVXNvd1JiMlFETkk5R2ozYWx2NVRGWlZfb0xyTkNiSkd5aGx3Qlhac0t4bmI0VHBaWnhONkY3OWJGTHpkMlpySENpRDAyQWQwMkxxUzVNSzRqOGRpTldXcml3dXVQUEdZT3RoVWxYcUtJdkI0RDlzZjU1dUo0RGpPVVJ0TGR1WkVtWkhhOFo2cEx3WTJFb0M5aTEtbWp5V0c2aGtGRUphOGhGM0s5Umd4bGJ4MW5hM2ExNWdFaHo0bFRvY3ZqX2xobXJBR0R3clFDUGg1WE5hUXBHS2VRbms4eVd3SWJURXlhSEFkRkVudWdOa1dTcGkyME9RV0EtM3hmdEo4SFNGU1hZN25IVUhYRm5TVTR3S3duRXlWcFF1THNuTkpHVW81M3dxeUNQS2JJZ0YtWWFWUzVWbV93UnVERWlncjN1RThEUmlTVDhJVndUdGZOTVplR0llcFVmcngzOXE0SzNjb3ludGVKUjVUOG80aC1hLVpPNUdBcHQ0eXF2QnZEUU1hVFI2eDFQanI0ZXVLdmxPRXFCVWZKOFdTOVQ3MFc2LVVFYWtqcVcwMnBERWhWT2N2NjNuX0hKLWZKcFJFQ1pScjhBVkxKdGl2YmY2T0hTQ3Q5TUlXb1Zwa29mbENsMUpEalVUYXNTbVlOT3VINUZJR3gtRXNSX29rZVViR1JRRGJxT3RQRmUtVzVfdTE3NzNMZ1lkSmRnRVpqNHVBMVJleVJJLXBLMGwyQ3JyMUpWX0VvVmFicnNObmllSE1EbkEtSWNkMmFTRnJkUWV4ME1QMzVUTU1PZ0gxT05VZ2FBdHlDLWV5RjNERkpOb0xscG1pVEhXN1FxNm5YdGVpRXZmY3BuTS01SnBVV2taV1dZVkR6OWhFcXUzRVl6MUlCeXN1MElvNy02RWhRRmVWbkgwbXFPeUlPWklJY2V2MVRwS2tab2tBRlB2MWJDNkM5bFNoOFBWU1NWQVRMeExIaUw0Yk1qMXNtTGNWZVNURFZXMHU0MFNKTlBRZnRKWmN1Q2lqZkFDRWZwV19NdHRVNUp2RUVQdUtIRUNSUlJ4S2I3S04wc1NB?oc=5",
+      "date": "Thu, 20 Aug 2026 12:32:06 GMT",
       "src": "Google News"
     }
   ],
   "summary": {
-    "score": 0.1,
+    "score": -0.2,
     "direction": "中性",
     "confidence": "低",
     "conflict": false,
@@ -162,14 +162,6 @@
     "note": "7 因子各 0-2 分；缺科目標不適用不扣分；連續改善另加減分"
   },
   "ohlc": [
-    {
-      "d": "2026-05-27",
-      "o": 139.5,
-      "h": 143.5,
-      "l": 138.5,
-      "c": 143.5,
-      "v": 280261963
-    },
     {
       "d": "2026-05-28",
       "o": 145.0,
@@ -640,16 +632,24 @@
       "h": 118.0,
       "l": 112.0,
       "c": 115.5,
-      "v": 101462408
+      "v": 101840408
+    },
+    {
+      "d": "2026-08-21",
+      "o": 115.5,
+      "h": 117.0,
+      "l": 114.0,
+      "c": 116.5,
+      "v": 58537906
     }
   ],
-  "as_of_date": "2026-08-20",
+  "as_of_date": "2026-08-21",
   "primary_decision": {
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
     "confidence": 30,
-    "decided_by_layer": 4,
+    "decided_by_layer": 5,
     "reason_codes": [
       "trend_weak",
       "fundamental_ok",
@@ -667,17 +667,17 @@
     },
     "defense_price": 102.5,
     "entry_condition": {
-      "price": 119.2,
+      "price": 118.6,
       "condition": "站回 MA20 且法人連 2 日買超"
     },
-    "reeval_date": "2026-08-27"
+    "reeval_date": "2026-08-28"
   },
   "context": {
     "timeframes": {
       "short": {
         "label": "短線 1-4 週",
         "stance": "偏空",
-        "basis": "技術偏空＋籌碼中性"
+        "basis": "技術偏空＋籌碼偏空"
       },
       "swing": {
         "label": "波段 1-3 月（主）",
@@ -703,18 +703,18 @@
       "technical": {
         "color": "red",
         "facts": [
-          "收盤 115.5",
-          "MA20 119.2",
-          "MA60 138.7",
-          "MA120 106.9"
+          "收盤 116.5",
+          "MA20 118.6",
+          "MA60 138.2",
+          "MA120 107.4"
         ]
       },
       "chips": {
-        "color": "yellow",
+        "color": "red",
         "facts": [
-          "近5日法人淨額(張) -30,446",
-          "連續方向天數 賣 2 天",
-          "最新日 2026-08-19"
+          "近5日法人淨額(張) -30,881",
+          "連續方向天數 賣 3 天",
+          "最新日 2026-08-20"
         ]
       }
     },
@@ -722,11 +722,11 @@
       "band": "偏貴",
       "base": 84.7,
       "bull": 95.3,
-      "bear": 67.4,
+      "bear": 67.7,
       "regime": "3y",
       "warning": null
     },
-    "rr": -2.37
+    "rr": -2.27
   },
   "evidence": {
     "roles": [
@@ -734,7 +734,7 @@
         "role": "技術面分析師",
         "support": [],
         "oppose": [
-          "已跌破短中期均線（MA20 119.2、MA60 138.7、MA120 106.9），技術轉空，此時進場等於接下墜的刀。"
+          "已跌破短中期均線（MA20 118.6、MA60 138.2、MA120 107.4），技術轉空，此時進場等於接下墜的刀。"
         ],
         "verify": [
           "連 3 日站穩 MA20 並帶量突破前高 → 翻多；跌破 MA60 收盤 → 翻空。"
@@ -756,7 +756,7 @@
         "role": "籌碼面分析師",
         "support": [],
         "oppose": [
-          "法人偏空、買盤縮手（近5日法人淨額(張) -30,446），沒有大戶點火前漲勢難延續。"
+          "法人偏空、買盤縮手（近5日法人淨額(張) -30,881），沒有大戶點火前漲勢難延續。"
         ],
         "verify": [
           "確認外資／投信是否由賣轉買、連續買超天數能否翻正。"
@@ -807,16 +807,16 @@
         "published_at": "2026-08-19T14:45:00+00:00"
       },
       {
-        "title": "黃崇仁夜奔台積求阻聯電整併 台灣半導體還有兩大經典收購攻防 - DIGITIMES",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQanRzM283ZHQzaHB6N1I2UFNCY3FrQVlYU2JQQW5YYlo1M0FIS2w0OTRfT2pGanZVejI2SVpka2V6c2pkRWd6TFM1dS1Fd2NzNFhEZUJhRVZSblJTRUwwUU0wcGlHYWpQVGxiX2VjVXJzT0hoOXRsME9RSDJGVVMxVWppeG5hMmVMblJaUDBR?oc=5",
-        "published_at": "2026-08-07T07:00:00+00:00"
-      },
-      {
         "title": "聯電突圍遇襲！幕後兇手是「這群人」 百萬股東哭哭 - 自由財經",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9WZmlycVpkVnBoT0s1NlhsNHBiWWVOaTZIVlVZSWlFNVYtRHh3emNXeVJzRkZxWDF6UzNpZE94QzllX3dpem84UjlaamlJU0ZFX2FMM0Fvek0tS215TXpV?oc=5",
         "published_at": "2026-08-14T08:47:29+00:00"
+      },
+      {
+        "title": "台積電大打矽光子 聯電用40奈米成熟製程，憑什麼交出量產晶圓？ - 天下雜誌",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9lZXh2UGY4MWE4RVJRYkg1TTRjQnZ4eVd1T0RKa2l3dnkzQ1JYWUxwblVsQlA2eE5RSG0xQVU3eHJkSTNVNFRzTjZRUGJrZw?oc=5",
+        "published_at": "2026-08-19T11:11:00+00:00"
       },
       {
         "title": "聯電參戰！角逐矽光子10年黃金商機 力拚高塔、格羅方德，競爭成熟製程新賽道 - 財訊",
@@ -825,16 +825,16 @@
         "published_at": "2026-08-17T04:15:42+00:00"
       },
       {
-        "title": "聯電發行40億CB競價拍賣　8月19日開始投標、底價100元 - ETtoday財經雲",
+        "title": "AI商機從GPU外溢到成熟製程　聯電矽光子、世界先進電源管理成新受惠主軸 - 經濟日報",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1Ic1RPazE5TnJPcWhQMnpfWlBhQm94RXdGNzg5Q08xdkNTUUstWG9pOWdqLXoyU1FyMzhUdEtiX1Y4SUJKN2JfdXJ6UW5pVGFHWEHSAVBBVV95cUxNeHFFR0dxUmlMWVFzbGZIYjhJcGEwV1U2amZJQ0Z6SktFV3pyWUVmRV9PNkJXMG1ZQS1ja3ZjYllHc2R4Nk85SGpxRExydVhMdw?oc=5",
-        "published_at": "2026-08-18T07:07:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBjT21MRHZjWVUxRlU3SXdiYUxsblJTRWdCUFZSNjNFZ0NYa1JKZWpHeE1xdUhXa2VmVzNWNlJONVNYeHcwZERyZXh5TndhTllNQmotcmVMa3Zfd9IBX0FVX3lxTE9LUVhpbjNXem4ta3dMdmt1SEcydWZuRXEwV3BDMV93bEZyVDRjaXBqQ3cybWxrM3k5MzFiT2R2bzBXNzZMM09Xd0xxb0JLOUw2V0d3TDhnV29zX1Y5UDdZ?oc=5",
+        "published_at": "2026-08-14T15:40:01+00:00"
       },
       {
-        "title": "2303 聯電 - 外資今日買超第11名！！ 資料來源：https://jell... - 股市爆料同學會 - cmoney.tw",
+        "title": "不敗教主-陳重銘. . #聯電 股價跌得有點兇啊！6月底還有185元，現在只剩下115，70元不見了！ 聯電到底怎麼了，第二季賺了3.39元，上半年每股獲利4.68元，很漂亮啊！ 但是你要注意這個變數啦⋯⋯ - facebook.com",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5GYS1fY180UWdPZzR1SDRYVXVXT2RaZ1JJTnowMjJHdTRuYnBFUDN2UHBVMkZwSVdaZWM3NDRpdjB3SG9MbFFFR3ZIZ1NmdEY0ckNtUmluX2c?oc=5",
-        "published_at": "2026-08-11T08:28:36+00:00"
+        "url": "https://news.google.com/rss/articles/CBMi0gZBVV95cUxPMVBIRTZsLTdDNFRXc1ZreEg5SGEzNXlFRzNnTkttVTNaRzFQdUZCVXNvd1JiMlFETkk5R2ozYWx2NVRGWlZfb0xyTkNiSkd5aGx3Qlhac0t4bmI0VHBaWnhONkY3OWJGTHpkMlpySENpRDAyQWQwMkxxUzVNSzRqOGRpTldXcml3dXVQUEdZT3RoVWxYcUtJdkI0RDlzZjU1dUo0RGpPVVJ0TGR1WkVtWkhhOFo2cEx3WTJFb0M5aTEtbWp5V0c2aGtGRUphOGhGM0s5Umd4bGJ4MW5hM2ExNWdFaHo0bFRvY3ZqX2xobXJBR0R3clFDUGg1WE5hUXBHS2VRbms4eVd3SWJURXlhSEFkRkVudWdOa1dTcGkyME9RV0EtM3hmdEo4SFNGU1hZN25IVUhYRm5TVTR3S3duRXlWcFF1THNuTkpHVW81M3dxeUNQS2JJZ0YtWWFWUzVWbV93UnVERWlncjN1RThEUmlTVDhJVndUdGZOTVplR0llcFVmcngzOXE0SzNjb3ludGVKUjVUOG80aC1hLVpPNUdBcHQ0eXF2QnZEUU1hVFI2eDFQanI0ZXVLdmxPRXFCVWZKOFdTOVQ3MFc2LVVFYWtqcVcwMnBERWhWT2N2NjNuX0hKLWZKcFJFQ1pScjhBVkxKdGl2YmY2T0hTQ3Q5TUlXb1Zwa29mbENsMUpEalVUYXNTbVlOT3VINUZJR3gtRXNSX29rZVViR1JRRGJxT3RQRmUtVzVfdTE3NzNMZ1lkSmRnRVpqNHVBMVJleVJJLXBLMGwyQ3JyMUpWX0VvVmFicnNObmllSE1EbkEtSWNkMmFTRnJkUWV4ME1QMzVUTU1PZ0gxT05VZ2FBdHlDLWV5RjNERkpOb0xscG1pVEhXN1FxNm5YdGVpRXZmY3BuTS01SnBVV2taV1dZVkR6OWhFcXUzRVl6MUlCeXN1MElvNy02RWhRRmVWbkgwbXFPeUlPWklJY2V2MVRwS2tab2tBRlB2MWJDNkM5bFNoOFBWU1NWQVRMeExIaUw0Yk1qMXNtTGNWZVNURFZXMHU0MFNKTlBRZnRKWmN1Q2lqZkFDRWZwV19NdHRVNUp2RUVQdUtIRUNSUlJ4S2I3S04wc1NB?oc=5",
+        "published_at": "2026-08-20T12:32:06+00:00"
       }
     ],
     "events": []
@@ -842,7 +842,7 @@
   "decision": {
     "rating": "觀望",
     "fair_value": {
-      "bear": 67.4,
+      "bear": 67.7,
       "base": 84.7,
       "bull": 95.3
     },
@@ -853,27 +853,27 @@
       "eps_forward": 7.72,
       "growth_used": 0.1555,
       "multiples": {
-        "bear": 8.73,
-        "base": 10.97,
-        "bull": 12.34
+        "bear": 8.77,
+        "base": 10.98,
+        "bull": 12.35
       },
       "current_multiple": 17.37,
       "current_percentile": 0.82,
-      "disclosure": "TTM EPS 6.68（財報 TTM）、成長 g=+15.6%（clamp -20%~+40%）、Forward EPS 7.72；PER 25/50/75=10.29/12.34/14.36（regime=3y，現值 17.37，分位 +82.0%）；品質股 Base 上修；大盤紅燈倍數下修一檔",
+      "disclosure": "TTM EPS 6.68（財報 TTM）、成長 g=+15.6%（clamp -20%~+40%）、Forward EPS 7.72；PER 25/50/75=10.3/12.35/14.37（regime=3y，現值 17.37，分位 +82.0%）；品質股 Base 上修；大盤紅燈倍數下修一檔",
       "bvps": null,
       "roe": null
     },
-    "risk_reward": -2.37,
+    "risk_reward": -2.27,
     "stop": {
       "price": 102.5,
-      "pct": -0.1126,
+      "pct": -0.1202,
       "basis": "近20日低",
       "clamped": false,
       "note": "參考防守位，接回自行判斷"
     },
     "entry": {
-      "pullback": "回測型：回檔至支撐 119.2±3.9（0.5×ATR）、隔日收盤站回不破再進",
-      "breakout": "突破型：收盤帶量突破近20日高 142.5、且量>1.3×20日均量（約 221,357,372）"
+      "pullback": "回測型：回檔至支撐 118.6±3.8（0.5×ATR）、隔日收盤站回不破再進",
+      "breakout": "突破型：收盤帶量突破近20日高 138.0、且量>1.3×20日均量（約 215,289,451）"
     },
     "position": {
       "tier": "空手",
@@ -897,8 +897,8 @@
       "short": {
         "label": "短線 1-4 週",
         "stance": "偏空",
-        "basis": "技術偏空＋籌碼中性為主",
-        "ref_price": "參考 MA20 119.2"
+        "basis": "技術偏空＋籌碼偏空為主",
+        "ref_price": "參考 MA20 118.6"
       },
       "swing": {
         "label": "波段 1-3 月（主）",
@@ -914,109 +914,109 @@
       }
     },
     "invalidation": {
-      "price": "價格：收盤 115.5 vs 防守位 102.5（未觸發）",
+      "price": "價格：收盤 116.5 vs 防守位 102.5（未觸發）",
       "fundamental": "基本面：最新營收 YoY 轉負且連 2 月低於 6 月均（未觸發）",
       "chips": "籌碼：法人連 3 日同向賣且賣超佔 20 日均量>15%（未觸發）",
       "any_triggered": false
     },
-    "as_of_price": 115.5,
+    "as_of_price": 116.5,
     "note": null,
     "disclaimer": "本區塊為規則引擎輸出之決策輔助，非投資建議；數字依固定規則計算，最終決策與風險由使用者承擔。",
-    "change_pct": 0.0
+    "change_pct": 0.87
   },
   "forecast": {
     "method": "monte_carlo_gbm",
     "n_paths": 2000,
-    "vol_annualized": 0.7385,
-    "as_of": "2026-08-20",
+    "vol_annualized": 0.7168,
+    "as_of": "2026-08-21",
     "history": [
       {
         "d": -63,
-        "close": 116.0
+        "close": 114.0
       },
       {
         "d": -60,
-        "close": 130.5
+        "close": 143.5
       },
       {
         "d": -57,
-        "close": 144.5
+        "close": 146.0
       },
       {
         "d": -54,
-        "close": 130.5
-      },
-      {
-        "d": -51,
-        "close": 121.0
-      },
-      {
-        "d": -48,
         "close": 125.0
       },
       {
+        "d": -51,
+        "close": 127.5
+      },
+      {
+        "d": -48,
+        "close": 133.5
+      },
+      {
         "d": -45,
-        "close": 141.0
+        "close": 140.0
       },
       {
         "d": -42,
-        "close": 160.0
+        "close": 170.0
       },
       {
         "d": -39,
-        "close": 178.5
+        "close": 164.0
       },
       {
         "d": -36,
-        "close": 164.5
+        "close": 169.0
       },
       {
         "d": -33,
-        "close": 170.5
+        "close": 166.0
       },
       {
         "d": -30,
-        "close": 163.0
+        "close": 156.0
       },
       {
         "d": -27,
-        "close": 151.0
+        "close": 166.0
       },
       {
         "d": -24,
-        "close": 144.0
+        "close": 130.0
       },
       {
         "d": -21,
-        "close": 139.0
+        "close": 138.5
       },
       {
         "d": -18,
-        "close": 126.0
+        "close": 113.5
       },
       {
         "d": -15,
-        "close": 110.0
+        "close": 121.0
       },
       {
         "d": -12,
-        "close": 118.5
+        "close": 122.0
       },
       {
         "d": -9,
-        "close": 116.0
-      },
-      {
-        "d": -6,
         "close": 123.0
       },
       {
+        "d": -6,
+        "close": 124.5
+      },
+      {
         "d": -3,
-        "close": 121.5
+        "close": 119.0
       },
       {
         "d": 0,
-        "close": 115.5
+        "close": 116.5
       }
     ],
     "horizons": {
@@ -1025,72 +1025,72 @@
         "bands": [
           {
             "d": 0,
-            "p10": 115.5,
-            "p25": 115.5,
-            "p50": 115.5,
-            "p75": 115.5,
-            "p90": 115.5
+            "p10": 116.5,
+            "p25": 116.5,
+            "p50": 116.5,
+            "p75": 116.5,
+            "p90": 116.5
           },
           {
             "d": 3,
-            "p10": 103.51,
-            "p25": 109.1,
-            "p50": 115.26,
-            "p75": 121.88,
-            "p90": 127.76
+            "p10": 104.87,
+            "p25": 110.23,
+            "p50": 116.08,
+            "p75": 122.22,
+            "p90": 128.18
           },
           {
             "d": 6,
-            "p10": 99.35,
-            "p25": 106.45,
-            "p50": 114.46,
-            "p75": 124.01,
-            "p90": 132.79
+            "p10": 99.98,
+            "p25": 107.39,
+            "p50": 115.68,
+            "p75": 124.87,
+            "p90": 133.18
           },
           {
             "d": 9,
-            "p10": 96.53,
-            "p25": 104.61,
-            "p50": 114.89,
-            "p75": 125.57,
-            "p90": 137.53
+            "p10": 97.24,
+            "p25": 105.08,
+            "p50": 115.42,
+            "p75": 125.89,
+            "p90": 136.66
           },
           {
             "d": 12,
-            "p10": 93.56,
-            "p25": 102.4,
-            "p50": 114.5,
-            "p75": 126.66,
-            "p90": 140.66
+            "p10": 93.03,
+            "p25": 102.9,
+            "p50": 114.68,
+            "p75": 128.0,
+            "p90": 139.74
           },
           {
             "d": 15,
-            "p10": 90.13,
-            "p25": 100.89,
-            "p50": 113.48,
-            "p75": 128.67,
-            "p90": 143.31
+            "p10": 90.76,
+            "p25": 101.1,
+            "p50": 114.38,
+            "p75": 129.48,
+            "p90": 142.94
           },
           {
             "d": 18,
-            "p10": 88.39,
-            "p25": 99.26,
-            "p50": 113.08,
-            "p75": 129.3,
-            "p90": 145.43
+            "p10": 88.57,
+            "p25": 99.48,
+            "p50": 114.73,
+            "p75": 130.39,
+            "p90": 144.34
           },
           {
             "d": 21,
-            "p10": 87.1,
-            "p25": 98.16,
-            "p50": 112.76,
-            "p75": 130.61,
-            "p90": 147.84
+            "p10": 86.44,
+            "p25": 97.98,
+            "p50": 113.53,
+            "p75": 130.47,
+            "p90": 149.4
           }
         ],
         "prob_range_70": [
-          91.55,
-          140.21
+          90.71,
+          141.37
         ]
       },
       "m3": {
@@ -1098,184 +1098,184 @@
         "bands": [
           {
             "d": 0,
-            "p10": 115.5,
-            "p25": 115.5,
-            "p50": 115.5,
-            "p75": 115.5,
-            "p90": 115.5
+            "p10": 116.5,
+            "p25": 116.5,
+            "p50": 116.5,
+            "p75": 116.5,
+            "p90": 116.5
           },
           {
             "d": 3,
-            "p10": 103.51,
-            "p25": 109.1,
-            "p50": 115.26,
-            "p75": 121.88,
-            "p90": 127.76
+            "p10": 104.87,
+            "p25": 110.23,
+            "p50": 116.08,
+            "p75": 122.22,
+            "p90": 128.18
           },
           {
             "d": 6,
-            "p10": 99.35,
-            "p25": 106.45,
-            "p50": 114.46,
-            "p75": 124.01,
-            "p90": 132.79
+            "p10": 99.98,
+            "p25": 107.39,
+            "p50": 115.68,
+            "p75": 124.87,
+            "p90": 133.18
           },
           {
             "d": 9,
-            "p10": 96.53,
-            "p25": 104.61,
-            "p50": 114.89,
-            "p75": 125.57,
-            "p90": 137.53
+            "p10": 97.24,
+            "p25": 105.08,
+            "p50": 115.42,
+            "p75": 125.89,
+            "p90": 136.66
           },
           {
             "d": 12,
-            "p10": 93.56,
-            "p25": 102.4,
-            "p50": 114.5,
-            "p75": 126.66,
-            "p90": 140.66
+            "p10": 93.03,
+            "p25": 102.9,
+            "p50": 114.68,
+            "p75": 128.0,
+            "p90": 139.74
           },
           {
             "d": 15,
-            "p10": 90.13,
-            "p25": 100.89,
-            "p50": 113.48,
-            "p75": 128.67,
-            "p90": 143.31
+            "p10": 90.76,
+            "p25": 101.1,
+            "p50": 114.38,
+            "p75": 129.48,
+            "p90": 142.94
           },
           {
             "d": 18,
-            "p10": 88.39,
-            "p25": 99.26,
-            "p50": 113.08,
-            "p75": 129.3,
-            "p90": 145.43
+            "p10": 88.57,
+            "p25": 99.48,
+            "p50": 114.73,
+            "p75": 130.39,
+            "p90": 144.34
           },
           {
             "d": 21,
-            "p10": 87.1,
-            "p25": 98.16,
-            "p50": 112.76,
-            "p75": 130.61,
-            "p90": 147.84
+            "p10": 86.44,
+            "p25": 97.98,
+            "p50": 113.53,
+            "p75": 130.47,
+            "p90": 149.4
           },
           {
             "d": 24,
-            "p10": 85.28,
-            "p25": 96.93,
-            "p50": 111.91,
-            "p75": 131.72,
-            "p90": 150.38
+            "p10": 85.12,
+            "p25": 97.65,
+            "p50": 113.17,
+            "p75": 131.71,
+            "p90": 152.11
           },
           {
             "d": 27,
-            "p10": 83.2,
-            "p25": 95.65,
-            "p50": 112.38,
-            "p75": 132.65,
-            "p90": 153.08
+            "p10": 83.91,
+            "p25": 96.21,
+            "p50": 112.54,
+            "p75": 132.79,
+            "p90": 154.82
           },
           {
             "d": 30,
-            "p10": 81.81,
-            "p25": 94.77,
-            "p50": 112.64,
-            "p75": 132.19,
-            "p90": 155.22
+            "p10": 82.37,
+            "p25": 94.92,
+            "p50": 112.56,
+            "p75": 133.85,
+            "p90": 154.4
           },
           {
             "d": 33,
-            "p10": 80.12,
-            "p25": 94.05,
-            "p50": 111.41,
-            "p75": 132.94,
-            "p90": 155.99
+            "p10": 80.95,
+            "p25": 94.39,
+            "p50": 111.59,
+            "p75": 134.16,
+            "p90": 157.97
           },
           {
             "d": 36,
-            "p10": 79.3,
-            "p25": 92.7,
-            "p50": 111.03,
-            "p75": 133.95,
-            "p90": 157.57
+            "p10": 79.54,
+            "p25": 93.26,
+            "p50": 111.74,
+            "p75": 134.16,
+            "p90": 160.96
           },
           {
             "d": 39,
-            "p10": 77.99,
-            "p25": 91.31,
-            "p50": 111.31,
-            "p75": 134.0,
-            "p90": 158.66
+            "p10": 78.42,
+            "p25": 92.58,
+            "p50": 111.6,
+            "p75": 137.12,
+            "p90": 159.01
           },
           {
             "d": 42,
-            "p10": 75.11,
-            "p25": 90.79,
-            "p50": 110.24,
-            "p75": 133.77,
-            "p90": 162.65
+            "p10": 77.07,
+            "p25": 91.5,
+            "p50": 110.94,
+            "p75": 137.1,
+            "p90": 161.43
           },
           {
             "d": 45,
-            "p10": 74.26,
-            "p25": 89.11,
-            "p50": 109.29,
-            "p75": 134.74,
-            "p90": 163.38
+            "p10": 75.2,
+            "p25": 91.14,
+            "p50": 110.82,
+            "p75": 138.05,
+            "p90": 165.1
           },
           {
             "d": 48,
-            "p10": 72.86,
-            "p25": 89.26,
-            "p50": 109.15,
-            "p75": 135.77,
-            "p90": 165.5
+            "p10": 74.87,
+            "p25": 90.02,
+            "p50": 110.88,
+            "p75": 137.81,
+            "p90": 166.55
           },
           {
             "d": 51,
-            "p10": 71.96,
-            "p25": 88.61,
-            "p50": 108.73,
-            "p75": 136.43,
-            "p90": 167.63
+            "p10": 72.71,
+            "p25": 89.61,
+            "p50": 110.43,
+            "p75": 137.53,
+            "p90": 168.84
           },
           {
             "d": 54,
-            "p10": 71.09,
-            "p25": 88.05,
-            "p50": 108.35,
-            "p75": 136.97,
-            "p90": 168.22
+            "p10": 72.37,
+            "p25": 88.94,
+            "p50": 109.01,
+            "p75": 137.71,
+            "p90": 169.09
           },
           {
             "d": 57,
-            "p10": 70.4,
-            "p25": 85.97,
-            "p50": 108.24,
-            "p75": 137.09,
-            "p90": 169.67
+            "p10": 71.34,
+            "p25": 87.91,
+            "p50": 109.54,
+            "p75": 139.6,
+            "p90": 170.96
           },
           {
             "d": 60,
-            "p10": 69.7,
-            "p25": 85.6,
-            "p50": 107.57,
-            "p75": 137.77,
-            "p90": 172.31
+            "p10": 70.09,
+            "p25": 86.97,
+            "p50": 109.38,
+            "p75": 139.36,
+            "p90": 171.82
           },
           {
             "d": 63,
-            "p10": 69.19,
-            "p25": 83.95,
-            "p50": 107.53,
-            "p75": 136.78,
-            "p90": 173.26
+            "p10": 69.45,
+            "p25": 87.35,
+            "p50": 108.57,
+            "p75": 139.26,
+            "p90": 173.84
           }
         ],
         "prob_range_70": [
-          74.43,
-          159.4
+          75.56,
+          157.33
         ]
       },
       "m6": {
@@ -1283,361 +1283,361 @@
         "bands": [
           {
             "d": 0,
-            "p10": 115.5,
-            "p25": 115.5,
-            "p50": 115.5,
-            "p75": 115.5,
-            "p90": 115.5
+            "p10": 116.5,
+            "p25": 116.5,
+            "p50": 116.5,
+            "p75": 116.5,
+            "p90": 116.5
           },
           {
             "d": 3,
-            "p10": 103.51,
-            "p25": 109.1,
-            "p50": 115.26,
-            "p75": 121.88,
-            "p90": 127.76
+            "p10": 104.87,
+            "p25": 110.23,
+            "p50": 116.08,
+            "p75": 122.22,
+            "p90": 128.18
           },
           {
             "d": 6,
-            "p10": 99.35,
-            "p25": 106.45,
-            "p50": 114.46,
-            "p75": 124.01,
-            "p90": 132.79
+            "p10": 99.98,
+            "p25": 107.39,
+            "p50": 115.68,
+            "p75": 124.87,
+            "p90": 133.18
           },
           {
             "d": 9,
-            "p10": 96.53,
-            "p25": 104.61,
-            "p50": 114.89,
-            "p75": 125.57,
-            "p90": 137.53
+            "p10": 97.24,
+            "p25": 105.08,
+            "p50": 115.42,
+            "p75": 125.89,
+            "p90": 136.66
           },
           {
             "d": 12,
-            "p10": 93.56,
-            "p25": 102.4,
-            "p50": 114.5,
-            "p75": 126.66,
-            "p90": 140.66
+            "p10": 93.03,
+            "p25": 102.9,
+            "p50": 114.68,
+            "p75": 128.0,
+            "p90": 139.74
           },
           {
             "d": 15,
-            "p10": 90.13,
-            "p25": 100.89,
-            "p50": 113.48,
-            "p75": 128.67,
-            "p90": 143.31
+            "p10": 90.76,
+            "p25": 101.1,
+            "p50": 114.38,
+            "p75": 129.48,
+            "p90": 142.94
           },
           {
             "d": 18,
-            "p10": 88.39,
-            "p25": 99.26,
-            "p50": 113.08,
-            "p75": 129.3,
-            "p90": 145.43
+            "p10": 88.57,
+            "p25": 99.48,
+            "p50": 114.73,
+            "p75": 130.39,
+            "p90": 144.34
           },
           {
             "d": 21,
-            "p10": 87.1,
-            "p25": 98.16,
-            "p50": 112.76,
-            "p75": 130.61,
-            "p90": 147.84
+            "p10": 86.44,
+            "p25": 97.98,
+            "p50": 113.53,
+            "p75": 130.47,
+            "p90": 149.4
           },
           {
             "d": 24,
-            "p10": 85.28,
-            "p25": 96.93,
-            "p50": 111.91,
-            "p75": 131.72,
-            "p90": 150.38
+            "p10": 85.12,
+            "p25": 97.65,
+            "p50": 113.17,
+            "p75": 131.71,
+            "p90": 152.11
           },
           {
             "d": 27,
-            "p10": 83.2,
-            "p25": 95.65,
-            "p50": 112.38,
-            "p75": 132.65,
-            "p90": 153.08
+            "p10": 83.91,
+            "p25": 96.21,
+            "p50": 112.54,
+            "p75": 132.79,
+            "p90": 154.82
           },
           {
             "d": 30,
-            "p10": 81.81,
-            "p25": 94.77,
-            "p50": 112.64,
-            "p75": 132.19,
-            "p90": 155.22
+            "p10": 82.37,
+            "p25": 94.92,
+            "p50": 112.56,
+            "p75": 133.85,
+            "p90": 154.4
           },
           {
             "d": 33,
-            "p10": 80.12,
-            "p25": 94.05,
-            "p50": 111.41,
-            "p75": 132.94,
-            "p90": 155.99
+            "p10": 80.95,
+            "p25": 94.39,
+            "p50": 111.59,
+            "p75": 134.16,
+            "p90": 157.97
           },
           {
             "d": 36,
-            "p10": 79.3,
-            "p25": 92.7,
-            "p50": 111.03,
-            "p75": 133.95,
-            "p90": 157.57
+            "p10": 79.54,
+            "p25": 93.26,
+            "p50": 111.74,
+            "p75": 134.16,
+            "p90": 160.96
           },
           {
             "d": 39,
-            "p10": 77.99,
-            "p25": 91.31,
-            "p50": 111.31,
-            "p75": 134.0,
-            "p90": 158.66
+            "p10": 78.42,
+            "p25": 92.58,
+            "p50": 111.6,
+            "p75": 137.12,
+            "p90": 159.01
           },
           {
             "d": 42,
-            "p10": 75.11,
-            "p25": 90.79,
-            "p50": 110.24,
-            "p75": 133.77,
-            "p90": 162.65
+            "p10": 77.07,
+            "p25": 91.5,
+            "p50": 110.94,
+            "p75": 137.1,
+            "p90": 161.43
           },
           {
             "d": 45,
-            "p10": 74.26,
-            "p25": 89.11,
-            "p50": 109.29,
-            "p75": 134.74,
-            "p90": 163.38
+            "p10": 75.2,
+            "p25": 91.14,
+            "p50": 110.82,
+            "p75": 138.05,
+            "p90": 165.1
           },
           {
             "d": 48,
-            "p10": 72.86,
-            "p25": 89.26,
-            "p50": 109.15,
-            "p75": 135.77,
-            "p90": 165.5
+            "p10": 74.87,
+            "p25": 90.02,
+            "p50": 110.88,
+            "p75": 137.81,
+            "p90": 166.55
           },
           {
             "d": 51,
-            "p10": 71.96,
-            "p25": 88.61,
-            "p50": 108.73,
-            "p75": 136.43,
-            "p90": 167.63
+            "p10": 72.71,
+            "p25": 89.61,
+            "p50": 110.43,
+            "p75": 137.53,
+            "p90": 168.84
           },
           {
             "d": 54,
-            "p10": 71.09,
-            "p25": 88.05,
-            "p50": 108.35,
-            "p75": 136.97,
-            "p90": 168.22
+            "p10": 72.37,
+            "p25": 88.94,
+            "p50": 109.01,
+            "p75": 137.71,
+            "p90": 169.09
           },
           {
             "d": 57,
-            "p10": 70.4,
-            "p25": 85.97,
-            "p50": 108.24,
-            "p75": 137.09,
-            "p90": 169.67
+            "p10": 71.34,
+            "p25": 87.91,
+            "p50": 109.54,
+            "p75": 139.6,
+            "p90": 170.96
           },
           {
             "d": 60,
-            "p10": 69.7,
-            "p25": 85.6,
-            "p50": 107.57,
-            "p75": 137.77,
-            "p90": 172.31
+            "p10": 70.09,
+            "p25": 86.97,
+            "p50": 109.38,
+            "p75": 139.36,
+            "p90": 171.82
           },
           {
             "d": 63,
-            "p10": 69.19,
-            "p25": 83.95,
-            "p50": 107.53,
-            "p75": 136.78,
-            "p90": 173.26
+            "p10": 69.45,
+            "p25": 87.35,
+            "p50": 108.57,
+            "p75": 139.26,
+            "p90": 173.84
           },
           {
             "d": 66,
-            "p10": 67.81,
-            "p25": 83.64,
-            "p50": 106.42,
-            "p75": 138.0,
-            "p90": 176.13
+            "p10": 68.28,
+            "p25": 86.31,
+            "p50": 108.73,
+            "p75": 139.61,
+            "p90": 173.41
           },
           {
             "d": 69,
-            "p10": 66.79,
-            "p25": 83.56,
-            "p50": 107.29,
-            "p75": 138.27,
-            "p90": 176.58
+            "p10": 65.71,
+            "p25": 84.86,
+            "p50": 108.71,
+            "p75": 140.73,
+            "p90": 176.29
           },
           {
             "d": 72,
-            "p10": 65.86,
-            "p25": 82.52,
-            "p50": 106.69,
-            "p75": 138.1,
-            "p90": 177.4
+            "p10": 65.92,
+            "p25": 83.24,
+            "p50": 108.07,
+            "p75": 140.15,
+            "p90": 176.96
           },
           {
             "d": 75,
-            "p10": 64.85,
-            "p25": 82.41,
-            "p50": 106.0,
-            "p75": 138.75,
-            "p90": 178.52
+            "p10": 64.78,
+            "p25": 82.35,
+            "p50": 107.99,
+            "p75": 140.48,
+            "p90": 178.76
           },
           {
             "d": 78,
-            "p10": 63.1,
-            "p25": 80.74,
-            "p50": 105.61,
-            "p75": 137.69,
-            "p90": 177.31
+            "p10": 64.26,
+            "p25": 81.83,
+            "p50": 107.83,
+            "p75": 141.19,
+            "p90": 181.63
           },
           {
             "d": 81,
-            "p10": 62.5,
-            "p25": 79.57,
-            "p50": 105.45,
-            "p75": 140.44,
-            "p90": 178.84
+            "p10": 63.49,
+            "p25": 81.2,
+            "p50": 106.36,
+            "p75": 142.33,
+            "p90": 184.14
           },
           {
             "d": 84,
-            "p10": 61.4,
-            "p25": 78.78,
-            "p50": 105.52,
-            "p75": 139.26,
-            "p90": 180.59
+            "p10": 62.06,
+            "p25": 81.15,
+            "p50": 107.25,
+            "p75": 143.56,
+            "p90": 186.61
           },
           {
             "d": 87,
-            "p10": 61.34,
-            "p25": 78.62,
-            "p50": 104.97,
-            "p75": 139.95,
-            "p90": 181.13
+            "p10": 61.24,
+            "p25": 80.01,
+            "p50": 106.52,
+            "p75": 142.54,
+            "p90": 183.85
           },
           {
             "d": 90,
-            "p10": 60.77,
-            "p25": 77.8,
-            "p50": 104.39,
-            "p75": 140.95,
-            "p90": 183.11
+            "p10": 60.18,
+            "p25": 79.24,
+            "p50": 105.5,
+            "p75": 143.66,
+            "p90": 185.12
           },
           {
             "d": 93,
-            "p10": 58.36,
-            "p25": 76.48,
-            "p50": 103.33,
-            "p75": 139.75,
-            "p90": 186.34
+            "p10": 59.94,
+            "p25": 77.56,
+            "p50": 106.54,
+            "p75": 141.68,
+            "p90": 188.77
           },
           {
             "d": 96,
-            "p10": 57.88,
-            "p25": 75.58,
-            "p50": 103.87,
-            "p75": 140.51,
-            "p90": 187.02
+            "p10": 59.05,
+            "p25": 77.05,
+            "p50": 105.99,
+            "p75": 143.97,
+            "p90": 188.35
           },
           {
             "d": 99,
-            "p10": 57.17,
-            "p25": 74.76,
-            "p50": 103.12,
-            "p75": 140.65,
-            "p90": 188.67
+            "p10": 58.4,
+            "p25": 76.34,
+            "p50": 104.7,
+            "p75": 143.06,
+            "p90": 185.68
           },
           {
             "d": 102,
-            "p10": 57.19,
-            "p25": 73.66,
-            "p50": 102.11,
-            "p75": 141.17,
-            "p90": 188.04
+            "p10": 58.12,
+            "p25": 75.82,
+            "p50": 103.93,
+            "p75": 143.94,
+            "p90": 187.18
           },
           {
             "d": 105,
-            "p10": 57.42,
-            "p25": 73.2,
-            "p50": 101.76,
-            "p75": 140.38,
-            "p90": 188.22
+            "p10": 57.58,
+            "p25": 75.17,
+            "p50": 103.82,
+            "p75": 142.74,
+            "p90": 189.79
           },
           {
             "d": 108,
-            "p10": 55.74,
-            "p25": 73.1,
-            "p50": 102.7,
-            "p75": 139.91,
-            "p90": 190.05
+            "p10": 57.68,
+            "p25": 75.18,
+            "p50": 104.1,
+            "p75": 143.09,
+            "p90": 192.13
           },
           {
             "d": 111,
-            "p10": 54.59,
-            "p25": 72.52,
-            "p50": 101.93,
-            "p75": 140.96,
-            "p90": 192.16
+            "p10": 56.04,
+            "p25": 73.83,
+            "p50": 102.25,
+            "p75": 141.86,
+            "p90": 193.47
           },
           {
             "d": 114,
-            "p10": 53.01,
-            "p25": 72.04,
-            "p50": 101.28,
-            "p75": 142.47,
-            "p90": 194.78
+            "p10": 55.96,
+            "p25": 73.13,
+            "p50": 103.18,
+            "p75": 142.89,
+            "p90": 193.24
           },
           {
             "d": 117,
-            "p10": 53.13,
-            "p25": 71.02,
-            "p50": 100.79,
-            "p75": 141.07,
-            "p90": 195.32
+            "p10": 55.54,
+            "p25": 73.46,
+            "p50": 103.0,
+            "p75": 141.6,
+            "p90": 192.06
           },
           {
             "d": 120,
-            "p10": 51.38,
-            "p25": 71.02,
-            "p50": 100.06,
-            "p75": 140.86,
-            "p90": 197.37
+            "p10": 55.31,
+            "p25": 72.89,
+            "p50": 102.8,
+            "p75": 141.72,
+            "p90": 192.42
           },
           {
             "d": 123,
-            "p10": 51.72,
-            "p25": 69.57,
-            "p50": 99.99,
-            "p75": 140.38,
-            "p90": 198.7
+            "p10": 53.92,
+            "p25": 72.57,
+            "p50": 102.7,
+            "p75": 143.45,
+            "p90": 196.1
           },
           {
             "d": 126,
-            "p10": 51.18,
-            "p25": 68.88,
-            "p50": 99.46,
-            "p75": 139.68,
-            "p90": 198.82
+            "p10": 52.52,
+            "p25": 71.49,
+            "p50": 102.38,
+            "p75": 143.86,
+            "p90": 199.17
           }
         ],
         "prob_range_70": [
-          56.56,
-          170.75
+          59.27,
+          170.03
         ]
       }
     },
     "week_range_70": [
-      102.58,
-      128.08
+      104.38,
+      128.44
     ],
     "scenarios": {
-      "bear": 67.4,
+      "bear": 67.7,
       "base": 84.7,
       "bull": 95.3
     },
@@ -1654,13 +1654,12 @@
     "horizon": "1-4 週",
     "key_levels": {
       "supports": [
-        106.9,
+        107.4,
         102.5
       ],
       "resistances": [
-        119.2,
-        138.7,
-        142.5
+        118.6,
+        138.0
       ]
     },
     "scenarios": [
@@ -1668,7 +1667,7 @@
         "id": "risk",
         "trigger": "收盤跌破 102（防守價）",
         "price_path": [
-          115.5,
+          116.5,
           102.5,
           97.4
         ],
@@ -1679,16 +1678,16 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 50,
+        "probability_pct": 55,
         "title": "劇本一・跌破防守，下探支撐"
       },
       {
         "id": "base",
         "trigger": "收盤守住 107（MA120）",
         "price_path": [
-          115.5,
-          106.9,
-          119.2
+          116.5,
+          107.4,
+          118.6
         ],
         "price_path_text": "116 → 回測 107（MA120）→ 反彈 119（MA20）震盪",
         "narrative": "空頭排列尚未扭轉，股價在MA120與MA20之間打底，反彈至壓力後仍震盪，等訊號轉強再說。",
@@ -1697,18 +1696,18 @@
           "stance": "wait",
           "text": "維持觀望，不進場"
         },
-        "probability_pct": 35,
+        "probability_pct": 30,
         "title": "劇本二・守住MA120"
       },
       {
         "id": "bull",
         "trigger": "收盤站上 119（MA20）且法人連 2 日買超",
         "price_path": [
-          115.5,
-          119.2,
-          138.7
+          116.5,
+          118.6,
+          138.0
         ],
-        "price_path_text": "116 → 挑戰 119（MA20）→ 突破後上看 139（MA60）",
+        "price_path_text": "116 → 挑戰 119（MA20）→ 突破後上看 138（近20日高）",
         "narrative": "站上MA20且法人買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
         "invalidation": "站上 119 後量縮不過，本劇本失效，切換劇本一。",
         "action": {
