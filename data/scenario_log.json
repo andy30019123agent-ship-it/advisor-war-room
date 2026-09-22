@@ -7932,7 +7932,8 @@
       "r1": 130.5,
       "close": 125.0
     },
-    "realized": null
+    "realized": "bull",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -7963,7 +7964,8 @@
       "r1": 2445.0,
       "close": 2400.0
     },
-    "realized": null
+    "realized": "bull",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -7994,7 +7996,8 @@
       "r1": 3836.8,
       "close": 3735.0
     },
-    "realized": null
+    "realized": "bull",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -8025,7 +8028,8 @@
       "r1": 47.6,
       "close": 46.8
     },
-    "realized": null
+    "realized": "bull",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -8056,7 +8060,8 @@
       "r1": 76.0,
       "close": 66.5
     },
-    "realized": null
+    "realized": "risk",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -8087,7 +8092,8 @@
       "r1": 76.5,
       "close": 66.7
     },
-    "realized": null
+    "realized": "base",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -8118,7 +8124,8 @@
       "r1": 215.0,
       "close": 188.5
     },
-    "realized": null
+    "realized": "bull",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -8149,7 +8156,8 @@
       "r1": 78.0,
       "close": 71.0
     },
-    "realized": null
+    "realized": "bull",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-25",
@@ -8180,7 +8188,8 @@
       "r1": 17.6,
       "close": 16.5
     },
-    "realized": null
+    "realized": "risk",
+    "ex_div_adjusted": true
   },
   {
     "date": "2026-08-26",
@@ -13170,6 +13179,254 @@
       "defense": 152.5,
       "r1": 187.5,
       "close": 178.5
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "2303",
+    "bucket": "green_x_green",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 50,
+      "bull": 35,
+      "risk": 15
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 50
+      },
+      {
+        "id": "bull",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 15
+      }
+    ],
+    "levels": {
+      "defense": 144.6,
+      "r1": 160.5,
+      "close": 160.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "2330",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 40,
+      "base": 35,
+      "risk": 25
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 40
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 25
+      }
+    ],
+    "levels": {
+      "defense": 2263.2,
+      "r1": 2505.0,
+      "close": 2460.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "3481",
+    "bucket": "yellow_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 40,
+      "base": 35,
+      "risk": 25
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 40
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 25
+      }
+    ],
+    "levels": {
+      "defense": 46.5,
+      "r1": 51.5,
+      "close": 50.5
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "2615",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 40,
+      "base": 35,
+      "risk": 25
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 40
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 25
+      }
+    ],
+    "levels": {
+      "defense": 107.2,
+      "r1": 122.3,
+      "close": 116.5
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "1303",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 40,
+      "base": 35,
+      "risk": 25
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 40
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 25
+      }
+    ],
+    "levels": {
+      "defense": 213.0,
+      "r1": 250.0,
+      "close": 231.5
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "6213",
+    "bucket": "green_x_green",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 50,
+      "bull": 40,
+      "risk": 10
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 50
+      },
+      {
+        "id": "bull",
+        "prob_pct": 40
+      },
+      {
+        "id": "risk",
+        "prob_pct": 10
+      }
+    ],
+    "levels": {
+      "defense": 499.6,
+      "r1": 599.0,
+      "close": 543.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "6505",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 40,
+      "base": 35,
+      "risk": 25
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 40
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 25
+      }
+    ],
+    "levels": {
+      "defense": 80.2,
+      "r1": 90.6,
+      "close": 87.2
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-09-22",
+    "stock_id": "2637",
+    "bucket": "green_x_green",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 50,
+      "bull": 40,
+      "risk": 10
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 50
+      },
+      {
+        "id": "bull",
+        "prob_pct": 40
+      },
+      {
+        "id": "risk",
+        "prob_pct": 10
+      }
+    ],
+    "levels": {
+      "defense": 92.5,
+      "r1": 105.0,
+      "close": 100.5
     },
     "realized": null
   }
