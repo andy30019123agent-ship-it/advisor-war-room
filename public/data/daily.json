@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-09-24",
-    "generated_at": "2026-09-24T20:14:29+08:00",
+    "generated_at": "2026-09-25T20:13:14+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -20,22 +20,22 @@
       {
         "id": "SPX",
         "name": "S&P 500",
-        "change_pct": -0.76
+        "change_pct": -0.02
       },
       {
         "id": "NDX",
         "name": "Nasdaq 100",
-        "change_pct": -0.04
+        "change_pct": 0.03
       },
       {
         "id": "SOX",
         "name": "費城半導體",
-        "change_pct": 0.81
+        "change_pct": -0.33
       },
       {
         "id": "VIX",
         "name": "VIX",
-        "change_pct": 6.26
+        "change_pct": -3.96
       }
     ]
   },
@@ -166,14 +166,6 @@
       "source": "picks"
     },
     {
-      "id": "6179",
-      "name": "亞通",
-      "type": "entry",
-      "price": 41.9,
-      "direction": "above",
-      "source": "picks"
-    },
-    {
       "id": "6933",
       "name": "AMAX-KY",
       "type": "entry",
@@ -190,6 +182,14 @@
       "source": "picks"
     },
     {
+      "id": "3605",
+      "name": "宏致",
+      "type": "entry",
+      "price": 188.5,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
       "id": "6505",
       "name": "台塑化",
       "type": "entry",
@@ -198,10 +198,10 @@
       "source": "picks"
     },
     {
-      "id": "3234",
-      "name": "光環",
+      "id": "6214",
+      "name": "精誠",
       "type": "entry",
-      "price": 186.4,
+      "price": 195.0,
       "direction": "above",
       "source": "picks"
     }
@@ -215,7 +215,7 @@
   },
   "events": [],
   "track_stats": {
-    "n": 495,
+    "n": 497,
     "closed": 445,
     "hit_rate_5d": 0.57,
     "hit_rate_20d": 0.786,
@@ -227,7 +227,7 @@
         "hit_rate": null
       },
       "swing": {
-        "n": 495,
+        "n": 497,
         "hit_rate": 0.786
       },
       "long": {
@@ -241,13 +241,7 @@
     "action": null,
     "todos": []
   },
-  "delta": {
-    "since": "2026-09-23",
-    "items": [
-      "風險溫度 3→5",
-      "大盤狀態 偏多進攻→中性"
-    ]
-  },
+  "delta": null,
   "market_battle": {
     "ohlc": [
       {
@@ -755,30 +749,13 @@
           ],
           "price_path_text": "48,025 → 回測 46,756（MA20）→ 反彈 48,602（近60日高）震盪",
           "narrative": "指數在MA20與近60日高之間找方向，等外資動向與均線結構進一步確認再調整曝險。",
-          "invalidation": "收盤跌破 46,756 本劇本失效，切換劇本三。",
+          "invalidation": "收盤跌破 46,756 本劇本失效，切換劇本二。",
           "action": {
             "stance": "hold",
             "text": "維持防禦，不因單一劇本加減碼"
           },
           "probability_pct": 50,
           "title": "劇本一・守住MA20"
-        },
-        {
-          "id": "bull",
-          "trigger": "收盤站上 48,602（近60日高）且外資連 2 日買超",
-          "price_path": [
-            48024.6,
-            48601.5
-          ],
-          "price_path_text": "48,025 → 挑戰 48,602（近60日高），站穩後再觀察下一關卡（近端無明確次一壓力）",
-          "narrative": "站上近60日高且外資買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
-          "invalidation": "站上 48,602 後量縮不過，本劇本失效，切換劇本一。",
-          "action": {
-            "stance": "small_entry",
-            "text": "可回補試單，不重壓"
-          },
-          "probability_pct": 30,
-          "title": "劇本二・站上近60日高"
         },
         {
           "id": "risk",
@@ -795,8 +772,25 @@
             "stance": "reduce",
             "text": "降曝險，控制股票總部位比重"
           },
+          "probability_pct": 30,
+          "title": "劇本二・跌破MA60，下探支撐"
+        },
+        {
+          "id": "bull",
+          "trigger": "收盤站上 48,602（近60日高）且外資連 2 日買超",
+          "price_path": [
+            48024.6,
+            48601.5
+          ],
+          "price_path_text": "48,025 → 挑戰 48,602（近60日高），站穩後再觀察下一關卡（近端無明確次一壓力）",
+          "narrative": "站上近60日高且外資買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
+          "invalidation": "站上 48,602 後量縮不過，本劇本失效，切換劇本一。",
+          "action": {
+            "stance": "small_entry",
+            "text": "可回補試單，不重壓"
+          },
           "probability_pct": 20,
-          "title": "劇本三・跌破MA60，下探支撐"
+          "title": "劇本三・站上近60日高"
         }
       ],
       "prob_note": "機率為規則估計（依三燈/籌碼/大盤查表），不是統計勝率，更不是保證。",
@@ -815,11 +809,11 @@
       "us_overnight": [
         {
           "id": "SPX",
-          "change_pct": -0.76
+          "change_pct": -0.02
         },
         {
           "id": "SOX",
-          "change_pct": 0.81
+          "change_pct": -0.33
         }
       ]
     },
@@ -857,28 +851,6 @@
           "rank_move": "−"
         },
         {
-          "id": "6179",
-          "name": "亞通",
-          "close": 36.6,
-          "score": 75.8,
-          "confidence": 63,
-          "action_summary": "拉回布局區 34.2-36.6，跌破 33.7 停損（試單上限 10 萬）",
-          "entry_zone": [
-            34.2,
-            36.6
-          ],
-          "defense_price": 33.7,
-          "invalidation": "跌破 33.7 或營收 YoY 連 2 月轉負",
-          "reasons": [
-            "均線多頭排列（MA20 34 > MA60 29）",
-            "60 日 RS +39.2%",
-            "R/R 約 1.4（目標 42／防守 32.9）"
-          ],
-          "sector": null,
-          "tenure_days": 2,
-          "rank_move": "↓"
-        },
-        {
           "id": "6933",
           "name": "AMAX-KY",
           "close": 385.0,
@@ -898,7 +870,7 @@
           ],
           "sector": null,
           "tenure_days": 1,
-          "rank_move": "−"
+          "rank_move": "↑"
         },
         {
           "id": "2357",
@@ -919,6 +891,28 @@
             "R/R 約 2.0（目標 1030／防守 914.9）"
           ],
           "sector": "電子代工",
+          "tenure_days": 1,
+          "rank_move": "↑"
+        },
+        {
+          "id": "3605",
+          "name": "宏致",
+          "close": 183.5,
+          "score": 65.0,
+          "confidence": 56,
+          "action_summary": "拉回布局區 183.5-188.5，跌破 160.9 停損（試單上限 10 萬）",
+          "entry_zone": [
+            183.5,
+            188.5
+          ],
+          "defense_price": 160.9,
+          "invalidation": "跌破 160.9 或營收 YoY 連 2 月轉負",
+          "reasons": [
+            "均線多頭排列（MA20 139 > MA60 112）",
+            "60 日 RS +114.4%",
+            "R/R 約 0.1（目標 188／防守 133.0）"
+          ],
+          "sector": null,
           "tenure_days": 1,
           "rank_move": "−"
         }
@@ -948,22 +942,22 @@
           "rank_move": "−"
         },
         {
-          "id": "3234",
-          "name": "光環",
-          "close": 178.0,
-          "score": 85.0,
-          "confidence": 70,
-          "action_summary": "分批佈局區 178.0-186.4，跌破 163.0 停損（試單上限 10 萬）",
+          "id": "6214",
+          "name": "精誠",
+          "close": 190.5,
+          "score": 71.4,
+          "confidence": 60,
+          "action_summary": "分批佈局區 187.5-190.5，跌破 175.3 停損（試單上限 10 萬）",
           "entry_zone": [
-            178.0,
-            186.4
+            187.5,
+            190.5
           ],
-          "defense_price": 163.0,
-          "invalidation": "跌破 163.0 或營收連 2 月轉負或估值回到高分位",
+          "defense_price": 175.3,
+          "invalidation": "跌破 175.3 或營收連 2 月轉負或估值回到高分位",
           "reasons": [
-            "營收 YoY +110.1%，近 3 月均 +90.0%",
-            "PER 落在歷史 0% 分位",
-            "PBR 歷史 99% 分位"
+            "營收 YoY +61.9%，近 3 月均 +56.9%",
+            "PER 落在歷史 47% 分位",
+            "殖利率 3.1%"
           ],
           "sector": null,
           "tenure_days": 1,
@@ -973,16 +967,12 @@
     },
     "roster_changes": {
       "new": [
-        "2357",
-        "2615",
-        "3234",
-        "6933"
+        "3605",
+        "6214"
       ],
       "dropped": [
-        "2637",
-        "3605",
-        "6213",
-        "7711"
+        "3234",
+        "6179"
       ],
       "stay_note": "6505 連續 15 日留任（波段結構未變）"
     }
