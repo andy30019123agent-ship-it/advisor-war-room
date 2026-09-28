@@ -2,16 +2,16 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-09-24",
-    "generated_at": "2026-09-25T20:13:14+08:00",
+    "generated_at": "2026-09-28T22:31:00+08:00",
     "sources": [
       "FinMind",
       "yfinance"
     ]
   },
   "market": {
-    "status": "中性",
-    "risk_temp": 5,
-    "conclusion": "盤勢中性，維持既有部位觀察。",
+    "status": "偏空防禦",
+    "risk_temp": 7,
+    "conclusion": "今天不加碼，守好停損位。",
     "taiex": {
       "close": 48024.6,
       "change_pct": -0.28
@@ -20,22 +20,22 @@
       {
         "id": "SPX",
         "name": "S&P 500",
-        "change_pct": -0.02
+        "change_pct": -0.52
       },
       {
         "id": "NDX",
         "name": "Nasdaq 100",
-        "change_pct": 0.03
+        "change_pct": -1.11
       },
       {
         "id": "SOX",
         "name": "費城半導體",
-        "change_pct": -0.33
+        "change_pct": -1.99
       },
       {
         "id": "VIX",
         "name": "VIX",
-        "change_pct": -3.96
+        "change_pct": 7.33
       }
     ]
   },
@@ -207,11 +207,11 @@
     }
   ],
   "exposure_guidance": {
-    "risk_temp": 5,
-    "max_equity_pct": 60,
-    "min_cash_pct": 40,
+    "risk_temp": 7,
+    "max_equity_pct": 50,
+    "min_cash_pct": 50,
     "new_position": "僅限試單",
-    "note": "風險溫度 5/10：波動升高，股票曝險控在 6 成、現金留 4 成。"
+    "note": "風險溫度 7/10：市場偏弱，現金至少留 5 成。"
   },
   "events": [],
   "track_stats": {
@@ -237,7 +237,7 @@
     }
   },
   "today_command": {
-    "headline": "風險 5/10：僅限小量試單，紀律優先。",
+    "headline": "風險 7/10：僅限小量試單，紀律優先。",
     "action": null,
     "todos": []
   },
@@ -809,17 +809,17 @@
       "us_overnight": [
         {
           "id": "SPX",
-          "change_pct": -0.02
+          "change_pct": -0.52
         },
         {
           "id": "SOX",
-          "change_pct": -0.33
+          "change_pct": -1.99
         }
       ]
     },
     "forecast_range_m1": [
       45100.69,
-      51329.67
+      51329.68
     ]
   },
   "picks": {
@@ -870,7 +870,7 @@
           ],
           "sector": null,
           "tenure_days": 1,
-          "rank_move": "↑"
+          "rank_move": "−"
         },
         {
           "id": "2357",
@@ -892,7 +892,7 @@
           ],
           "sector": "電子代工",
           "tenure_days": 1,
-          "rank_move": "↑"
+          "rank_move": "−"
         },
         {
           "id": "3605",
@@ -966,14 +966,8 @@
       ]
     },
     "roster_changes": {
-      "new": [
-        "3605",
-        "6214"
-      ],
-      "dropped": [
-        "3234",
-        "6179"
-      ],
+      "new": [],
+      "dropped": [],
       "stay_note": "6505 連續 15 日留任（波段結構未變）"
     }
   }

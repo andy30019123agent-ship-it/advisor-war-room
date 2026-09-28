@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-09-24",
-    "generated_at": "2026-09-25T20:13:14+08:00",
+    "generated_at": "2026-09-28T22:31:00+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,15 +24,14 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 68,
-    "decided_by_layer": 5,
+    "confidence": 58,
+    "decided_by_layer": 4,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
       "chips_weak",
       "valuation_very_expensive",
-      "valuation_warning",
-      "market_bull"
+      "valuation_warning"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以先觀望不進場；但估值很貴是風險。",
     "risk_note": "若已持有，跌破 141.7 先降波段部位；空手則等進場條件",
@@ -46,7 +45,7 @@
       "price": 168.5,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-02",
+    "reeval_date": "2026-10-05",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 142 收盤再降一半波段部位。",
@@ -223,22 +222,22 @@
         "published_at": "2026-09-24T08:18:28+00:00"
       },
       {
-        "title": "聯電作帳行情啟動- 日報 - 工商時報",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE8ySncwYzdYbG9yRmFZaGdha2VOQm9kangxNXgxOGpCNVZjcEtQTjRlZUc5Nzh0VGFOM2RDQjRLRUluUzVZdWFKdVdhUzRaeW1SaTdrYVBVVkxEZHpheWIw?oc=5",
-        "published_at": "2026-09-20T19:00:00+00:00"
-      },
-      {
         "title": "成熟製程夯 聯電發動「有感漲價」 力積電傳報價大漲四成 - 經濟日報",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1ody1mWk5HMkNsRXRkNW5FLUs0YkVRZ0lvNWhSQ3FQa2RPbDZiVFJYWnBOU3JyX2FyZFVyMVRUWHZqYzQ3bzVLU0U3bnJjQTdlbmxaS2FGdUlJUdIBX0FVX3lxTE5jMlZfRzdUZ2lET05iR1hJaFBEaW42N1k1SnpINUppRUhoQi1oNVRiTEdYVUExMG1rMjVzQ1YxeC1FYXJoWnZrNlFFRTFWQWtJU01vZFNZVVBfczBrZjlN?oc=5",
-        "published_at": "2026-09-24T09:00:00+00:00"
+        "published_at": "2026-09-20T07:00:00+00:00"
       },
       {
         "title": "明年EPS挑戰9.2元！聯電CPO、矽光子轉型商機發威官股法人喊「強力買進」：目標價跳升42％ - 上市櫃 - 旺得富理財網",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBudlA3eGhmWU5pN2RJRjNFREN1bmNIamFQY3puSGxZbHkydXItZ0dFZzdvVmczM1FHTFZlcDM3LTdzWV9wbFVsUTktcXByVzBBQzBfYnRPbVRmeDRSWmlnYWg2eEtiS0hDSVE?oc=5",
-        "published_at": "2026-09-18T10:16:34+00:00"
+        "published_at": "2026-09-18T07:00:00+00:00"
+      },
+      {
+        "title": "【12:03 即時新聞】聯電(2303)股價走強，法人買盤與AI成熟製程成盤中焦點 - CMoney投資網誌",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPMU03QmVkUTQtMndNSmpWRE1UUmowSW1pS2tSS01qZjBkd2wzcDNYTjJIazVJOXo1Y1VGTkxaZnRaTF85V05HZVAyTjdJNDBUT2JyQnBmbno2ZW4zRnl5N0F0Y2o1UHBMTXl2SC1id19SZUlhR3ZVNDZFazZ1SHgyQUc4dE1JWG9UcktUYmNR?oc=5",
+        "published_at": "2026-09-17T07:00:00+00:00"
       }
     ],
     "events": []
@@ -1515,7 +1514,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 43,
+        "probability_pct": 38,
         "title": "劇本一・站上近20日高"
       },
       {
@@ -1551,7 +1550,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 22,
+        "probability_pct": 27,
         "title": "劇本三・跌破防守，下探支撐"
       }
     ],

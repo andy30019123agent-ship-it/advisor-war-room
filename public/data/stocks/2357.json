@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-09-24",
-    "generated_at": "2026-09-25T20:13:14+08:00",
+    "generated_at": "2026-09-28T22:31:00+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,15 +24,14 @@
     "action": "試單",
     "stance": "中性偏多",
     "position_delta": "small_entry",
-    "confidence": 88,
+    "confidence": 78,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_mixed",
       "fundamental_ok",
       "chips_weak",
       "valuation_fair",
-      "valuation_warning",
-      "market_bull"
+      "valuation_warning"
     ],
     "readable_reason": "因為基本面沒惡化，所以小量試單；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "跌破 876.8 防守位就先降波段部位",
@@ -46,7 +45,7 @@
       "price": 1030.0,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-02",
+    "reeval_date": "2026-10-05",
     "advice": {
       "holder": {
         "action_text": "續抱不動，跌破 877 收盤再降一半波段部位。",
@@ -208,40 +207,40 @@
     ],
     "news": [
       {
-        "title": "蘋果華碩輸了！最強電腦品牌冠軍「年銷4850萬台」，內行：平價順暢功能強、耐用10 年沒壞 - 風傳媒",
+        "title": "華碩搭載輝達N1X ProArt筆電要來了 預計10/8正式登場 - Yahoo股市",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9rRGwzeWttcUhtdVN6YVd3eXVZVmc4bTUtZWZiRnJoaGFmNE1uaFZhUmJ4QlgxNmVaZENFZm05M2h5SmgzRXloWEFKX2UtYWQt?oc=5",
-        "published_at": "2026-09-20T08:29:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiuwJBVV95cUxQLVhib3BtTmlENndrUk5qNFh1elVMRUZfVkpPbmVIc0NpZFMtUDlBSXBWMG5ZVlFncUs3RFV4NExxeVFxaHNNT2tHYUM5NmgtZnNpdXJMeTRQaTdCdE5odDFxUG9vcXdEbzlfZ0U4N1F0NVIweldZV3BtemtMV1NTeDRXa0M2bGxlSlFhRVdjX1lwQjNEbnVadHh6czBnaXp4Tjd1NWZkZ1R1RjE3NUhhNThTTWtmM051WDRwZm5HNTZTZERFQzJKOEp4MHJUZEk0cW16RkhudGdSei1MUkhEUzhySWM1QTlPd29lUkdibXFwSnMxbXlDWUhUNndQNEpieDg1a0RodjQ5ajB5aC1obWpwOHVXRXliY0VHLTBsT3k5NTZ1RmlQVVpjM0F5VGtfX3RCZ293NFNFenc?oc=5",
+        "published_at": "2026-09-26T09:46:00+00:00"
       },
       {
-        "title": "華碩打造全台首間 ROG 電競專賣店 今日起於新竹巨城開幕 - gnn.gamer.com.tw",
+        "title": "華碩(2357) 個股概覽 | 個股 - 股市 - CMoney",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBTZmJ2b0ZxR21OdTNFQUtGcVVIbVh0NlNWdEJuWkNQdzdtdDJtRWk3MEx5SmVreUtsNUlxYzg5Wng1LXAzYXJBT1B6bHQtUkhuTVhV?oc=5",
+        "published_at": "2026-09-27T12:54:49+00:00"
+      },
+      {
+        "title": "華碩打造全台首間 ROG 電競專賣店 今日起於新竹巨城開幕 - GNN 新聞網",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFBrVFVSUVcyX3hzQzRPQVBEbE9XZ3lMZkdob1ZKY2tiX015bjE0U0lpMzE5ck9sYzhYTlMzVjVHa0k0MG5RYmtJS3ZoTTd2UFdvSVUtOFdyQkw?oc=5",
         "published_at": "2026-09-23T10:45:23+00:00"
       },
       {
-        "title": "北台灣有條件開放！大同、華碩擬建置桃園 AI 算力中心 - 經濟日報",
+        "title": "蘋果華碩輸了！最強電腦品牌冠軍「年銷4850萬台」，內行：平價順暢功能強、耐用10 年沒壞 - 風傳媒",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1BaTE4blVKbm5hR19LZUU5ZEE1TlcxTGN5N1B4Y3ZvWHEzRE50RUNNdnpjOWFibkcwdGZRYkdQLVVhUElVTl81NnB3dEJoUExRX2hydkhsLU1fd9IBX0FVX3lxTFBOc0NHd0tIbzlraDZtejZTVzRoVy02WU1ZMU00MXQ2cjhTSjhieXdkZmNiTS05bV91ejV5bmtzamxFQzVxUncxZGtraF82bkVIZlVvN2taWWJ1ZlEzanhv?oc=5",
-        "published_at": "2026-09-14T07:00:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9rRGwzeWttcUhtdVN6YVd3eXVZVmc4bTUtZWZiRnJoaGFmNE1uaFZhUmJ4QlgxNmVaZENFZm05M2h5SmgzRXloWEFKX2UtYWQt?oc=5",
+        "published_at": "2026-09-20T07:00:00+00:00"
       },
       {
-        "title": "華碩全球 AI Tech 高峰會前進韓國，攜手 NVIDIA 加速 AI 工廠落地 - TechNews 科技新報",
+        "title": "宏碁華碩領銜首發Googlebook 結合Gemini催化高階AI PC新變局 - cnyes.com",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBNaUhjVnZfcmd5MVZ6eF9RbEhRVWZNSVFwaTZpNDhOMGVQRExtTEtsQXhTR0lqTHRETGVLcXl0ZVZRYzJRcEt3eEJ4bFFrUTNITEJ2bUtPY3ZIVTkwdTJfTVFTdlAwM0Ry?oc=5",
-        "published_at": "2026-09-15T07:00:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9HLVM2M3BWZUlsMzNKanB0UTFsQnJfNDZCUUQtSjlHVkQ4SlJPcTRWNzltYUtTQl9PRmkwZnU5U0hXTUJINkdVSExLRQ?oc=5",
+        "published_at": "2026-09-26T01:40:21+00:00"
       },
       {
-        "title": "實至名歸！華碩三度獲選《Newsweek》全球最受信賴企業 - iThome",
+        "title": "華碩在10月15日正式發售前，將ROG Xbox Ally X20 OLED遊戲掌機的售價定為1,299美元 - XFastest News",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE85NEdRamJhMnlHWGhzYlBRSklDSWgwMUlUekNBb1V2WVozd0FxbDZlWm9acl8yaThQd3Rsc0Ffb001YkRLQUFXb0E3TQ?oc=5",
-        "published_at": "2026-09-17T01:59:08+00:00"
-      },
-      {
-        "title": "華碩準備發表AM5主機板的BIOS更新，為CXMT記憶體帶來優化的低延遲效能 - XFastest News",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxQeGdiWHJkb002WE92VC1lNjlDSEh2QVlPTEhzUDAxb2xNNGhNc3c4cjYtVGttWUNESGVEaTdkakViMzd1cVd1SWhfV3FmZ1JCRlJZLVJ4UXdoeUczekNNUHBzRzN5SGxkaWYwLW9Gb1NUSWFPMFJwSXVFS2dlMWItTU1ibGl0T1NBNC1WUmJqMmFKOXMwU0V0dmkxZUJMTE55Y294UTdnMGUtMnhoWnNqV0xEY0ZlYWhBZ1hGT3lmcWhqWkEyX2d3V19oMU1pUGExUkdydVJ2cw?oc=5",
-        "published_at": "2026-09-19T16:14:46+00:00"
+        "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxQcUl4RHZSeVNlVDcwODZtV3dwUFFqVy1JVGR1d2lISjRPZVp6ZDVBNF9KZ0FTX3VkTUtoRmVaSEFqcThELU5qVHozNGg3SVZyemNjTElFMFpWZUNWRzl0MGRPY21ZY1MwM3lVWDlEREpvY1BwMjZXN0hHS1JReHB3enk5QnRLQnhMUGpuMFJZTy13U1duM2c?oc=5",
+        "published_at": "2026-09-25T04:27:14+00:00"
       }
     ],
     "events": []
@@ -1022,24 +1021,6 @@
     },
     "scenarios": [
       {
-        "id": "bull",
-        "trigger": "收盤站上 968（MA20）且法人連 2 日買超",
-        "price_path": [
-          953.0,
-          967.9,
-          1030.0
-        ],
-        "price_path_text": "953 → 挑戰 968（MA20）→ 突破後上看 1,030（近20日高）",
-        "narrative": "站上MA20且法人買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
-        "invalidation": "站上 968 後量縮不過，本劇本失效，切換劇本二。",
-        "action": {
-          "stance": "small_entry",
-          "text": "站上壓力可先小量試單，不重壓"
-        },
-        "probability_pct": 40,
-        "title": "劇本一・站上MA20"
-      },
-      {
         "id": "base",
         "trigger": "收盤守住 900（近20日低）",
         "price_path": [
@@ -1055,7 +1036,25 @@
           "text": "維持小量試單，不重壓"
         },
         "probability_pct": 35,
-        "title": "劇本二・守住近20日低"
+        "title": "劇本一・守住近20日低"
+      },
+      {
+        "id": "bull",
+        "trigger": "收盤站上 968（MA20）且法人連 2 日買超",
+        "price_path": [
+          953.0,
+          967.9,
+          1030.0
+        ],
+        "price_path_text": "953 → 挑戰 968（MA20）→ 突破後上看 1,030（近20日高）",
+        "narrative": "站上MA20且法人買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
+        "invalidation": "站上 968 後量縮不過，本劇本失效，切換劇本一。",
+        "action": {
+          "stance": "small_entry",
+          "text": "站上壓力可先小量試單，不重壓"
+        },
+        "probability_pct": 35,
+        "title": "劇本二・站上MA20"
       },
       {
         "id": "risk",
@@ -1067,12 +1066,12 @@
         ],
         "price_path_text": "953 → 跌破 877（防守價）→ 下探 856（MA60），守穩才反彈",
         "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
-        "invalidation": "站回 877（防守價）本劇本失效，切換劇本二。",
+        "invalidation": "站回 877（防守價）本劇本失效，切換劇本一。",
         "action": {
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 25,
+        "probability_pct": 30,
         "title": "劇本三・跌破防守，下探支撐"
       }
     ],
@@ -1579,7 +1578,7 @@
       "basis": [
         "估值合理（PER 分位 54%）",
         "營收 YoY +51.2%，近3月動能轉強（加速度 +13.2pp）",
-        "產業別：電子工業"
+        "產業別：電腦及週邊設備業"
       ]
     }
   }

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-09-24",
-    "generated_at": "2026-09-25T20:13:14+08:00",
+    "generated_at": "2026-09-28T22:31:00+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,14 +24,13 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 64,
+    "confidence": 54,
     "decided_by_layer": 5,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
       "chips_weak",
-      "valuation_expensive",
-      "market_bull"
+      "valuation_expensive"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以先觀望不進場；但估值偏貴是風險。",
     "risk_note": "若已持有，跌破 106.3 先降波段部位；空手則等進場條件",
@@ -45,7 +44,7 @@
       "price": 125.0,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-02",
+    "reeval_date": "2026-10-05",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 106 收盤再降一半波段部位。",
@@ -203,28 +202,28 @@
     ],
     "news": [
       {
-        "title": "長榮、萬海 選逾120天 - UDN",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9PZVRBVlkwWVMxUVBxemlwbUFnTzFYdEdlenZab08xZUJEMVlRZzZJRjVNQy1VRzIwX2o2YkhzLXo3a2wtNVJxNVpjV0NwLVNH0gFWQVVfeXFMTVFqcWE1cm5SM1ZEQ1RTRGQ0ZXR6Y2JNVTBpVEN2cngyYjhJR0JXakJOazh3ZXlGWkZ6bzRvLWljWUJfOUJCRWN2azZsd2FqdVFDMWNnaFE?oc=5",
-        "published_at": "2026-09-14T07:00:00+00:00"
-      },
-      {
-        "title": "貨主提早拉貨 長榮、萬海看旺Q2、Q3 - 自由時報",
+        "title": "貨主提早拉貨 長榮、萬海看旺Q2、Q3 - stock.ltn.com.tw",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE45NUlVRy1UaF83WEhuWk51eDlwTDF3a2JpSExaNnM2Q0RlZFlfaDdYU1kyS0dwdnFNMkJ6WmlnQ0tlRVFTMHA0OW92dzBDTEdScXFYeUVVSDI?oc=5",
         "published_at": "2026-09-21T19:45:01+00:00"
       },
       {
-        "title": "2615 萬海- 萬海9月营收最少230億元起跳.帶領航運三雄再創輝煌.沖一波- 股市爆料同學會 - CMoney",
+        "title": "萬海(2615)2025股利發放日、除權息日與歷年配息金額 - 股市爆料同學會 - CMoney",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE41clQySGVqd3lpZzRPWm16RnFkRzlDN195cHd1bUJkbmxqdE55Z3FJVVNDWU1STTRjNFo5SjltNEJJNk9rcUQwTDMwVF8zX0JITHFUY2tPMHk?oc=5",
-        "published_at": "2026-09-12T07:00:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5pT0dzZW1hcnBVdkppa3ZwbUc3RVBBS0FiSWdlbll0Z2VDQ2dySF9wX3BSUVJUMFFPcWM4eVIyMUxlN0ducEQ4eDJ6RlpINDEtWFNLUURwSDJxTFNTRVE?oc=5",
+        "published_at": "2026-09-22T07:00:00+00:00"
       },
       {
         "title": "目標價110元！SCFI有望迎來連8漲…長榮、陽明、萬海最新EPS預估出爐法人點「1黑馬股」：獲利彈性高 - Yahoo股市",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMi9wJBVV95cUxNZHZZTmE4cmJ6TEVHYkpNeDl1c3pFUmJ2OFFJWTlVMzdZamJSOHJZNDlmZmRDZlZ0MDBBWWZfczdsNnYxdWpYVl9pMms4N3p5STd5TUVrN3ZHdUg3ay1iVS0xR3RnMUxYZFRFZVJQT2pSZkRFQTZYZ0FkSXJlYkltVlJtQU00UVdBZDBBMG1IZjN3WTV1V2R1MTN5UlJWVFRoNlF2Y3dTT21tQkk2VHk0UURkeXJuQ1Y3Sl96bHAxa2xxckYyZFRfMmt1eHplTXpHYU9BdU1weVBZUlVqZTlpUzNPV1pWOVFpTkZYeG1YTDJWUktJS2c0NXVlMWlCNUo2NnpkX2ZYT0lKQ3BWbURvaGc2LW1RQ0F4V1cwUHc5cFJSRXlJWlQta0JLZ0xUSTh0bExmQmV2eHNBdEFjWDNUUjVVam0wYjBib3I5WGNrSTlVLVZmOU1DUW5DazBqU1VndEZBS2U4dnVJakt2WHpDbkZqVmhQaVE?oc=5",
-        "published_at": "2026-09-18T05:05:00+00:00"
+        "published_at": "2026-09-17T07:00:00+00:00"
+      },
+      {
+        "title": "今日最夯股／短多下車、萬海拉回整理 KD黃金交叉後還能再攻波段高點？ | 市場焦點 | 證券 - 經濟日報",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5MdjR5ZHAyWmZ2alNJT3F4dkFaSjg5bWdPVVhHSkdVaHh2QWgzOTZ5VnMyQVRKbmhnQ1pFd09WdXdrZUJsc0cwbEdQa0pLb2lua0M2WHhYY0p1QQ?oc=5",
+        "published_at": "2026-09-16T07:00:00+00:00"
       },
       {
         "title": "萬海航運再度參加秘魯出口博覽會　深耕南美國際運銷市場 - ETtoday財經雲",
@@ -1128,7 +1127,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 43,
+        "probability_pct": 38,
         "title": "劇本一・站上近20日高"
       },
       {
@@ -1164,7 +1163,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 22,
+        "probability_pct": 27,
         "title": "劇本三・跌破防守，下探支撐"
       }
     ],

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-09-24",
-    "generated_at": "2026-09-25T20:13:14+08:00",
+    "generated_at": "2026-09-28T22:31:00+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,15 +24,14 @@
     "action": "試單",
     "stance": "中性偏多",
     "position_delta": "small_entry",
-    "confidence": 92,
+    "confidence": 82,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
       "chips_weak",
       "valuation_fair",
-      "valuation_warning",
-      "market_bull"
+      "valuation_warning"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以小量試單。",
     "risk_note": "跌破 337.7 防守位就先降波段部位",
@@ -46,7 +45,7 @@
       "price": 360.5,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-02",
+    "reeval_date": "2026-10-05",
     "advice": {
       "holder": {
         "action_text": "續抱不動，跌破 338 收盤再降一半波段部位。",
@@ -200,40 +199,40 @@
     ],
     "news": [
       {
-        "title": "〈焦點股〉AMAX-KY台美需求暢旺 亮燈漲停 - news.cnyes.com",
+        "title": "AMAX-KY亞洲及美國市場需求強勁 中壢廠擴建產能最快年底貢獻 - news.cnyes.com",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5XU29lWnZhX1BDc0hyTDRCNzVuRXJvekd3TnR6ZWJLTGZKRkFiVFFOeDNWMVVDRWRsRFRMSEZ4cGd6eGFsWGZoZ1l6ZnppVlE?oc=5",
-        "published_at": "2026-09-23T03:53:49+00:00"
-      },
-      {
-        "title": "AMAX-KY攻AI基建解決方案，台、美同步擴產 - 新聞 - MoneyDJ",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQVU1HUXNHWndDMkZDWXg0RFl3Wi1YVlJlNllZcTVqTUZNampjV2VxSXZycHdWajR5Vk5EcmRORW55MklyMVFZQVpoMjd4UzJBRWJwaTY5MXI4bzlIelBQR0V5V2xJUURMa29fNDJHRUs3Tm9ZTHljUEN6bHE5YXVDZmJpb2JiRDFmMWZJdnhzQ0kyZw?oc=5",
-        "published_at": "2026-09-17T08:28:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBDOVd5bjRxdzRZQUhDSWVkYmFyVHJpYTNLbmZWckc4N0d4T2pobElyem1jb3d5OEE2NFRuaGRGQ202TnY1UVBVWTN4cjRTX2s?oc=5",
+        "published_at": "2026-09-17T07:00:00+00:00"
       },
       {
         "title": "AI單櫃價格大幅提升 AMAX-KY三大動能拼成長 - 自由財經",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9ERUxjbTRvemV6cGVQY2d4OXJOODBnXzYtLWRoSDd0NU85bVFMRDh6TWhscTlPYXdMY19BZU1ZN1JqdlpranlpQlliTW52MGsyMWJ6WHJEelc0Rmw5UWF30gFkQVVfeXFMTVhFLTJ4cXZhR2w2T1dLYkR2VVdKWDdBS0FBZE1LQS13SmRUX3d4RUgtUHdVSndndV9vTkFXMmhUQnY5RU1wMGs4ZU1ISlhWaDlfVGtvZzRtb0NCZHkzTUoyU3JpdA?oc=5",
-        "published_at": "2026-09-17T11:41:07+00:00"
+        "published_at": "2026-09-17T07:00:00+00:00"
+      },
+      {
+        "title": "AMAX-KY攻AI基建解決方案，台、美同步擴產 - 新聞 - MoneyDJ",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQVU1HUXNHWndDMkZDWXg0RFl3Wi1YVlJlNllZcTVqTUZNampjV2VxSXZycHdWajR5Vk5EcmRORW55MklyMVFZQVpoMjd4UzJBRWJwaTY5MXI4bzlIelBQR0V5V2xJUURMa29fNDJHRUs3Tm9ZTHljUEN6bHE5YXVDZmJpb2JiRDFmMWZJdnhzQ0kyZw?oc=5",
+        "published_at": "2026-09-17T07:00:00+00:00"
       },
       {
         "title": "AMAX-KY：液冷機櫃資料中心獲青睞中壢廠完成擴充| 產經 - 中央社 CNA",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9QTmhDM3BTWktMcnlfSER4MFo5U2RjcnJpeldEX0o5d1RMUkFmUGpqYWt0bXQ1TFk5dl94VVZDQ0xibTJmTjlIbjcyaDc3dDhvTGNfOGVPMW9NLVRhbGc?oc=5",
-        "published_at": "2026-09-17T10:33:00+00:00"
+        "published_at": "2026-09-17T07:00:00+00:00"
       },
       {
         "title": "AMAX-KY 2026-09-17 法說會 - BigGo 財經",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxObmtfQ2l6X0tJcXE3WWVNWWw3MEZjMGpsTjRHTUs1ZFZMb3BJTmg4NTlXWmZNcy1Gbjl5OEVsNjZaUEprcmIyVTZXMDdPdmNQZXlORE5HRGdmemJBb3oxU1NkMFFBbmt3SHBIYi1OdVZLUGh5Tk1BTzZPMXBtWU56TjlXN1Q?oc=5",
-        "published_at": "2026-09-17T11:30:11+00:00"
+        "published_at": "2026-09-17T07:00:00+00:00"
       },
       {
-        "title": "TWA00 加權指數- 2026.09.17_6933 AMAX-KY 法說筆記- 股市爆料同學會 - CMoney",
+        "title": "【09:27 即時新聞】AMAX-KY(6933)攻上漲停，季漲幅翻倍成作帳焦點 - CMoney投資網誌",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE9wQ1JTT2NsRHM4Y3N1YjhzNXNZeHJqX3liNEU0TUZOX21jQzh4ZzduNEhfUDJaTmc5T05ja3JiLTdjWnN5QkkwaTFVbV9lN2tHYXBMYXppaXE?oc=5",
-        "published_at": "2026-09-24T01:22:13+00:00"
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNZFFpblZTN3ZHalZTcTc0RERFcGgyNVJpMjNVRVpoTmRlOS1CTUp6cHlsYkNRaEQzS2pCRy1DVk5QQ0dnTG53ak9TWG96TUhtRDlWZkJSVk5FaWlfY2d6T3cycnJ1OW5qRmFwUU9FYjRuNDhUZlI3N19ldEJqeDl2VTlybmZ2ZkxVSUZpV3JR?oc=5",
+        "published_at": "2026-09-23T01:27:37+00:00"
       }
     ],
     "events": []
@@ -1046,7 +1045,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 48,
+        "probability_pct": 43,
         "title": "劇本一・站上近期壓力"
       },
       {
@@ -1082,7 +1081,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 22,
+        "probability_pct": 27,
         "title": "劇本三・跌破防守，下探支撐"
       }
     ],
