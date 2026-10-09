@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-08",
-    "generated_at": "2026-10-08T22:01:10+08:00",
+    "generated_at": "2026-10-09T21:47:24+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,15 +24,14 @@
     "action": "試單",
     "stance": "中性偏多",
     "position_delta": "small_entry",
-    "confidence": 100,
+    "confidence": 90,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
       "chips_ok",
       "valuation_cheap",
-      "valuation_warning",
-      "market_bull"
+      "valuation_warning"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以小量試單。",
     "risk_note": "跌破 100.0 防守位就先降波段部位",
@@ -46,7 +45,7 @@
       "price": 110.0,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-15",
+    "reeval_date": "2026-10-16",
     "advice": {
       "holder": {
         "action_text": "續抱不動，跌破 100 收盤再降一半波段部位。",
@@ -202,10 +201,10 @@
     ],
     "news": [
       {
-        "title": "目標價給到85元！不是南亞、台塑化「四寶這一寶」法人最看好 盤面爆發鎖漲停75.4元 - Yahoo股市",
+        "title": "四寶發威了！台塑、南亞衝漲停 台塑化噴8% - Yahoo股市",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMirwJBVV95cUxNSkVreXJNcHpxUGp4OGtpblJmWmpVLXJLeVV6WUZxWUVHWkNEOFdod0VsM3d2Tkd0NTBRcXBsSldtS1FCX0lGNVcycWIyWnUzSVA0V21MMktSanU4SElMMWVySGI3UXpaQUhEZmwtSTM3UnAtcXJmOGF0ZlR6aGVremp0Ti1XLWIzWjVzaThqSThnTnR2X3hNODE0ZVFFTmRxUHR1SW41dXYyMkhnWGJhS2Jwb3ZWR20zN1JTTUhKLU15REMtanlvc1QxeEI2REtwOTUyNjYyelUwQVVZdmxlTXV6LWxzMWRpdW5YaEhkdjJxM2xkazdyc2VuaVFFMkUzVjYzcEVDV1FVeFNwMXVlTjdaazlBaldhVGcxaU9OeWFsbGpHNmp3eGhNZXFFSDQ?oc=5",
-        "published_at": "2026-10-07T08:55:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMioAJBVV95cUxPYkVqRVFoamRveHBaSFVQRF9VY21ybm5BMWN1bkhOWWE5ZFVRUUQtQjdwWDNkVUg3WE9ZYkdqcHdVOVNSUEVVblJwYlpGVUtJeFF4dWRaTXZUMmlzZ1hORzYxajRtbmpSdFRmZXRBdU9la1FUWG9LSlVjNnJaZGwxUmpUZEpkdEhBTHBELXpWWWhPNVJ1dzNjRG83UkJRNFlnTzVWamFSME1heFUtMEZHay1RdnpveHdKdWdrVllOSHJwMlZEbDZHWFFxd1Z6Q1ZLTDIyc1Bla2FwNmlyVl9TLW4wWjBDc0kyMWtLV3NpVEhWQmdXNW1HbHZpS3lHZWRIbEwwN0VwSXFPVXhFQzJHN3d5Q0hqdkJ3SUhVMVFPcXg?oc=5",
+        "published_at": "2026-10-07T04:31:25+00:00"
       },
       {
         "title": "台塑化、南亞、台塑、台化…台塑四寶選誰？最新目標價曝光，這檔外資喊到3位數，利多頻發還會再漲？ - 今周刊",
@@ -214,16 +213,16 @@
         "published_at": "2026-09-29T07:00:00+00:00"
       },
       {
+        "title": "台塑見8字頭還能買嗎？三大法人瘋狂掃貨分析師算完淨值驚吐：目標價將直奔三位數- 上市櫃 - 旺得富理財網",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE4ybE0ybU5odVBRVk9PeW1MbTI3Q1ZaVHU0MEVqNFVqTnRzUVFyQVp4TkpkZUhuUG80WThFeW0ydWxpd1BOeVRMamFGRHU5ZzNrQl8xM3RjZk9WZU53aU4zZW4wT3B4dmt0ZlE?oc=5",
+        "published_at": "2026-10-08T05:59:54+00:00"
+      },
+      {
         "title": "CCL獲利空間還很大！外資升評南亞目標價喊到424元台塑化也翻多2力道助攻- 日報 - 工商時報",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBhS0dMaFFQcUxpZFdtaV9KVm1iMVdpM0Y1Smk5Z0lERW9KTFlKM0RvZHZUNTV0ZVFSeFRhOWh4Y2Y2Rm82cGZiUzBWMGJsOU93Yjd3WlJncDRhYnpCUXJR?oc=5",
-        "published_at": "2026-09-29T19:00:00+00:00"
-      },
-      {
-        "title": "南亞、台塑化...主動式ETF爆買台塑二寶掃貨這檔4000張法人曝關鍵：最新目標價也說了- 上市櫃 - 旺得富理財網",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5lcDZjQWZSWk5JbzNWeXd5Q3JIUlVEZDlkT0NsaXBhdzkyLVBjaVRvV3Ata1VzdGJ4OVMzNU1rcERnRXFONFh5SkdGdWtiYlRRSlZXUVhrMnYzS210VWlxMk5jZnBhV2ZhRlE?oc=5",
-        "published_at": "2026-10-01T00:37:49+00:00"
+        "published_at": "2026-09-30T07:00:00+00:00"
       },
       {
         "title": "大牛股台塑漲停、南亞續創天價　轉投資台塑化業外進補 - ETtoday財經雲",
@@ -232,10 +231,10 @@
         "published_at": "2026-10-07T04:34:00+00:00"
       },
       {
-        "title": "法人看到什麼？台塑爆量攻漲停、台塑化創五年新高 - 經濟日報",
+        "title": "今日漲停股｜塑化傳產反彈與被動元件領軍，台塑、華新科、宏捷科強勢亮燈1007｜豐雲學堂2026 年 10 月 - 永豐金證券",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBfVUp0OVZiWFlrVU15Z1YwQkF1M1hkQ0ozVGxiT25Zc0ZQanNXQmRWdVJpMmxUZWZMQ3piTU1JaTVlR0YtVXhDeURURkdWRVRERTJSQnpCMFZ3d9IBX0FVX3lxTE9VUmFKZU55ei1UcXYtZ2ZXRV8zMmozdmxRZmE1STEwUGd6MTdIeE5rMnM5V0pLRUFsdThRSkxrdlg5SU9JbTFwR09CQmNBZDQyVkgxYWx2UlAwYUVoUHRR?oc=5",
-        "published_at": "2026-10-06T13:00:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMi9gNBVV95cUxPY3BqTExvUWRab3hZY3FHcVJEUFRoQ3lVMHBKbEpaN3g2NTVZdHFQUUo4QzhKa1VrRkhvT3MyaWgwc1lCb3Nrd0RfY2lYMDVhTVQtSFItcnJHd3VPNlNRNjJLZ0QxV1RzdzZBV3ZJRUxuZzR6Z3k2dWktMWVocER0aXoyWFdwVmJXRkUzNHRNLThPR1JlVWR3cGFSd182VWRVZXo1U04zLVczZ05CX3lWamYwMFB2bHNXRkpzWU1QWXlxaEQ2MFRESXNyUnduM0lxRkxtWmtNOG9nbHhMUjY4R0ZHRE00VE81M3A2MXpuYnJJVDFVN1FVcFhXWkhZRkxVTUQtQ2QwTTkwenUtVGNjWG5oV1ZYYjlMYkpwNFROaGVYSWdqZTIzamNaQUVnaXFVVkVKeHFuSldubm9DSHlfZVFnaVRmcm1BbVR1bmFaSHpiWDJFN0YxcGV4bDdab3E3QUFRWDc4NHZ6UXJGOGRqdVAybU43RjVabndJVm5UYXRrYlBQbTRQQ25NRmQtT01ZeWxrWm9RR0RfekRrQ3pmM01CUW95WXVlYTIxYWFaVmc0bzYtZ29YNEFkMHptN0w0Vk1lUFEwMV95eFdUTlE5M1J3SHVlZzZXcWJVcl9XREZhRzFjRzNXMWk3ZkJ2NTBOR1VkWmhn?oc=5",
+        "published_at": "2026-10-07T11:20:46+00:00"
       }
     ],
     "events": []
@@ -1319,7 +1318,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 40,
+        "probability_pct": 35,
         "title": "劇本二・站上近期壓力"
       },
       {
@@ -1337,7 +1336,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 15,
+        "probability_pct": 20,
         "title": "劇本三・跌破防守，下探支撐"
       }
     ],

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-08",
-    "generated_at": "2026-10-08T22:01:10+08:00",
+    "generated_at": "2026-10-09T21:47:24+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,7 +24,7 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 68,
+    "confidence": 58,
     "decided_by_layer": 2,
     "reason_codes": [
       "chips_broken",
@@ -32,8 +32,7 @@
       "fundamental_ok",
       "chips_weak",
       "valuation_very_expensive",
-      "valuation_warning",
-      "market_bull"
+      "valuation_warning"
     ],
     "readable_reason": "因為法人連日賣超、籌碼失效，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "若已持有，跌破 4314.8 先降波段部位；空手則等進場條件；法人持續賣超需留意",
@@ -47,7 +46,7 @@
       "price": 4834.5,
       "condition": "站回 MA20 且法人連 2 日買超"
     },
-    "reeval_date": "2026-10-15",
+    "reeval_date": "2026-10-16",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 4,315 收盤再降一半波段部位。",
@@ -100,9 +99,9 @@
       "fundamental": {
         "color": "yellow",
         "facts": [
-          "最新營收月 2026/8",
-          "營收YoY +44.1%",
-          "近3月平均YoY +19.7%",
+          "最新營收月 2026/9",
+          "營收YoY +2.0%",
+          "近3月平均YoY +19.4%",
           "PER 77.5"
         ]
       },
@@ -126,13 +125,13 @@
     },
     "valuation": {
       "band": "很貴",
-      "base": 1623.1,
-      "bull": 1690.9,
-      "bear": 1391.8,
+      "base": 1609.0,
+      "bull": 1676.1,
+      "bear": 1379.7,
       "regime": "3y",
-      "warning": "模型 Base 1623.1 與現價 4690.0 偏離 65%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+      "warning": "模型 Base 1609.0 與現價 4690.0 偏離 66%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
     },
-    "rr": -8.17
+    "rr": -8.21
   },
   "evidence": {
     "roles": [
@@ -151,7 +150,7 @@
       {
         "role": "基本面分析師",
         "support": [
-          "基本面沒惡化、成長仍在（營收YoY +44.1%），是續抱與逢低的底氣。"
+          "基本面沒惡化、成長仍在（營收YoY +2.0%），是續抱與逢低的底氣。"
         ],
         "oppose": [
           "PER 77.5 已不便宜，好公司不等於好價格，追高要留意估值。"
@@ -186,7 +185,7 @@
       {
         "role": "魔鬼代言人",
         "support": [
-          "反過來想：營收YoY +44.1%、股價已修正一段，此時先觀望不進場可能砍在阿呆谷、錯過基本面反彈。"
+          "反過來想：營收YoY +2.0%、股價已修正一段，此時先觀望不進場可能砍在阿呆谷、錯過基本面反彈。"
         ],
         "oppose": [
           "若營收維持成長、法人回補並站回均線，過度保守會兩頭空。"
@@ -222,28 +221,28 @@
         "published_at": "2026-10-06T03:12:11+00:00"
       },
       {
+        "title": "台積電vs.聯發科怎麼選？網友掀熱議 - 自由財經",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBZc25YcUlsZm1BOGxJczF2ZGJ5NzdObnNtd0dkRlhhWnd2eWZlNUlEc1JsUkpqX1FtWmhJYjdvTExvZ1pWNFlHUjd1RmE3ektsX016TV9vMmdVZTJucFA00gFkQVVfeXFMT2w1emRYVU94TklOSnhTM0RLUTVZN2JSMnpybldweTlWTE1xaTE3ZFdnMUpYREpsNE9TZlktenNDd2dhZkRtaGJUZ0RyRlpLOFdZelE1ZGdveGdxbDIySkk1NW1yRw?oc=5",
+        "published_at": "2026-09-27T07:00:00+00:00"
+      },
+      {
         "title": "遭爆大砍AI額度！郭哲榮怒喊「出清持股」　聯發科：為了更有效益 - ETtoday財經雲",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5qaXU3a1E5eWlycXN4TDBLdkcwbHdhUzN3TXhKMnpKT2lWOXhWcGFrX3NUZUswRFIwUVZQQk5ua3ljNG9uTjN3TTVhZEpwRnR4SlHSAVBBVV95cUxQVmJrdmU2U3ZjT2JuaUIxSXlzNmN4NWZKSjdYVE56WlBnR05KU0tfOXhhNENVNG02RFNQMkIzaGtpOEpWMklWRFRjZTZsa1JzNw?oc=5",
         "published_at": "2026-10-06T06:21:00+00:00"
       },
       {
-        "title": "哲哲怒轟大砍員工AI token使用量？ 聯發科回應了 - 自由財經",
+        "title": "台達電、聯發科、南電、華新科…20檔「低基期股」接棒台股衝關5萬點！「億元教授」點它有望挑戰股王 - 今周刊",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE84OUUzYkJfeUgzNG1Tb1JCcy0xeXdCSXdoRFM0TUlOOGRvUWdvLXdtZEI5SnVaTFo1REctcG1Kc1lRUWZjVnpxX2RrdER6NFZmTzhfVDNTWU5OWHBpbENZ0gFkQVVfeXFMTllqSFIyOE9wM0FRdWtkdGYxT2ltOUEtZ2NVaGJyNTVqeWp5SUp0YXFxM3QtaXI1ZjdoUURCMkNGUXN3cTA1SjdpMFVJb1pZbUxaYzdyRWNRQUNOR29pN1ZwMGFqcA?oc=5",
-        "published_at": "2026-10-06T06:56:41+00:00"
+        "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNaGM4TGJtdWhxYWo3a2kyb05EVmZCWjBod081Sk40XzVxSVk0MjhGdmp1RDk2dHVVOEY5RjMxX1g1RUJqUmlyRVZzcmtfTmRpWlc4ZzJEOXBUekVERnB1SjdOdVJ1OGJoWlhCaVAyWGJPaWU0QTNvUDh3eVIycC1tWQ?oc=5",
+        "published_at": "2026-10-04T10:15:00+00:00"
       },
       {
         "title": "聯發科重摔250元 跌回4字頭！原因曝光 - 三立新聞",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9odlNhSWdVczloS2RtVEhySUVNczhVX1RVcmt3dHA4UGthR2g0dG1HbkIyaXBHRlRKT0Fha1ZJOXVTTjNXYndrM0VaUQ?oc=5",
         "published_at": "2026-10-06T04:29:50+00:00"
-      },
-      {
-        "title": "郭哲榮「一理由」撂話出清聯發科股票！痛批高層逼工程師手刻「亂搞事沒救了」…公司完整回應曝光 - 今周刊",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOcm5qdWt2dnB4NVRyMTZBZHlzTFgzemVaZDl2b3BFdGZMckZ6bldvY21YSGNnTEVWbnVJOHl1dG1PRHZzSGhWSEZHNXR3TG1WbnlVaTRuSVJnY04wdUg2MUZVUlVaaHMyMGRkdi1TdVBfaUVsTVlmaDQzMFNObE1Kdw?oc=5",
-        "published_at": "2026-10-07T04:23:00+00:00"
       }
     ],
     "events": []
@@ -1629,24 +1628,6 @@
     },
     "scenarios": [
       {
-        "id": "base",
-        "trigger": "收盤守住 4,430（近20日低）",
-        "price_path": [
-          4690.0,
-          4430.0,
-          4834.5
-        ],
-        "price_path_text": "4,690 → 回測 4,430（近20日低）→ 反彈 4,834（MA20）震盪",
-        "narrative": "股價在近20日低與MA20之間找方向，等法人與均線訊號進一步確認再加減碼。",
-        "invalidation": "收盤跌破 4,430 本劇本失效，切換劇本二。",
-        "action": {
-          "stance": "wait",
-          "text": "維持觀望，不進場"
-        },
-        "probability_pct": 40,
-        "title": "劇本一・守住近20日低"
-      },
-      {
         "id": "risk",
         "trigger": "收盤跌破 4,315（防守價）",
         "price_path": [
@@ -1656,13 +1637,31 @@
         ],
         "price_path_text": "4,690 → 跌破 4,315（防守價）→ 下探 4,204（MA60），守穩才反彈",
         "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
-        "invalidation": "站回 4,315（防守價）本劇本失效，切換劇本一。",
+        "invalidation": "站回 4,315（防守價）本劇本失效，切換劇本二。",
         "action": {
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
+        "probability_pct": 45,
+        "title": "劇本一・跌破防守，下探支撐"
+      },
+      {
+        "id": "base",
+        "trigger": "收盤守住 4,430（近20日低）",
+        "price_path": [
+          4690.0,
+          4430.0,
+          4834.5
+        ],
+        "price_path_text": "4,690 → 回測 4,430（近20日低）→ 反彈 4,834（MA20）震盪",
+        "narrative": "股價在近20日低與MA20之間找方向，等法人與均線訊號進一步確認再加減碼。",
+        "invalidation": "收盤跌破 4,430 本劇本失效，切換劇本一。",
+        "action": {
+          "stance": "wait",
+          "text": "維持觀望，不進場"
+        },
         "probability_pct": 40,
-        "title": "劇本二・跌破防守，下探支撐"
+        "title": "劇本二・守住近20日低"
       },
       {
         "id": "bull",
@@ -1679,7 +1678,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 20,
+        "probability_pct": 15,
         "title": "劇本三・站上MA20"
       }
     ],
@@ -2185,7 +2184,7 @@
       "flip_condition": "站回 MA20 4,834 且連 2 日買超 → 轉中性偏多",
       "basis": [
         "估值很貴（PER 分位 98%）",
-        "營收 YoY +44.1%，近3月動能轉強（加速度 +11.4pp）",
+        "營收 YoY +2.0%，近3月動能轉強（加速度 +12.8pp）",
         "產業別：半導體業"
       ]
     }

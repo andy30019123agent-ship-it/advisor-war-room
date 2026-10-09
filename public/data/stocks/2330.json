@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-08",
-    "generated_at": "2026-10-08T22:01:10+08:00",
+    "generated_at": "2026-10-09T21:47:24+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,7 +24,7 @@
     "action": "續抱",
     "stance": "中性偏多",
     "position_delta": "hold",
-    "confidence": 70,
+    "confidence": 60,
     "decided_by_layer": 6,
     "reason_codes": [
       "chips_broken",
@@ -32,8 +32,7 @@
       "fundamental_ok",
       "chips_weak",
       "valuation_expensive",
-      "valuation_warning",
-      "market_bull"
+      "valuation_warning"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
     "risk_note": "跌破 2346.0 防守位就先降波段部位；法人持續賣超需留意",
@@ -44,7 +43,7 @@
     },
     "defense_price": 2346.0,
     "entry_condition": null,
-    "reeval_date": "2026-10-15",
+    "reeval_date": "2026-10-16",
     "core_note": "此為波段層判斷，不影響定期定額核心部位。",
     "advice": {
       "holder": {
@@ -218,22 +217,22 @@
         "published_at": "2026-10-08T05:37:00+00:00"
       },
       {
-        "title": "台積公司2026年9月營收報告|台灣積體電路製造股份有限公司 - TSMC",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE5rUXJYTE9pbmliM1JzdURRTzF4TlI3Q25VNmJmeDVGdkhFeEdKVzdVX0s2QWZqVE43U2JyVnk1Q1R2QzI1RmJHaU1hM1Zodw?oc=5",
-        "published_at": "2026-10-08T05:30:41+00:00"
-      },
-      {
         "title": "台積電擴大美國製造版圖 傳赴德州建第二園區 總投資額估超越亞利桑那州 - 經濟日報",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5CV2V6MHZzeG9UYnBKTW1yTGVUb1ZZM0FuWlRrV3RrdTJfWVlzNTNjOUU3UExLcDJoQUsza3ZEUlBaa2d4NDd2bF9zc2trZHMtQnBnZU5uajBjd9IBX0FVX3lxTE15WVpRMVQ4WEVmTmlTVFIyTGtNSEJJV3EzQlJsSGc2dkFsTzRiZDVtV0cxakN3RUpvaENXZmRzY1ZrQmpFSkdmRjluSlNwZU9pY2Z3LWFZdTZ0ZG1qRnh3?oc=5",
         "published_at": "2026-09-29T07:00:00+00:00"
       },
       {
-        "title": "台積電衝新高！外媒揭「隱憂」 下一波考驗將到來 - Yahoo新聞",
+        "title": "台積電9月營收衰退！今年前三季仍衝到3.9兆元 史上最強 - Yahoo",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMisAJBVV95cUxPcVd5aWRtZUpZemRLNEM5NFlVMXpsRDBKRWdhYUI1NnpJQ2duTXhhMXR4Ukc1TFd0WVNmWV9uUmpWNEg2VVVqeUllb3YxVGJWWkhhTXdPbnc1d2RMZDRpd19TQ2tMemNLZExLa0czVE9iVy1mS0JYd3p2SXMzaDJpaTJsdkNja1pGcEJhSVpQUndyNEFVUWlYTFFSRHRiOS1DeHFvbmFCYnRKWkRCQjhXNlNSVVpoSFNmaW95WVhIVHByOFNTQzYtM2JRcWEwM0dLaUVIbk5YLTVpYkFmUjhwTUk1c1VzUEVlbUtHRjh4OGxVT3ZlRFhnVFVZZGNUNDRubERCQXhHY1JGeHJqVk9scnBiVHpyUDZSU19MeFVILUIxcmhrcEFIQmQyZUVtcXhN?oc=5",
-        "published_at": "2026-10-06T13:12:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMi9AJBVV95cUxORGplSlpKR2otSmpLaEowdWkxemNZaFhJVEEwOS1nSFlyelBGWm41N2U4ci1DNEtMZDBTd3IzZGdIQWRYODZMU2h6SjN1NjNuSWY3YWM1QjRwQ25JSks2Z1ExWkM2cVVOaVhpazN5MjFwaTBMbEU3ZzNMRjhBMmdUajNXaDUzeTB1UmlNNV85WFgxUWlCNWdxTFVZUkdJaEduRDhZSFJIZHo0UDZ6RUJBaGhjMU5nbnI3Q0loZS00U0txZDNXeWRPdkpNZndOS2tCWjlLT1VKWmJIVlduQUtKZlhRb2RBN3hyRWtsWUV5Y1lIb2kzRFlPVHBEU0RSQ2RlNmEyQjNOTm95VXdENm9Tc2VPMWlDbmFOTFR2cEVXXy1pYk8zazUtSVZIR1h3ZUk4OGY2NV9GZm9EU0VycF9tUUw0cTFvTXRHOFlzcG5ZNkZMR1BrWTNuc1c4XzNpSFlnUl9fSXJOMWplZmg1OWdraEZmWWM?oc=5",
+        "published_at": "2026-10-08T05:46:58+00:00"
+      },
+      {
+        "title": "台積電再創天價 下一個難題也浮出檯面 - 自由財經",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5Lcm1OTTg2TjdPQ1JDWkM4bElzeEM5UVZxQkpzY2tIdlBUcHJZZGFlRDB3VHduS21XSzdCcld6SWxJREJybV8yWHA5M1dwc3lvYk1DRm4tc25TZEx5RGZF0gFkQVVfeXFMTWdlQnAxYllCSGhnUWR6UEgzQ0pqN1FJWGpxeC0zUC1kSFZUWXVrYUVMNzVQeE1ST3BuZFhDakNTY0gwM1BZejA4Y2ZyRlJEbEJUMVdEQkwxNWF0QlZUZ2xhcFZsTA?oc=5",
+        "published_at": "2026-10-05T06:32:47+00:00"
       }
     ],
     "events": []
@@ -1650,7 +1649,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 35,
+        "probability_pct": 40,
         "title": "劇本二・跌破防守，下探支撐"
       },
       {
@@ -1667,7 +1666,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 20,
+        "probability_pct": 15,
         "title": "劇本三・站上近20日高"
       }
     ],

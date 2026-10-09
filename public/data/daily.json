@@ -2,16 +2,16 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-08",
-    "generated_at": "2026-10-08T22:01:10+08:00",
+    "generated_at": "2026-10-09T21:47:24+08:00",
     "sources": [
       "FinMind",
       "yfinance"
     ]
   },
   "market": {
-    "status": "偏空防禦",
-    "risk_temp": 7,
-    "conclusion": "今天不加碼，守好停損位。",
+    "status": "中性",
+    "risk_temp": 5,
+    "conclusion": "盤勢中性，維持既有部位觀察。",
     "taiex": {
       "close": 49313.4,
       "change_pct": -0.99
@@ -20,22 +20,22 @@
       {
         "id": "SPX",
         "name": "S&P 500",
-        "change_pct": -0.25
+        "change_pct": 0.24
       },
       {
         "id": "NDX",
         "name": "Nasdaq 100",
-        "change_pct": -0.63
+        "change_pct": 0.22
       },
       {
         "id": "SOX",
         "name": "費城半導體",
-        "change_pct": -2.22
+        "change_pct": -0.23
       },
       {
         "id": "VIX",
         "name": "VIX",
-        "change_pct": 2.85
+        "change_pct": -1.56
       }
     ]
   },
@@ -166,10 +166,10 @@
       "source": "picks"
     },
     {
-      "id": "2455",
-      "name": "全新",
+      "id": "6179",
+      "name": "亞通",
       "type": "entry",
-      "price": 613.0,
+      "price": 41.9,
       "direction": "above",
       "source": "picks"
     },
@@ -182,10 +182,10 @@
       "source": "picks"
     },
     {
-      "id": "6426",
-      "name": "統新",
+      "id": "6218",
+      "name": "豪勉",
       "type": "entry",
-      "price": 346.6,
+      "price": 57.2,
       "direction": "above",
       "source": "picks"
     },
@@ -198,24 +198,24 @@
       "source": "picks"
     },
     {
-      "id": "2357",
-      "name": "華碩",
+      "id": "3287",
+      "name": "廣寰科",
       "type": "entry",
-      "price": 1010.0,
+      "price": 45.0,
       "direction": "above",
       "source": "picks"
     }
   ],
   "exposure_guidance": {
-    "risk_temp": 7,
-    "max_equity_pct": 50,
-    "min_cash_pct": 50,
+    "risk_temp": 5,
+    "max_equity_pct": 60,
+    "min_cash_pct": 40,
     "new_position": "僅限試單",
-    "note": "風險溫度 7/10：市場偏弱，現金至少留 5 成。"
+    "note": "風險溫度 5/10：波動升高，股票曝險控在 6 成、現金留 4 成。"
   },
   "events": [],
   "track_stats": {
-    "n": 577,
+    "n": 580,
     "closed": 527,
     "hit_rate_5d": 0.567,
     "hit_rate_20d": 0.822,
@@ -227,7 +227,7 @@
         "hit_rate": null
       },
       "swing": {
-        "n": 577,
+        "n": 580,
         "hit_rate": 0.822
       },
       "long": {
@@ -237,14 +237,11 @@
     }
   },
   "today_command": {
-    "headline": "風險 7/10：僅限小量試單，紀律優先。",
+    "headline": "風險 5/10：僅限小量試單，紀律優先。",
     "action": null,
     "todos": []
   },
-  "delta": {
-    "since": "2026-10-07",
-    "items": []
-  },
+  "delta": null,
   "market_battle": {
     "ohlc": [
       {
@@ -812,17 +809,17 @@
       "us_overnight": [
         {
           "id": "SPX",
-          "change_pct": -0.25
+          "change_pct": 0.24
         },
         {
           "id": "SOX",
-          "change_pct": -2.22
+          "change_pct": -0.23
         }
       ]
     },
     "forecast_range_m1": [
-      46437.42,
-      52058.03
+      46437.47,
+      52057.98
     ]
   },
   "picks": {
@@ -854,22 +851,22 @@
           "rank_move": "−"
         },
         {
-          "id": "2455",
-          "name": "全新",
-          "close": 558.0,
-          "score": 84.1,
-          "confidence": 69,
-          "action_summary": "拉回布局區 548.8-558.0，跌破 513.4 停損（試單上限 10 萬）",
+          "id": "6179",
+          "name": "亞通",
+          "close": 37.8,
+          "score": 82.7,
+          "confidence": 68,
+          "action_summary": "拉回布局區 36.8-37.8，跌破 34.8 停損（試單上限 10 萬）",
           "entry_zone": [
-            548.8,
-            558.0
+            36.8,
+            37.8
           ],
-          "defense_price": 513.4,
-          "invalidation": "跌破 513.4 或營收 YoY 連 2 月轉負",
+          "defense_price": 34.8,
+          "invalidation": "跌破 34.8 或營收 YoY 連 2 月轉負",
           "reasons": [
-            "均線多頭排列（MA20 549 > MA60 440）",
-            "60 日 RS +77.4%",
-            "R/R 約 1.8（目標 613／防守 526.8）"
+            "均線多頭排列（MA20 37 > MA60 30）",
+            "60 日 RS +36.0%",
+            "R/R 約 1.7（目標 42／防守 35.4）"
           ],
           "sector": null,
           "tenure_days": 1,
@@ -898,26 +895,26 @@
           "rank_move": "−"
         },
         {
-          "id": "6426",
-          "name": "統新",
-          "close": 341.0,
+          "id": "6218",
+          "name": "豪勉",
+          "close": 56.0,
           "score": 75.0,
           "confidence": 62,
-          "action_summary": "拉回布局區 341.0-346.6，跌破 291.5 停損（試單上限 10 萬）",
+          "action_summary": "拉回布局區 56.0-57.2，跌破 48.3 停損（試單上限 10 萬）",
           "entry_zone": [
-            341.0,
-            346.6
+            56.0,
+            57.2
           ],
-          "defense_price": 291.5,
-          "invalidation": "跌破 291.5 或營收 YoY 連 2 月轉負",
+          "defense_price": 48.3,
+          "invalidation": "跌破 48.3 或營收 YoY 連 2 月轉負",
           "reasons": [
-            "均線多頭排列（MA20 347 > MA60 257）",
-            "60 日 RS +95.4%",
-            "R/R 約 5.2（目標 412／防守 327.4）"
+            "均線多頭排列（MA20 57 > MA60 44）",
+            "60 日 RS +58.4%",
+            "R/R 約 5.9（目標 69／防守 53.8）"
           ],
           "sector": null,
-          "tenure_days": 4,
-          "rank_move": "↓"
+          "tenure_days": 1,
+          "rank_move": "−"
         }
       ],
       "on_deck": [],
@@ -945,43 +942,41 @@
           "rank_move": "−"
         },
         {
-          "id": "2357",
-          "name": "華碩",
-          "close": 996.0,
-          "score": 72.9,
+          "id": "3287",
+          "name": "廣寰科",
+          "close": 43.45,
+          "score": 72.2,
           "confidence": 61,
-          "action_summary": "分批佈局區 962.1-996.0，跌破 916.3 停損（試單上限 10 萬）",
+          "action_summary": "分批佈局區 39.4-43.5，跌破 40.0 停損（試單上限 10 萬）",
           "entry_zone": [
-            962.1,
-            996.0
+            39.4,
+            43.5
           ],
-          "defense_price": 916.3,
-          "invalidation": "跌破 916.3 或營收連 2 月轉負或估值回到高分位",
+          "defense_price": 40.0,
+          "invalidation": "跌破 40.0 或營收連 2 月轉負或估值回到高分位",
           "reasons": [
-            "營收 YoY +51.2%，近 3 月均 +53.4%",
-            "PER 落在歷史 75% 分位",
-            "殖利率 4.2%"
+            "營收 YoY +34.5%，近 3 月均 +14.3%",
+            "PER 落在歷史 3% 分位",
+            "殖利率 3.5%"
           ],
-          "sector": "電子代工",
-          "tenure_days": 6,
-          "rank_move": "↓"
+          "sector": null,
+          "tenure_days": 1,
+          "rank_move": "−"
         }
       ]
     },
     "roster_changes": {
       "new": [
-        "2455",
-        "3229",
-        "6141",
-        "6505"
+        "3287",
+        "6179",
+        "6218"
       ],
       "dropped": [
-        "2466",
-        "6108",
-        "6168",
-        "6226"
+        "2357",
+        "2455",
+        "6426"
       ],
-      "stay_note": "2357 連續 6 日留任（波段結構未變）"
+      "stay_note": null
     }
   }
 }

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-08",
-    "generated_at": "2026-10-08T22:01:10+08:00",
+    "generated_at": "2026-10-09T21:47:24+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,13 +24,12 @@
     "action": "試單",
     "stance": "中性偏多",
     "position_delta": "small_entry",
-    "confidence": 30,
+    "confidence": 20,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
-      "chips_weak",
-      "market_bull"
+      "chips_weak"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以小量試單。",
     "risk_note": "跌破 47.2 防守位就先降波段部位",
@@ -44,7 +43,7 @@
       "price": 55.5,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-15",
+    "reeval_date": "2026-10-16",
     "advice": {
       "holder": {
         "action_text": "續抱不動，跌破 47 收盤再降一半波段部位。",
@@ -202,10 +201,16 @@
     ],
     "news": [
       {
-        "title": "【09/29券商評等報告彙整】柏承(6141) 今日僅1家券商發布績效評等報告，評價為看多，目標價為100元。 - CMoney",
+        "title": "6141 柏承- 【10/02 產業即時新聞】PCB族群大漲近5%多頭點火，臻鼎泰鼎亮燈引爆載板與軟板買氣- 股市爆料同學會 - CMoney",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBVS1JtbTlZclhBSTNndDRKd0M2VUtxOW5DVWRGalRzTHhHTE9rNjU2M0tyYklsY0pKSFVSdlpldnNmVHpqelN4ZTBjZXBkVWVxR3cxOHJ4azdaeTFqZFUtaXdCajV3Ulk?oc=5",
-        "published_at": "2026-09-29T10:50:03+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE42SW1sb2pCamFKME1tQnFaY2lFdEJYYlJKQkZ1UmtaMFJSbzVlY2FGQWxfS2tENWtUdXhILXd5WV83V2lsd3EwU2kzWUtBdmlUMHdhc3hVVVg?oc=5",
+        "published_at": "2026-10-02T04:20:52+00:00"
+      },
+      {
+        "title": "【09/29券商評等報告彙整】柏承(6141) 今日僅1家券商發布績效評等報告，評價為看多，目標價為100元。 - CMoney投資網誌",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxQdEVhMjlrR0M4bW41c0RXSTZIeWtwbkotYjMxc2FOdEo1NnRDNlYwMmNZc3NrMmtXTXZZRlFjb0NvY3U2dERhcGdqVjFWTEEzS1NFb3RkQ1AxaXRZMzcwRGQ5aUYtNDhSRV9XcG9hbm5WdkF5WnltcFU2M1pMVDJ6N3AtMWtVREJnWHc?oc=5",
+        "published_at": "2026-09-29T07:00:00+00:00"
       },
       {
         "title": "《電零組》光模組板小量出貨 柏承2027有望轉盈 - 富聯網",
@@ -214,22 +219,16 @@
         "published_at": "2026-10-03T07:15:00+00:00"
       },
       {
-        "title": "第一金證券剛剛發布了一份柏承(6141)的券商報告，目標價為100.00，多空評等為看多 - CMoney",
+        "title": "台股前三季飆股榜出爐！ 「這妖股」狂飆680%封王 載板三雄全上榜 - Yahoo股市",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFBxaG1oX2F4MkoyQmY5MUZDZGVycmpXcVlNOVhjTGREQmlHYnp6NTMyTmo3NThOaFYxbDd1UFcydV85UnJJdzNvVXZJbi1rcXFQQ0oyUllLeU0?oc=5",
-        "published_at": "2026-09-29T09:13:39+00:00"
-      },
-      {
-        "title": "三雄上漲硬挺！「它」擠進千元俱樂部 PCB族群卻軟趴趴帶不動 - 三立新聞網SETN.com",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFB5RWFsTkZKLUdGYlo3NUF4R29rM1lCV1h1T21oYnRnRmxIM0Y3aDkzLWN6LV9QSGtGY3QxS2wzLXdHWlg0anFpQjFwcw?oc=5",
-        "published_at": "2026-10-01T02:51:27+00:00"
+        "url": "https://news.google.com/rss/articles/CBMihANBVV95cUxQcFFmUFBPUkgwRi12RF9QdHR4NmFWbHhLMGk3TEplcnVMNkFRVUxOSkJrdUJYQmx1S2d6MVEwQUtDQlhuemRUd0t1SFZ1cHJ1YklKSXZfYzJCbVp4QVdaY1R0RGZRZVkwcXRoT21YRnYwU0NBZXVjMFBaRXNJSFdNM2N1UG9wZ1YwNEMyakhVbFlEQXVkZkF1Q2hZdHRiOWh4Ny1lUDQzUWR5dUhqOFd0TE9rdUxrQWNBWUVXcm9CejROS21WY1ZCY19zS254QmtYUk85NVFJay1mWEpZOXp6RjVQUWh5SDZtSFpnYUd3Qml0dTlZcTI4QVNBVTRwck1LVEI3REFwOXNhbElCMFFHbGFNUkFBQ3d0VkF4eF85V2dJcFVvUXJZMjJuVDFUdzAwMXBjbmJLdm4ydUtLVXRzZGdPUjhoRElSV2JWdEozWnl4MVVvc2x5bFRidjZnamc3QlpoaUE0c01tYVNVY0F1bGlhWWpmR0VLQUthSlNxc0VwNXAy?oc=5",
+        "published_at": "2026-09-30T09:09:00+00:00"
       },
       {
         "title": "台股前3季20大飆股出爐！聯友金屬暴漲13倍奪冠、禾伸堂第二 PCB五雄入榜 - 鉅亨網",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFB0UlJMM3NhSzNOb21YUWhiSWswcF9lMExQUXVnMGtUZ3VSSEcwNzFBQ1hxaGJfcTVuTUlNd25vMjdmejR0Y2JKa2JMTlBtTWM?oc=5",
-        "published_at": "2026-09-30T08:48:21+00:00"
+        "published_at": "2026-09-30T07:00:00+00:00"
       },
       {
         "title": "PCB漲跌互見！「這檔」連7漲62.4%同聯茂噴48.8%創高 欣興、景碩、南電一起走弱 - FTNN",
@@ -1050,7 +1049,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 42,
+        "probability_pct": 37,
         "title": "劇本一・站上近20日高"
       },
       {
@@ -1086,11 +1085,11 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 23,
+        "probability_pct": 28,
         "title": "劇本三・跌破防守，下探支撐"
       }
     ],
-    "prob_note": "機率為規則估計＋歷史校正（樣本 42 筆），不是統計勝率，更不是保證。",
+    "prob_note": "機率為規則估計＋歷史校正（樣本 43 筆），不是統計勝率，更不是保證。",
     "disclaimer": "劇本＝條件推演；價位到了不代表會停，跟著失效條件走。"
   },
   "ohlc": [

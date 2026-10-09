@@ -15902,161 +15902,6 @@
   },
   {
     "date": "2026-10-08",
-    "stock_id": "2303",
-    "bucket": "yellow_x_red",
-    "model_version": "v1",
-    "raw_probs": {
-      "base": 40,
-      "risk": 35,
-      "bull": 25
-    },
-    "scenarios": [
-      {
-        "id": "base",
-        "prob_pct": 40
-      },
-      {
-        "id": "risk",
-        "prob_pct": 35
-      },
-      {
-        "id": "bull",
-        "prob_pct": 25
-      }
-    ],
-    "levels": {
-      "defense": 135.0,
-      "r1": 150.4,
-      "close": 147.5
-    },
-    "realized": null
-  },
-  {
-    "date": "2026-10-08",
-    "stock_id": "2330",
-    "bucket": "green_x_red",
-    "model_version": "v1",
-    "raw_probs": {
-      "base": 45,
-      "risk": 35,
-      "bull": 20
-    },
-    "scenarios": [
-      {
-        "id": "base",
-        "prob_pct": 45
-      },
-      {
-        "id": "risk",
-        "prob_pct": 35
-      },
-      {
-        "id": "bull",
-        "prob_pct": 20
-      }
-    ],
-    "levels": {
-      "defense": 2346.0,
-      "r1": 2590.0,
-      "close": 2550.0
-    },
-    "realized": null
-  },
-  {
-    "date": "2026-10-08",
-    "stock_id": "2454",
-    "bucket": "yellow_x_red",
-    "model_version": "v1",
-    "raw_probs": {
-      "base": 40,
-      "risk": 40,
-      "bull": 20
-    },
-    "scenarios": [
-      {
-        "id": "base",
-        "prob_pct": 40
-      },
-      {
-        "id": "risk",
-        "prob_pct": 40
-      },
-      {
-        "id": "bull",
-        "prob_pct": 20
-      }
-    ],
-    "levels": {
-      "defense": 4314.8,
-      "r1": 4834.5,
-      "close": 4690.0
-    },
-    "realized": null
-  },
-  {
-    "date": "2026-10-08",
-    "stock_id": "3481",
-    "bucket": "green_x_yellow",
-    "model_version": "v1",
-    "raw_probs": {
-      "bull": 42,
-      "base": 35,
-      "risk": 23
-    },
-    "scenarios": [
-      {
-        "id": "bull",
-        "prob_pct": 42
-      },
-      {
-        "id": "base",
-        "prob_pct": 35
-      },
-      {
-        "id": "risk",
-        "prob_pct": 23
-      }
-    ],
-    "levels": {
-      "defense": 46.9,
-      "r1": 56.2,
-      "close": 51.0
-    },
-    "realized": null
-  },
-  {
-    "date": "2026-10-08",
-    "stock_id": "6141",
-    "bucket": "green_x_yellow",
-    "model_version": "v1",
-    "raw_probs": {
-      "bull": 42,
-      "base": 35,
-      "risk": 23
-    },
-    "scenarios": [
-      {
-        "id": "bull",
-        "prob_pct": 42
-      },
-      {
-        "id": "base",
-        "prob_pct": 35
-      },
-      {
-        "id": "risk",
-        "prob_pct": 23
-      }
-    ],
-    "levels": {
-      "defense": 47.2,
-      "r1": 55.5,
-      "close": 51.3
-    },
-    "realized": null
-  },
-  {
-    "date": "2026-10-08",
     "stock_id": "2455",
     "bucket": "green_x_yellow",
     "model_version": "v1",
@@ -16119,37 +15964,6 @@
   },
   {
     "date": "2026-10-08",
-    "stock_id": "3229",
-    "bucket": "yellow_x_yellow",
-    "model_version": "v1",
-    "raw_probs": {
-      "bull": 40,
-      "base": 35,
-      "risk": 25
-    },
-    "scenarios": [
-      {
-        "id": "bull",
-        "prob_pct": 40
-      },
-      {
-        "id": "base",
-        "prob_pct": 35
-      },
-      {
-        "id": "risk",
-        "prob_pct": 25
-      }
-    ],
-    "levels": {
-      "defense": 49.0,
-      "r1": 59.5,
-      "close": 55.4
-    },
-    "realized": null
-  },
-  {
-    "date": "2026-10-08",
     "stock_id": "2357",
     "bucket": "green_x_yellow",
     "model_version": "v1",
@@ -16176,6 +15990,285 @@
       "defense": 916.3,
       "r1": 1010.0,
       "close": 996.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "2303",
+    "bucket": "yellow_x_red",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 40,
+      "risk": 40,
+      "bull": 20
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 40
+      },
+      {
+        "id": "risk",
+        "prob_pct": 40
+      },
+      {
+        "id": "bull",
+        "prob_pct": 20
+      }
+    ],
+    "levels": {
+      "defense": 135.0,
+      "r1": 150.4,
+      "close": 147.5
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "2330",
+    "bucket": "green_x_red",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 45,
+      "risk": 40,
+      "bull": 15
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 45
+      },
+      {
+        "id": "risk",
+        "prob_pct": 40
+      },
+      {
+        "id": "bull",
+        "prob_pct": 15
+      }
+    ],
+    "levels": {
+      "defense": 2346.0,
+      "r1": 2590.0,
+      "close": 2550.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "2454",
+    "bucket": "yellow_x_red",
+    "model_version": "v1",
+    "raw_probs": {
+      "risk": 45,
+      "base": 40,
+      "bull": 15
+    },
+    "scenarios": [
+      {
+        "id": "risk",
+        "prob_pct": 45
+      },
+      {
+        "id": "base",
+        "prob_pct": 40
+      },
+      {
+        "id": "bull",
+        "prob_pct": 15
+      }
+    ],
+    "levels": {
+      "defense": 4314.8,
+      "r1": 4834.5,
+      "close": 4690.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "3481",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 37,
+      "base": 35,
+      "risk": 28
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 37
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 28
+      }
+    ],
+    "levels": {
+      "defense": 46.9,
+      "r1": 56.2,
+      "close": 51.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "6141",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 37,
+      "base": 35,
+      "risk": 28
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 37
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 28
+      }
+    ],
+    "levels": {
+      "defense": 47.2,
+      "r1": 55.5,
+      "close": 51.3
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "6179",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 35,
+      "risk": 33,
+      "bull": 32
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 33
+      },
+      {
+        "id": "bull",
+        "prob_pct": 32
+      }
+    ],
+    "levels": {
+      "defense": 34.8,
+      "r1": 41.9,
+      "close": 37.8
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "6218",
+    "bucket": "yellow_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 35,
+      "bull": 35,
+      "risk": 30
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "bull",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 30
+      }
+    ],
+    "levels": {
+      "defense": 48.3,
+      "r1": 57.2,
+      "close": 56.0
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "3229",
+    "bucket": "yellow_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "base": 35,
+      "bull": 35,
+      "risk": 30
+    },
+    "scenarios": [
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "bull",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 30
+      }
+    ],
+    "levels": {
+      "defense": 49.0,
+      "r1": 59.5,
+      "close": 55.4
+    },
+    "realized": null
+  },
+  {
+    "date": "2026-10-08",
+    "stock_id": "3287",
+    "bucket": "green_x_yellow",
+    "model_version": "v1",
+    "raw_probs": {
+      "bull": 37,
+      "base": 35,
+      "risk": 28
+    },
+    "scenarios": [
+      {
+        "id": "bull",
+        "prob_pct": 37
+      },
+      {
+        "id": "base",
+        "prob_pct": 35
+      },
+      {
+        "id": "risk",
+        "prob_pct": 28
+      }
+    ],
+    "levels": {
+      "defense": 40.0,
+      "r1": 45.0,
+      "close": 43.5
     },
     "realized": null
   }
