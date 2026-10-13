@@ -10795,7 +10795,7 @@
     },
     "outcome": {
       "r5": -0.0073,
-      "r20": null,
+      "r20": 0.0192,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -10907,7 +10907,7 @@
     },
     "outcome": {
       "r5": 0.4104,
-      "r20": null,
+      "r20": 0.7169,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -10963,7 +10963,7 @@
     },
     "outcome": {
       "r5": 0.1217,
-      "r20": null,
+      "r20": 0.6014,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -11019,7 +11019,7 @@
     },
     "outcome": {
       "r5": 0.0,
-      "r20": null,
+      "r20": 0.3805,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -11555,7 +11555,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0176,
+      "max_drawdown": -0.0628,
       "ex_div_adjusted": true
     }
   },
@@ -11609,9 +11609,9 @@
       "r5": 0.0536,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0388,
+      "hit": "stop",
+      "hit_days": 18,
+      "max_drawdown": -0.1294,
       "ex_div_adjusted": true
     }
   },
@@ -13627,7 +13627,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0506,
+      "max_drawdown": -0.0702,
       "ex_div_adjusted": true
     }
   },
@@ -14495,7 +14495,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.006,
+      "max_drawdown": -0.008,
       "ex_div_adjusted": true
     }
   },
@@ -14775,7 +14775,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": 0.0,
+      "max_drawdown": -0.004,
       "ex_div_adjusted": true
     }
   },
@@ -14943,7 +14943,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.012,
+      "max_drawdown": -0.0684,
       "ex_div_adjusted": true
     }
   },
@@ -15050,13 +15050,13 @@
       "per_percentile": 0.86
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.033,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.033,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15078,13 +15078,13 @@
       "per_percentile": 1.0
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.1239,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0484,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15106,13 +15106,13 @@
       "per_percentile": 0.72
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.044,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0287,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15134,13 +15134,13 @@
       "per_percentile": 0.9
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0721,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0426,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15162,13 +15162,13 @@
       "per_percentile": 0.5
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.529,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": 0.0,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15190,13 +15190,13 @@
       "per_percentile": 0.22
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.057,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "stop",
+      "hit_days": 5,
+      "max_drawdown": -0.0877,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15218,13 +15218,13 @@
       "per_percentile": null
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.0279,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0465,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15246,13 +15246,13 @@
       "per_percentile": 0.28
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0839,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "stop",
+      "hit_days": 3,
+      "max_drawdown": -0.0825,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15274,13 +15274,13 @@
       "per_percentile": 0.06
     },
     "outcome": {
-      "r5": null,
+      "r5": 0.2069,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0091,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -15302,13 +15302,13 @@
       "per_percentile": 0.63
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0291,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0312,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -16498,6 +16498,286 @@
     "stop": 23.9,
     "rr": -5.1,
     "confidence": 58,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 1.0
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:30:42+08:00",
+    "date": "2026-10-13",
+    "stock_id": "2330",
+    "name": "台積電",
+    "price": 2490.0,
+    "rating": "續抱",
+    "fair_base": 2906.1,
+    "stop": 2290.8,
+    "rr": 2.09,
+    "confidence": 42,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "red",
+      "per_percentile": 0.79
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:30:46+08:00",
+    "date": "2026-10-13",
+    "stock_id": "2454",
+    "name": "聯發科",
+    "price": 4525.0,
+    "rating": "觀望",
+    "fair_base": 1445.5,
+    "stop": 4163.0,
+    "rr": -8.51,
+    "confidence": 48,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "red",
+      "per_percentile": 0.97
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:30:55+08:00",
+    "date": "2026-10-13",
+    "stock_id": "3481",
+    "name": "群創",
+    "price": 50.0,
+    "rating": "觀望",
+    "fair_base": 9.0,
+    "stop": 46.0,
+    "rr": -10.25,
+    "confidence": 45,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.7
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:30:58+08:00",
+    "date": "2026-10-13",
+    "stock_id": "2303",
+    "name": "聯電",
+    "price": 141.5,
+    "rating": "觀望",
+    "fair_base": 91.9,
+    "stop": 130.2,
+    "rr": -4.39,
+    "confidence": 48,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "red",
+      "per_percentile": 0.88
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:38:20+08:00",
+    "date": "2026-10-13",
+    "stock_id": "6505",
+    "name": "台塑化",
+    "price": 119.0,
+    "rating": "試單",
+    "fair_base": 216.5,
+    "stop": 107.2,
+    "rr": 8.26,
+    "confidence": 72,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "green",
+      "per_percentile": 0.2
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:38:22+08:00",
+    "date": "2026-10-13",
+    "stock_id": "3219",
+    "name": "倚強股份",
+    "price": 116.0,
+    "rating": "試單",
+    "fair_base": 225.4,
+    "stop": 106.7,
+    "rr": 11.76,
+    "confidence": 72,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.07
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:38:24+08:00",
+    "date": "2026-10-13",
+    "stock_id": "6426",
+    "name": "統新",
+    "price": 327.5,
+    "rating": "試單",
+    "fair_base": 920.7,
+    "stop": 293.0,
+    "rr": 17.19,
+    "confidence": 68,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.22
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:38:27+08:00",
+    "date": "2026-10-13",
+    "stock_id": "2455",
+    "name": "全新",
+    "price": 508.0,
+    "rating": "觀望",
+    "fair_base": 303.3,
+    "stop": 467.4,
+    "rr": -5.04,
+    "confidence": 45,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.94
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:38:29+08:00",
+    "date": "2026-10-13",
+    "stock_id": "6532",
+    "name": "瑞耘",
+    "price": 114.5,
+    "rating": "試單",
+    "fair_base": 172.2,
+    "stop": 104.8,
+    "rr": 5.95,
+    "confidence": 68,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.26
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-13T22:38:32+08:00",
+    "date": "2026-10-13",
+    "stock_id": "6108",
+    "name": "競國",
+    "price": 26.2,
+    "rating": "觀望",
+    "fair_base": 6.2,
+    "stop": 24.2,
+    "rr": -9.78,
+    "confidence": 48,
     "timeframe": "swing",
     "factors": {
       "fund_light": "amber",
