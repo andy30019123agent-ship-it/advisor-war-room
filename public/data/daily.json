@@ -1,41 +1,41 @@
 {
   "meta": {
     "schema_version": 1,
-    "data_date": "2026-10-20",
-    "generated_at": "2026-10-20T20:07:41+08:00",
+    "data_date": "2026-10-21",
+    "generated_at": "2026-10-21T20:22:31+08:00",
     "sources": [
       "FinMind",
       "yfinance"
     ]
   },
   "market": {
-    "status": "偏空防禦",
-    "risk_temp": 7,
-    "conclusion": "今天不加碼，守好停損位。",
+    "status": "中性",
+    "risk_temp": 5,
+    "conclusion": "盤勢中性，維持既有部位觀察。",
     "taiex": {
-      "close": 46292.9,
-      "change_pct": -1.13
+      "close": 46887.8,
+      "change_pct": 1.28
     },
     "us": [
       {
         "id": "SPX",
         "name": "S&P 500",
-        "change_pct": 0.41
+        "change_pct": 0.28
       },
       {
         "id": "NDX",
         "name": "Nasdaq 100",
-        "change_pct": 1.17
+        "change_pct": -0.13
       },
       {
         "id": "SOX",
         "name": "費城半導體",
-        "change_pct": 1.61
+        "change_pct": -0.29
       },
       {
         "id": "VIX",
         "name": "VIX",
-        "change_pct": 2.06
+        "change_pct": 0.17
       }
     ]
   },
@@ -57,45 +57,45 @@
     {
       "id": "2303",
       "name": "聯電",
-      "close": 127.0,
-      "change_pct": -3.42,
+      "close": 128.0,
+      "change_pct": 0.79,
       "decision": {
         "action": "觀望",
         "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
-        "defense_price": 116.8
+        "defense_price": 117.8
       }
     },
     {
       "id": "2330",
       "name": "台積電",
-      "close": 2405.0,
-      "change_pct": -0.62,
+      "close": 2420.0,
+      "change_pct": 0.62,
       "decision": {
         "action": "續抱",
         "readable_reason": "因為基本面沒惡化，所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
-        "defense_price": 2212.6
+        "defense_price": 2226.4
       }
     },
     {
       "id": "2454",
       "name": "聯發科",
-      "close": 4150.0,
-      "change_pct": -1.31,
+      "close": 4140.0,
+      "change_pct": -0.24,
       "decision": {
         "action": "觀望",
-        "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
-        "defense_price": 3818.0
+        "readable_reason": "因為法人連日賣超、籌碼失效，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
+        "defense_price": 3808.8
       }
     },
     {
       "id": "3481",
       "name": "群創",
-      "close": 46.8,
-      "change_pct": -0.32,
+      "close": 48.5,
+      "change_pct": 3.63,
       "decision": {
         "action": "觀望",
         "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
-        "defense_price": 43.1
+        "defense_price": 44.6
       }
     }
   ],
@@ -105,7 +105,7 @@
       "id": "2303",
       "name": "聯電",
       "type": "defense",
-      "price": 116.8,
+      "price": 117.8,
       "direction": "below",
       "source": "tracked"
     },
@@ -113,7 +113,7 @@
       "id": "2303",
       "name": "聯電",
       "type": "entry",
-      "price": 133.4,
+      "price": 147.0,
       "direction": "above",
       "source": "tracked"
     },
@@ -121,7 +121,7 @@
       "id": "2330",
       "name": "台積電",
       "type": "defense",
-      "price": 2212.6,
+      "price": 2226.4,
       "direction": "below",
       "source": "tracked"
     },
@@ -129,7 +129,7 @@
       "id": "2454",
       "name": "聯發科",
       "type": "defense",
-      "price": 3818.0,
+      "price": 3808.8,
       "direction": "below",
       "source": "tracked"
     },
@@ -137,7 +137,7 @@
       "id": "2454",
       "name": "聯發科",
       "type": "entry",
-      "price": 4756.8,
+      "price": 4728.2,
       "direction": "above",
       "source": "tracked"
     },
@@ -145,7 +145,7 @@
       "id": "3481",
       "name": "群創",
       "type": "defense",
-      "price": 43.1,
+      "price": 44.6,
       "direction": "below",
       "source": "tracked"
     },
@@ -158,77 +158,77 @@
       "source": "tracked"
     },
     {
+      "id": "6933",
+      "name": "AMAX-KY",
+      "type": "entry",
+      "price": 417.9,
+      "direction": "above",
+      "source": "picks"
+    },
+    {
       "id": "1709",
       "name": "和益",
       "type": "entry",
-      "price": 59.3,
+      "price": 58.8,
       "direction": "above",
       "source": "picks"
     },
     {
-      "id": "3406",
-      "name": "玉晶光",
+      "id": "6805",
+      "name": "富世達",
       "type": "entry",
-      "price": 1092.0,
+      "price": 2750.0,
       "direction": "above",
       "source": "picks"
     },
     {
-      "id": "6179",
-      "name": "亞通",
+      "id": "5228",
+      "name": "鈺鎧",
       "type": "entry",
-      "price": 41.9,
+      "price": 65.1,
       "direction": "above",
       "source": "picks"
     },
     {
-      "id": "3354",
-      "name": "律勝",
+      "id": "3234",
+      "name": "光環",
       "type": "entry",
-      "price": 46.0,
+      "price": 193.0,
       "direction": "above",
       "source": "picks"
     },
     {
-      "id": "6532",
-      "name": "瑞耘",
+      "id": "6209",
+      "name": "今國光",
       "type": "entry",
-      "price": 132.0,
-      "direction": "above",
-      "source": "picks"
-    },
-    {
-      "id": "5314",
-      "name": "世紀*",
-      "type": "entry",
-      "price": 27.6,
+      "price": 112.0,
       "direction": "above",
       "source": "picks"
     }
   ],
   "exposure_guidance": {
-    "risk_temp": 7,
-    "max_equity_pct": 50,
-    "min_cash_pct": 50,
+    "risk_temp": 5,
+    "max_equity_pct": 60,
+    "min_cash_pct": 40,
     "new_position": "僅限試單",
-    "note": "風險溫度 7/10：市場偏弱，現金至少留 5 成。"
+    "note": "風險溫度 5/10：波動升高，股票曝險控在 6 成、現金留 4 成。"
   },
   "events": [],
   "track_stats": {
-    "n": 650,
-    "closed": 600,
-    "hit_rate_5d": 0.546,
-    "hit_rate_20d": 0.842,
+    "n": 660,
+    "closed": 610,
+    "hit_rate_5d": 0.545,
+    "hit_rate_20d": 0.835,
     "hit_rate_60d": 1.0,
-    "note": "已結算 600 筆。命中率口徑：看多建議報酬為正、防禦（減碼）建議報酬不為正即算命中；觀望（無方向主張）不列入統計。",
+    "note": "已結算 610 筆。命中率口徑：看多建議報酬為正、防禦（減碼）建議報酬不為正即算命中；觀望（無方向主張）不列入統計。",
     "by_timeframe": {
       "short": {
         "n": 0,
         "hit_rate": null
       },
       "swing": {
-        "n": 650,
-        "hit_rate": 0.842
+        "n": 660,
+        "hit_rate": 0.835
       },
       "long": {
         "n": 0,
@@ -237,27 +237,19 @@
     }
   },
   "today_command": {
-    "headline": "風險 7/10：僅限小量試單，紀律優先。",
+    "headline": "風險 5/10：僅限小量試單，紀律優先。",
     "action": null,
     "todos": []
   },
   "delta": {
-    "since": "2026-10-19",
+    "since": "2026-10-20",
     "items": [
-      "風險溫度 2→7",
-      "大盤狀態 偏多進攻→偏空防禦"
+      "風險溫度 7→5",
+      "大盤狀態 偏空防禦→中性"
     ]
   },
   "market_battle": {
     "ohlc": [
-      {
-        "d": "2026-07-24",
-        "o": 44769.4,
-        "h": 44769.4,
-        "l": 43607.4,
-        "c": 43654.8,
-        "v": null
-      },
       {
         "d": "2026-07-27",
         "o": 43585.9,
@@ -729,15 +721,23 @@
         "l": 46163.0,
         "c": 46292.9,
         "v": null
+      },
+      {
+        "d": "2026-10-21",
+        "o": 46454.3,
+        "h": 47254.9,
+        "l": 46454.3,
+        "c": 46887.8,
+        "v": null
       }
     ],
     "key_levels": {
       "supports": [
-        46113.1,
-        45004.3
+        46167.0,
+        45065.6
       ],
       "resistances": [
-        48170.1,
+        48155.5,
         49968.9
       ]
     },
@@ -747,56 +747,56 @@
       "scenarios": [
         {
           "id": "base",
-          "trigger": "收盤守住 46,113（MA60）",
+          "trigger": "收盤守住 46,167（MA60）",
           "price_path": [
-            46292.9,
-            46113.1,
-            48170.1
+            46887.8,
+            46167.0,
+            48155.5
           ],
-          "price_path_text": "46,293 → 回測 46,113（MA60）→ 反彈 48,170（MA20）震盪",
+          "price_path_text": "46,888 → 回測 46,167（MA60）→ 反彈 48,155（MA20）震盪",
           "narrative": "指數在MA60與MA20之間找方向，等外資動向與均線結構進一步確認再調整曝險。",
-          "invalidation": "收盤跌破 46,113 本劇本失效，切換劇本二。",
+          "invalidation": "收盤跌破 46,167 本劇本失效，切換劇本二。",
           "action": {
             "stance": "hold",
             "text": "維持防禦，不因單一劇本加減碼"
           },
-          "probability_pct": 40,
+          "probability_pct": 50,
           "title": "劇本一・守住MA60"
         },
         {
           "id": "risk",
-          "trigger": "收盤跌破 46,113（MA60）",
+          "trigger": "收盤跌破 46,167（MA60）",
           "price_path": [
-            46292.9,
-            46113.1,
-            45936.1
+            46887.8,
+            46167.0,
+            46163.0
           ],
-          "price_path_text": "46,293 → 跌破 46,113（MA60）→ 下探 45,936（近20日低），守穩才反彈",
+          "price_path_text": "46,888 → 跌破 46,167（MA60）→ 下探 46,163（近20日低），守穩才反彈",
           "narrative": "跌破季線代表大盤結構轉弱，先降曝險保守以對，等止穩訊號再評估回補。",
-          "invalidation": "站回 46,113（MA60）本劇本失效，切換劇本一。",
+          "invalidation": "站回 46,167（MA60）本劇本失效，切換劇本一。",
           "action": {
             "stance": "reduce",
             "text": "降曝險，控制股票總部位比重"
           },
-          "probability_pct": 40,
+          "probability_pct": 35,
           "title": "劇本二・跌破MA60，下探支撐"
         },
         {
           "id": "bull",
-          "trigger": "收盤站上 48,170（MA20）且外資連 2 日買超",
+          "trigger": "收盤站上 48,155（MA20）且外資連 2 日買超",
           "price_path": [
-            46292.9,
-            48170.1,
+            46887.8,
+            48155.5,
             49968.9
           ],
-          "price_path_text": "46,293 → 挑戰 48,170（MA20）→ 突破後上看 49,969（近60日高）",
+          "price_path_text": "46,888 → 挑戰 48,155（MA20）→ 突破後上看 49,969（近60日高）",
           "narrative": "站上MA20且外資買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
-          "invalidation": "站上 48,170 後量縮不過，本劇本失效，切換劇本一。",
+          "invalidation": "站上 48,155 後量縮不過，本劇本失效，切換劇本一。",
           "action": {
             "stance": "small_entry",
             "text": "可回補試單，不重壓"
           },
-          "probability_pct": 20,
+          "probability_pct": 15,
           "title": "劇本三・站上MA20"
         }
       ],
@@ -805,9 +805,9 @@
     },
     "flow": {
       "foreign_streak": {
-        "direction": "sell",
-        "days": 10,
-        "latest_yi": -795.4
+        "direction": "buy",
+        "days": 1,
+        "latest_yi": 22.4
       },
       "leading_sectors": [
         "軍工航太",
@@ -816,17 +816,17 @@
       "us_overnight": [
         {
           "id": "SPX",
-          "change_pct": 0.41
+          "change_pct": 0.28
         },
         {
           "id": "SOX",
-          "change_pct": 1.61
+          "change_pct": -0.29
         }
       ]
     },
     "forecast_range_m1": [
-      43321.9,
-      49229.95
+      43819.39,
+      49902.89
     ]
   },
   "picks": {
@@ -836,88 +836,88 @@
     "pools": {
       "actionable": [
         {
-          "id": "1709",
-          "name": "和益",
-          "close": 56.5,
+          "id": "6933",
+          "name": "AMAX-KY",
+          "close": 398.0,
           "score": 85.0,
           "confidence": 70,
-          "action_summary": "拉回布局區 53.8-56.5，跌破 52.0 停損（試單上限 10 萬）",
+          "action_summary": "拉回布局區 382.8-398.0，跌破 366.2 停損（試單上限 10 萬）",
           "entry_zone": [
-            53.8,
-            56.5
+            382.8,
+            398.0
           ],
-          "defense_price": 52.0,
-          "invalidation": "跌破 52.0 或營收 YoY 連 2 月轉負",
+          "defense_price": 366.2,
+          "invalidation": "跌破 366.2 或營收 YoY 連 2 月轉負",
           "reasons": [
-            "均線多頭排列（MA20 54 > MA60 39）",
-            "60 日 RS +107.7%",
-            "R/R 約 2.0（目標 66／防守 51.7）"
+            "均線多頭排列（MA20 383 > MA60 283）",
+            "60 日 RS +141.2%",
+            "R/R 約 2.0（目標 460／防守 367.5）"
           ],
           "sector": null,
           "tenure_days": 1,
           "rank_move": "−"
         },
         {
-          "id": "3406",
-          "name": "玉晶光",
-          "close": 1040.0,
+          "id": "1709",
+          "name": "和益",
+          "close": 56.0,
           "score": 85.0,
           "confidence": 70,
-          "action_summary": "拉回布局區 1008.8-1040.0，跌破 956.8 停損（試單上限 10 萬）",
+          "action_summary": "拉回布局區 54.7-56.0，跌破 51.5 停損（試單上限 10 萬）",
           "entry_zone": [
-            1008.8,
-            1040.0
+            54.7,
+            56.0
           ],
-          "defense_price": 956.8,
-          "invalidation": "跌破 956.8 或營收 YoY 連 2 月轉負",
+          "defense_price": 51.5,
+          "invalidation": "跌破 51.5 或營收 YoY 連 2 月轉負",
           "reasons": [
-            "均線多頭排列（MA20 1009 > MA60 833）",
-            "60 日 RS +95.5%",
-            "R/R 約 2.5（目標 1220／防守 968.4）"
+            "均線多頭排列（MA20 55 > MA60 39）",
+            "60 日 RS +113.3%",
+            "R/R 約 2.9（目標 66／防守 52.5）"
           ],
           "sector": null,
           "tenure_days": 2,
           "rank_move": "↓"
         },
         {
-          "id": "6179",
-          "name": "亞通",
-          "close": 37.6,
+          "id": "6805",
+          "name": "富世達",
+          "close": 2395.0,
           "score": 85.0,
           "confidence": 70,
-          "action_summary": "拉回布局區 37.0-37.6，跌破 34.6 停損（試單上限 10 萬）",
+          "action_summary": "拉回布局區 2373.2-2395.0，跌破 2203.4 停損（試單上限 10 萬）",
           "entry_zone": [
-            37.0,
-            37.6
+            2373.2,
+            2395.0
           ],
-          "defense_price": 34.6,
-          "invalidation": "跌破 34.6 或營收 YoY 連 2 月轉負",
+          "defense_price": 2203.4,
+          "invalidation": "跌破 2203.4 或營收 YoY 連 2 月轉負",
           "reasons": [
-            "均線多頭排列（MA20 37 > MA60 32）",
-            "60 日 RS +45.7%",
-            "R/R 約 2.0（目標 42／防守 35.5）"
+            "均線多頭排列（MA20 2373 > MA60 2056）",
+            "60 日 RS +69.9%",
+            "R/R 約 3.0（目標 2750／防守 2278.3）"
           ],
           "sector": null,
-          "tenure_days": 2,
-          "rank_move": "↓"
+          "tenure_days": 1,
+          "rank_move": "−"
         },
         {
-          "id": "3354",
-          "name": "律勝",
-          "close": 50.5,
+          "id": "5228",
+          "name": "鈺鎧",
+          "close": 65.5,
           "score": 75.0,
           "confidence": 62,
-          "action_summary": "拉回布局區 46.0-50.5，跌破 45.0 停損（試單上限 10 萬）",
+          "action_summary": "拉回布局區 65.1-65.5，跌破 57.4 停損（試單上限 10 萬）",
           "entry_zone": [
-            46.0,
-            50.5
+            65.1,
+            65.5
           ],
-          "defense_price": 45.0,
-          "invalidation": "跌破 45.0 或營收 YoY 連 2 月轉負",
+          "defense_price": 57.4,
+          "invalidation": "跌破 57.4 或營收 YoY 連 2 月轉負",
           "reasons": [
-            "20 日動能 +72.6%",
-            "站回 MA20（33.4）",
-            "帶量突破 20 日高 46.0（量能 5.9×）"
+            "20 日動能 +62.3%",
+            "站回 MA20（51.2）",
+            "帶量突破 20 日高 65.1（量能 2.7×）"
           ],
           "sector": null,
           "tenure_days": 1,
@@ -927,44 +927,44 @@
       "on_deck": [],
       "research": [
         {
-          "id": "6532",
-          "name": "瑞耘",
-          "close": 118.5,
-          "score": 75.2,
-          "confidence": 63,
-          "action_summary": "分批佈局區 112.1-118.5，跌破 109.0 停損（試單上限 10 萬）",
+          "id": "3234",
+          "name": "光環",
+          "close": 196.5,
+          "score": 85.0,
+          "confidence": 70,
+          "action_summary": "分批佈局區 178.3-196.5，跌破 178.3 停損（試單上限 10 萬）",
           "entry_zone": [
-            112.1,
-            118.5
+            178.3,
+            196.5
           ],
-          "defense_price": 109.0,
-          "invalidation": "跌破 109.0 或營收連 2 月轉負或估值回到高分位",
+          "defense_price": 178.3,
+          "invalidation": "跌破 178.3 或營收連 2 月轉負或估值回到高分位",
           "reasons": [
-            "營收 YoY +60.6%，近 3 月均 +61.3%",
-            "PER 落在歷史 40% 分位",
-            "殖利率 2.5%"
+            "營收 YoY +140.3%，近 3 月均 +115.8%",
+            "PER 落在歷史 0% 分位",
+            "PBR 歷史 100% 分位"
           ],
           "sector": null,
           "tenure_days": 1,
           "rank_move": "−"
         },
         {
-          "id": "5314",
-          "name": "世紀*",
-          "close": 26.2,
-          "score": 66.6,
-          "confidence": 57,
-          "action_summary": "分批佈局區 26.2-27.6，跌破 24.1 停損（試單上限 10 萬）",
+          "id": "6209",
+          "name": "今國光",
+          "close": 110.0,
+          "score": 71.7,
+          "confidence": 60,
+          "action_summary": "分批佈局區 110.0-112.0，跌破 97.1 停損（試單上限 10 萬）",
           "entry_zone": [
-            26.2,
-            27.6
+            110.0,
+            112.0
           ],
-          "defense_price": 24.1,
-          "invalidation": "跌破 24.1 或營收連 2 月轉負或估值回到高分位",
+          "defense_price": 97.1,
+          "invalidation": "跌破 97.1 或營收連 2 月轉負或估值回到高分位",
           "reasons": [
-            "營收 YoY +45.7%，近 3 月均 +99.3%",
-            "PER 落在歷史 1% 分位",
-            "殖利率 120.7%"
+            "營收 YoY +81.6%，近 3 月均 +93.8%",
+            "PER 落在歷史 17% 分位",
+            "殖利率 0.5%"
           ],
           "sector": null,
           "tenure_days": 1,
@@ -974,16 +974,18 @@
     },
     "roster_changes": {
       "new": [
-        "1709",
-        "3354",
-        "5314",
-        "6532"
+        "3234",
+        "5228",
+        "6209",
+        "6805",
+        "6933"
       ],
       "dropped": [
-        "6108",
-        "6214",
-        "6505",
-        "6834"
+        "3354",
+        "3406",
+        "5314",
+        "6179",
+        "6532"
       ],
       "stay_note": null
     }
