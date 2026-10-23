@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-22T20:24:05+08:00",
+    "generated_at": "2026-10-23T20:05:33+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,14 +24,13 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 48,
+    "confidence": 58,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
       "chips_weak",
-      "valuation_very_expensive",
-      "market_bear"
+      "valuation_very_expensive"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以先觀望不進場；但估值很貴是風險。",
     "risk_note": "若已持有，跌破 47.0 先降波段部位；空手則等進場條件",
@@ -45,7 +44,7 @@
       "price": 55.3,
       "condition": "站回 MA20 且法人連 2 日買超"
     },
-    "reeval_date": "2026-10-29",
+    "reeval_date": "2026-10-30",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼。",
@@ -116,13 +115,13 @@
     },
     "valuation": {
       "band": "很貴",
-      "base": 41.2,
-      "bull": 45.5,
-      "bear": 32.9,
+      "base": 45.5,
+      "bull": 52.9,
+      "bear": 41.2,
       "regime": "3y",
       "warning": null
     },
-    "rr": -1.7
+    "rr": -1.18
   },
   "evidence": {
     "roles": [
@@ -199,22 +198,22 @@
     ],
     "news": [
       {
+        "title": "和益(1709) 今日股價與討論 - 股市爆料同學會 - CMoney",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1pT2FuVHBjZzRrc1BFcjRjaWVfMV9GQnBRSml4UFUwSkh6NmdYSnJBdXZkRGZzNlJ5TEo1TjI2djZ3eGExTDRfbThMRE1Ucm8?oc=5",
+        "published_at": "2026-10-20T07:00:00+00:00"
+      },
+      {
         "title": "國精化、和益都被點名AI材料股，電子樹脂到底做到哪？ - 口袋證券",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE5XSjNHbWYxZnY2dC1HVXpUQU1DOUYtU2hEOUdiSWtMT0lrMUlLY0VBZkQtVEx4S2hJOG1YdmlyeHVxMHBTVHlURHRSTmt4dm1SZWJDZVZXNzI2b1BEQXlCaU5SdXJldw?oc=5",
         "published_at": "2026-10-19T07:10:10+00:00"
       },
       {
-        "title": "【13:20 即時新聞】和益(1709)盤中走強，主動式ETF加碼標的受關注 - CMoney",
+        "title": "和益(1709) 個股概覽 | 個股 - 股市 - CMoney",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE4xYjJ5TGtaV0s4bm42YTRLMmhTRHlrQzlVcE5ycU9vZHUyVUg5d3VMd29haS1JN1R2WkhXYzlaZWNtaE1iQ29VZEg2QS1haXE3WjN3OHRRb1RpNlNVUDhjRmdYY0VMa0k?oc=5",
-        "published_at": "2026-10-13T05:22:10+00:00"
-      },
-      {
-        "title": "今日最夯股／和益有望受惠油價上漲 股價收漲停 | 市場焦點 | 證券 - 經濟日報",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5VLXBPU3BmcUVWSnIzUjcyeXJjZ1BWU3RVY2o5a242RXZHanNZcjhYZ0o4RllWWnFUcE1PYjU3S0gtaFZsR2k3MDQ5dkd0RVRMWHFJSlhTRUN4dw?oc=5",
-        "published_at": "2026-10-20T11:53:18+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE1MT1RyQ2RoYndUejk4VkhESUpOdXVBLTBIa0lZbDk4QXc3bVJMRTAwV05XMFFId3pid3lKSF9rTHpjbWFMbWJsUm5n?oc=5",
+        "published_at": "2026-10-20T14:36:27+00:00"
       },
       {
         "title": "熱門股》跨入半導體領域？ 和益大漲 - 自由時報",
@@ -223,16 +222,16 @@
         "published_at": "2026-10-18T13:13:39+00:00"
       },
       {
-        "title": "【10:13 即時新聞】和益(1709) 亮燈漲停，外資連日回補成焦點 - CMoney投資網誌",
+        "title": "今日最夯股／和益有望受惠油價上漲 股價收漲停 | 市場焦點 | 證券 - 經濟日報",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOVUp6Z05iYzg1WTZpNUNFZ1ZUQ3pFSVU0MDlYWnVXb1pQRlFMNXJQdGV2UEstZmVDODlkYXNTRHNMeGhUbTU5MzREc2Z2bW1SZXRZcTRYRnV1bUd3bmE5bk1VMmlfaXFYYzZvRkNDSDZ1cEhIVy1qV0RIWlFJWDdWZ190MkNxYnZBekdQUTBn?oc=5",
-        "published_at": "2026-10-20T02:13:35+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5VLXBPU3BmcUVWSnIzUjcyeXJjZ1BWU3RVY2o5a242RXZHanNZcjhYZ0o4RllWWnFUcE1PYjU3S0gtaFZsR2k3MDQ5dkd0RVRMWHFJSlhTRUN4dw?oc=5",
+        "published_at": "2026-10-20T11:53:18+00:00"
       },
       {
-        "title": "1709 和益- 謝謝和益讓我賺錢- 股市爆料同學會 - CMoney",
+        "title": "【13:30 即時新聞】和益(1709)股價走強，主動式ETF加碼成盤中焦點 - CMoney投資網誌",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE4zaEU0bkpqT0E4b3JGRnlKRFEtQXlUN0NFTWFQVlhfMjZkVmdNNVFoZzJpUmdPcWw1LXduZWdjWjdkRFhZZWdGd2tBN2k5MHhsUEhEZVMxWUI?oc=5",
-        "published_at": "2026-10-14T06:53:44+00:00"
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQYXpIUGsxbVk0SDZqTHNVMUp4MEhXM2VYWUI5WTVCQzhVLWwzYTJNOFFRREV2N1l3TWdJSDdsZUhkNU0tdWVNVGFQLTJNUG1sNmVvU1RRUjY5R3ROaG9abF9xNXpqMkdjaldJVUxseHRFZ3lLdXZ5Q1lueHhXRnY4b1p6V2pMR2hHYUlyckp3?oc=5",
+        "published_at": "2026-10-14T07:00:00+00:00"
       }
     ],
     "events": []
@@ -1018,9 +1017,9 @@
       63.06
     ],
     "scenarios": {
-      "bear": 32.9,
-      "base": 41.2,
-      "bull": 45.5
+      "bear": 41.2,
+      "base": 45.5,
+      "bull": 52.9
     },
     "event_markers": [],
     "accuracy": {
@@ -1045,24 +1044,6 @@
     },
     "scenarios": [
       {
-        "id": "risk",
-        "trigger": "收盤跌破 47（防守價）",
-        "price_path": [
-          55.3,
-          47.0,
-          39.9
-        ],
-        "price_path_text": "55 → 跌破 47（防守價）→ 下探 40（MA60），守穩才反彈",
-        "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
-        "invalidation": "站回 47（防守價）本劇本失效，切換劇本二。",
-        "action": {
-          "stance": "reduce",
-          "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
-        },
-        "probability_pct": 36,
-        "title": "劇本一・跌破防守，下探支撐"
-      },
-      {
         "id": "base",
         "trigger": "收盤守住 47（防守價）",
         "price_path": [
@@ -1072,13 +1053,13 @@
         ],
         "price_path_text": "55 → 回測 47（防守價）→ 反彈 66（近20日高）震盪",
         "narrative": "股價在防守價與近20日高之間找方向，等法人與均線訊號進一步確認再加減碼。",
-        "invalidation": "收盤跌破 47 本劇本失效，切換劇本一。",
+        "invalidation": "收盤跌破 47 本劇本失效，切換劇本三。",
         "action": {
           "stance": "wait",
           "text": "維持觀望，不進場"
         },
         "probability_pct": 35,
-        "title": "劇本二・守住防守價"
+        "title": "劇本一・守住防守價"
       },
       {
         "id": "bull",
@@ -1094,8 +1075,26 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 29,
-        "title": "劇本三・站上近20日高"
+        "probability_pct": 34,
+        "title": "劇本二・站上近20日高"
+      },
+      {
+        "id": "risk",
+        "trigger": "收盤跌破 47（防守價）",
+        "price_path": [
+          55.3,
+          47.0,
+          39.9
+        ],
+        "price_path_text": "55 → 跌破 47（防守價）→ 下探 40（MA60），守穩才反彈",
+        "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
+        "invalidation": "站回 47（防守價）本劇本失效，切換劇本一。",
+        "action": {
+          "stance": "reduce",
+          "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
+        },
+        "probability_pct": 31,
+        "title": "劇本三・跌破防守，下探支撐"
       }
     ],
     "prob_note": "機率為規則估計＋歷史校正（樣本 54 筆），不是統計勝率，更不是保證。",

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-22T20:24:05+08:00",
+    "generated_at": "2026-10-23T20:05:33+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,13 +24,12 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 0,
+    "confidence": 2,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
-      "chips_weak",
-      "market_bear"
+      "chips_weak"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以先觀望不進場。",
     "risk_note": "若已持有，跌破 16.7 先降波段部位；空手則等進場條件",
@@ -44,7 +43,7 @@
       "price": 19.1,
       "condition": "現價附近整理走穩、法人止賣（原突破價過遠，已改近端觀察區間）"
     },
-    "reeval_date": "2026-10-29",
+    "reeval_date": "2026-10-30",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 17 收盤再降一半波段部位。",
@@ -216,6 +215,12 @@
         "published_at": "2026-10-16T09:39:23+00:00"
       },
       {
+        "title": "從消耗品到禮品 文具的綠色革命 - PeoPo 公民新聞",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTFBVTHhpcnNKTUVXbHdWYWxpM0ppV0NJZGJycWZ5bXBhTHFTWnp0T095Y2lzYVZ5LVo1amhkS2FIQ0FVMHl2d1lMaw?oc=5",
+        "published_at": "2026-10-13T10:00:00+00:00"
+      },
+      {
         "title": "《通網股》注意股：百一 近5日漲28.66% - 富聯網",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNWjJhejVlaC1OcS1TOHpzSHZtU1NTTVJSeUJJbzlIVWN0c0ozZ045NDlSaXI3Umt0T2w4bzVsWWRPQzJhRHBqeF94ekVUaVNPMXp0Q2VhaHZyZVdFMXNEQ2Q5NVNXMTZ3VE9YVUNFZ3g2UGtxZ3VfUEUwejNmY0d2a3NzSWd0TXBS?oc=5",
@@ -226,12 +231,6 @@
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBuOE5OR3ZfNVI4VWZOV1RIbF92ek5NNGc0N3pOaFI0RFVkajlkNkxBVWdkSlpGeGMzN3EzOF85eWlQU082UkFpbDhwTGxRX2lWWXc?oc=5",
         "published_at": "2026-10-11T07:00:00+00:00"
-      },
-      {
-        "title": "第八屆 CAS 國產雞肉嘉年華 8大品牌齊聚板橋大遠百 - 信傳媒",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1kcGdBZGFyaEZPZ003ZmNWcm96ZVJpQkVycUl0clRNc1VpbjBIMmhITmw3eWkzTDFEbjJscDJPalZfN3hnMW1nVEJQaFNTOUpnOE00aUI3Mm0wdw?oc=5",
-        "published_at": "2026-10-12T09:30:00+00:00"
       }
     ],
     "events": []
@@ -1022,7 +1021,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 45,
+        "probability_pct": 40,
         "title": "劇本二・跌破防守，下探支撐"
       },
       {
@@ -1040,7 +1039,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 10,
+        "probability_pct": 15,
         "title": "劇本三・站上進場錨"
       }
     ],

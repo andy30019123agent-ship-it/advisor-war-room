@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-22T20:24:05+08:00",
+    "generated_at": "2026-10-23T20:05:33+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,15 +24,14 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 48,
+    "confidence": 58,
     "decided_by_layer": 5,
     "reason_codes": [
       "trend_mixed",
       "fundamental_ok",
       "chips_weak",
       "valuation_very_expensive",
-      "valuation_warning",
-      "market_bear"
+      "valuation_warning"
     ],
     "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "若已持有，跌破 3612.6 先降波段部位；空手則等進場條件",
@@ -46,7 +45,7 @@
       "price": 4297.0,
       "condition": "站回 MA60 且法人連 2 日買超"
     },
-    "reeval_date": "2026-10-29",
+    "reeval_date": "2026-10-30",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 3,613 收盤再降一半波段部位。",
@@ -121,13 +120,13 @@
     },
     "valuation": {
       "band": "很貴",
-      "base": 1449.6,
-      "bull": 1483.5,
-      "bear": 1288.9,
+      "base": 1623.9,
+      "bull": 1696.2,
+      "bear": 1383.8,
       "regime": "3y",
-      "warning": "模型 Base 1449.6 與現價 4010.0 偏離 64%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+      "warning": "模型 Base 1623.9 與現價 4010.0 偏離 60%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
     },
-    "rr": -6.44
+    "rr": -6.0
   },
   "evidence": {
     "roles": [
@@ -217,6 +216,12 @@
         "published_at": "2026-10-22T02:12:34+00:00"
       },
       {
+        "title": "AI ASIC 領域展現強勁動能，花旗給聯發科 6,800 元目標價 - TechNews 科技新報",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOaWtleDNQeW5ISEhaaFVrQVI3S19nd3RVMWZSb0hwUHJ1dFdha0xHNjhseTB0NmtEUWQ3WnI5YjE0MFpLWktua1MzcGFTZ25taE9STFVkVGIxZUM0QlFPcjBNT3E3TndIeEIzSjZGVFRDY0c0TTM4cUFBOFQ2RUVoNGRWUHl4MExIX0FJSnJsMzNtTVpyV251dTd4YWF2MGNodF8tUlh1STJBZFE?oc=5",
+        "published_at": "2026-10-22T06:15:49+00:00"
+      },
+      {
         "title": "聯發科第3季營收超越預期 法人估全年EPS 66元 - UDN",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE55WjhGQnFvZU45WTN3UmtaYTJaZkNoeldqeFNvZ0kyd0M2ZGtLemJSLVNRaU1GQ3d5cGxXZXBOc3YyM2I5NV9xNUNJaV9XcHlI0gFWQVVfeXFMT29MazlBemcxYU81aUQ1dVp6N0FOMFd4RU0wNEltRWEwWjl5bERtVDdwQkFDRUVjOTRXX1hBR3VpQklYa1JOcHhWYWZIMmluc1VFSy02UUE?oc=5",
@@ -233,12 +238,6 @@
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9oUGRwa0dFbXd0QU1XaXJ0M3d1ZEQzWHppNTA1X3JBbElNbnI1U09ReTZJSGVWLVZHN1dzWWs5M1loVWtfT19wTkF6bnpzTlg4X3ZvaFhRQ0VxUzlzMGM4?oc=5",
         "published_at": "2026-10-21T07:51:00+00:00"
-      },
-      {
-        "title": "半導體產業鏈／聯發科Q3營收創新高！2奈米天璣9600 Pro問世 - 科技島",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE50S3l3X2VUM3VKVkVQQVF4SUROdS1icGR6VmpEbU50MDlOUHlPVTZNSzBkZWFVY3B1ZmlHS0hpTmlRTGhTUE9CaVNyLVotY3lscHJvT09IQWsxMFhvaFFiUVZJa2xDTTR3Q2c?oc=5",
-        "published_at": "2026-10-21T02:46:41+00:00"
       }
     ],
     "events": []
@@ -1736,7 +1735,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 50,
+        "probability_pct": 45,
         "title": "劇本一・跌破防守，下探支撐"
       },
       {
@@ -1772,7 +1771,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 10,
+        "probability_pct": 15,
         "title": "劇本三・站上前波低點"
       }
     ],

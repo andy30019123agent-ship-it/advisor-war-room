@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-22T20:24:05+08:00",
+    "generated_at": "2026-10-23T20:05:33+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,15 +24,13 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 44,
+    "confidence": 54,
     "decided_by_layer": 5,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
       "chips_weak",
-      "valuation_expensive",
-      "valuation_warning",
-      "market_bear"
+      "valuation_expensive"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以先觀望不進場；但估值偏貴是風險。",
     "risk_note": "若已持有，跌破 26.5 先降波段部位；空手則等進場條件",
@@ -46,7 +44,7 @@
       "price": 27.6,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-29",
+    "reeval_date": "2026-10-30",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 26 收盤再降一半波段部位。",
@@ -121,13 +119,13 @@
     },
     "valuation": {
       "band": "偏貴",
-      "base": 18.7,
-      "bull": 20.5,
-      "bear": 17.9,
+      "base": 20.5,
+      "bull": 22.9,
+      "bear": 18.7,
       "regime": "full",
-      "warning": "模型 Base 18.7 與現價 28.95 偏離 35%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+      "warning": null
     },
-    "rr": -4.18
+    "rr": -3.45
   },
   "evidence": {
     "roles": [
@@ -171,7 +169,6 @@
           "防守價明確、下檔可量化，先觀望不進場都在停損紀律內執行。"
         ],
         "oppose": [
-          "估值模型有 warning、Base 不可信，R/R 不宜當加碼依據，只看價格結構與停損。",
           "估值偏貴，一旦情緒反轉，殺估值的速度會很快。"
         ],
         "verify": [
@@ -217,16 +214,16 @@
         "published_at": "2026-10-21T12:11:00+00:00"
       },
       {
-        "title": "運錩(2069)~子公司奇億傳打入蘋果折疊機供應鏈 - CMoney",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFA3M1M1Rk51d2RYSk1sTkpnRWdsNkFYempPLTRXX3dnOF9YcF9VZTVCeHFEQWdpbXVmTFExX3lpNUNhQUs5X2p6aEdsa0dFWkR3Zml3VVZWNGQ?oc=5",
-        "published_at": "2026-10-20T03:02:05+00:00"
-      },
-      {
         "title": "【10:17 即時新聞】運錩(2069)亮燈漲停，高階材料與蘋果折疊機題材受關注 - CMoney投資網誌",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQWGtYVndnd2I4dkctcnhoN29Ja0VkT0Z0OHFDbk8yM2RIdWNza1VlY2hvd1c0QnBPNTdnbEVhNnFqNndYTk9oS2taSjYxMkNSZTYtT05hWUhmVG9ZaURIZXcxN0dwZzM2VnFJUlU0SEZjaElJaEQwYkMxcS1jcEp5bmFUQ2dMTGNNUG1DV2lB?oc=5",
         "published_at": "2026-10-21T02:19:17+00:00"
+      },
+      {
+        "title": "運錩(2069)~子公司奇億傳打入蘋果折疊機供應鏈 - CMoney",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFA3M1M1Rk51d2RYSk1sTkpnRWdsNkFYempPLTRXX3dnOF9YcF9VZTVCeHFEQWdpbXVmTFExX3lpNUNhQUs5X2p6aEdsa0dFWkR3Zml3VVZWNGQ?oc=5",
+        "published_at": "2026-10-20T03:02:05+00:00"
       },
       {
         "title": "《10月21日融資動態15-3》運 錩(12.00%)、達發(11.93%) - 富聯網",
@@ -969,9 +966,9 @@
       31.3
     ],
     "scenarios": {
-      "bear": null,
-      "base": null,
-      "bull": null
+      "bear": 18.7,
+      "base": 20.5,
+      "bull": 22.9
     },
     "event_markers": [],
     "accuracy": {
@@ -1007,26 +1004,8 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 39,
+        "probability_pct": 44,
         "title": "劇本一・站上近期壓力"
-      },
-      {
-        "id": "risk",
-        "trigger": "收盤跌破 26（防守價）",
-        "price_path": [
-          28.9,
-          26.5,
-          25.4
-        ],
-        "price_path_text": "29 → 跌破 26（防守價）→ 下探 25（MA20），守穩才反彈",
-        "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
-        "invalidation": "站回 26（防守價）本劇本失效，切換劇本三。",
-        "action": {
-          "stance": "reduce",
-          "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
-        },
-        "probability_pct": 31,
-        "title": "劇本二・跌破防守，下探支撐"
       },
       {
         "id": "base",
@@ -1038,13 +1017,31 @@
         ],
         "price_path_text": "29 → 回測 28（前波高點）→ 反彈 30（近期壓力）震盪",
         "narrative": "股價在前波高點與近期壓力之間找方向，等法人與均線訊號進一步確認再加減碼。",
-        "invalidation": "收盤跌破 28 本劇本失效，切換劇本二。",
+        "invalidation": "收盤跌破 28 本劇本失效，切換劇本三。",
         "action": {
           "stance": "wait",
           "text": "維持觀望，不進場"
         },
         "probability_pct": 30,
-        "title": "劇本三・守住前波高點"
+        "title": "劇本二・守住前波高點"
+      },
+      {
+        "id": "risk",
+        "trigger": "收盤跌破 26（防守價）",
+        "price_path": [
+          28.9,
+          26.5,
+          25.4
+        ],
+        "price_path_text": "29 → 跌破 26（防守價）→ 下探 25（MA20），守穩才反彈",
+        "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
+        "invalidation": "站回 26（防守價）本劇本失效，切換劇本二。",
+        "action": {
+          "stance": "reduce",
+          "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
+        },
+        "probability_pct": 26,
+        "title": "劇本三・跌破防守，下探支撐"
       }
     ],
     "prob_note": "機率為規則估計＋歷史校正（樣本 54 筆），不是統計勝率，更不是保證。",

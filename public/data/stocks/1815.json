@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-22T20:24:05+08:00",
+    "generated_at": "2026-10-23T20:05:33+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,15 +24,14 @@
     "action": "試單",
     "stance": "中性偏多",
     "position_delta": "small_entry",
-    "confidence": 72,
+    "confidence": 82,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_ok",
       "fundamental_ok",
       "chips_weak",
       "valuation_cheap",
-      "valuation_warning",
-      "market_bear"
+      "valuation_warning"
     ],
     "readable_reason": "因為趨勢仍在（站上均線），所以小量試單。",
     "risk_note": "跌破 127.9 防守位就先降波段部位",
@@ -46,7 +45,7 @@
       "price": 146.0,
       "condition": "現價附近整理走穩、法人止賣（原突破價過遠，已改近端觀察區間）"
     },
-    "reeval_date": "2026-10-29",
+    "reeval_date": "2026-10-30",
     "advice": {
       "holder": {
         "action_text": "續抱不動，跌破 128 收盤再降一半波段部位。",
@@ -117,13 +116,13 @@
     },
     "valuation": {
       "band": "便宜",
-      "base": 301.3,
-      "bull": 368.8,
-      "bear": 189.3,
+      "base": 445.9,
+      "bull": 602.5,
+      "bear": 268.1,
       "regime": "3y",
-      "warning": "模型 Base 301.3 與現價 139.0 偏離 117%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+      "warning": "模型 Base 445.9 與現價 139.0 偏離 221%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
     },
-    "rr": 14.62
+    "rr": 27.65
   },
   "evidence": {
     "roles": [
@@ -218,16 +217,16 @@
         "published_at": "2026-10-19T07:31:35+00:00"
       },
       {
-        "title": "玻纖布廠富喬攻漲停　提前開獎9月獲利年增341.33% - ETtoday財經雲",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5IdHlWUkFnMVFERlRlYlRrV0Nra1Y3NDRtSEpMQWZnQ3NaWFFVdUxLN3JBVXIzdHZaYTA2a3plZGlINHNEU1pkR2FLMWRabVFCQWfSAVBBVV95cUxQR2RaWWhuUFpCcFNtRWtNemxtUjI0bzdheVBvR0wwbTR2M3hucURDMTROcEhMU045elJJUkgtMjlibU5jU2RTTmlGdjllQXFncw?oc=5",
-        "published_at": "2026-10-16T08:43:00+00:00"
-      },
-      {
         "title": "高階玻纖布獲利超補！富喬9月獲利年增341.33％ - 自由財經",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE8xSm9pOXdoS25pdWU3UGYzYU1WY19TZXl6TksxRExzTmFHdVg3Y2VlMWxRelY4YTBfNzV4bmUzSzZpYVRKc1FwRGxGc1RGV2ZleUlBbFREV2o5ajA4OHNB0gFkQVVfeXFMUENzcFpqZTFNQUdyVkZvaXQ5Y01ieFRsVWJHZGFOUHdzY2RmVTU4N21qdlVvNzY2aENUWnNsVnJ2TVRGU0dIeHlGUVpaVV83enlQT3cwMlpqaEZQUXJhX3dpeTJQag?oc=5",
         "published_at": "2026-10-16T08:08:08+00:00"
+      },
+      {
+        "title": "玻纖布廠富喬攻漲停　提前開獎9月獲利年增341.33% - ETtoday財經雲",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5IdHlWUkFnMVFERlRlYlRrV0Nra1Y3NDRtSEpMQWZnQ3NaWFFVdUxLN3JBVXIzdHZaYTA2a3plZGlINHNEU1pkR2FLMWRabVFCQWfSAVBBVV95cUxQR2RaWWhuUFpCcFNtRWtNemxtUjI0bzdheVBvR0wwbTR2M3hucURDMTROcEhMU045elJJUkgtMjlibU5jU2RTTmlGdjllQXFncw?oc=5",
+        "published_at": "2026-10-16T08:43:00+00:00"
       },
       {
         "title": "智邦、富喬 認購紅火 | 權證特區 | 證券 - 經濟日報",
@@ -1003,24 +1002,6 @@
     },
     "scenarios": [
       {
-        "id": "risk",
-        "trigger": "收盤跌破 128（防守價）",
-        "price_path": [
-          139.0,
-          127.9,
-          113.1
-        ],
-        "price_path_text": "139 → 跌破 128（防守價）→ 下探 113（MA60），守穩才反彈",
-        "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
-        "invalidation": "站回 128（防守價）本劇本失效，切換劇本二。",
-        "action": {
-          "stance": "reduce",
-          "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
-        },
-        "probability_pct": 36,
-        "title": "劇本一・跌破防守，下探支撐"
-      },
-      {
         "id": "base",
         "trigger": "收盤守住 130（MA20）",
         "price_path": [
@@ -1030,13 +1011,13 @@
         ],
         "price_path_text": "139 → 回測 130（MA20）→ 反彈 146（進場錨）震盪",
         "narrative": "股價在MA20與進場錨之間找方向，等法人與均線訊號進一步確認再加減碼。",
-        "invalidation": "收盤跌破 130 本劇本失效，切換劇本一。",
+        "invalidation": "收盤跌破 130 本劇本失效，切換劇本三。",
         "action": {
           "stance": "small_entry",
           "text": "維持小量試單，不重壓"
         },
         "probability_pct": 35,
-        "title": "劇本二・守住MA20"
+        "title": "劇本一・守住MA20"
       },
       {
         "id": "bull",
@@ -1053,8 +1034,26 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 29,
-        "title": "劇本三・站上進場錨"
+        "probability_pct": 34,
+        "title": "劇本二・站上進場錨"
+      },
+      {
+        "id": "risk",
+        "trigger": "收盤跌破 128（防守價）",
+        "price_path": [
+          139.0,
+          127.9,
+          113.1
+        ],
+        "price_path_text": "139 → 跌破 128（防守價）→ 下探 113（MA60），守穩才反彈",
+        "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
+        "invalidation": "站回 128（防守價）本劇本失效，切換劇本一。",
+        "action": {
+          "stance": "reduce",
+          "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
+        },
+        "probability_pct": 31,
+        "title": "劇本三・跌破防守，下探支撐"
       }
     ],
     "prob_note": "機率為規則估計＋歷史校正（樣本 54 筆），不是統計勝率，更不是保證。",

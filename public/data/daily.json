@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-22T20:24:05+08:00",
+    "generated_at": "2026-10-23T20:05:33+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -20,22 +20,22 @@
       {
         "id": "SPX",
         "name": "S&P 500",
-        "change_pct": 0.58
+        "change_pct": -1.21
       },
       {
         "id": "NDX",
         "name": "Nasdaq 100",
-        "change_pct": 1.13
+        "change_pct": -2.9
       },
       {
         "id": "SOX",
         "name": "費城半導體",
-        "change_pct": 1.97
+        "change_pct": -6.72
       },
       {
         "id": "VIX",
         "name": "VIX",
-        "change_pct": 8.87
+        "change_pct": 2.84
       }
     ]
   },
@@ -198,10 +198,10 @@
       "source": "picks"
     },
     {
-      "id": "6209",
-      "name": "今國光",
+      "id": "2305",
+      "name": "全友",
       "type": "entry",
-      "price": 104.0,
+      "price": 61.1,
       "direction": "above",
       "source": "picks"
     }
@@ -215,7 +215,7 @@
   },
   "events": [],
   "track_stats": {
-    "n": 670,
+    "n": 671,
     "closed": 620,
     "hit_rate_5d": 0.545,
     "hit_rate_20d": 0.82,
@@ -227,7 +227,7 @@
         "hit_rate": null
       },
       "swing": {
-        "n": 670,
+        "n": 671,
         "hit_rate": 0.82
       },
       "long": {
@@ -241,13 +241,7 @@
     "action": null,
     "todos": []
   },
-  "delta": {
-    "since": "2026-10-21",
-    "items": [
-      "風險溫度 5→7",
-      "大盤狀態 中性→偏空防禦"
-    ]
-  },
+  "delta": null,
   "market_battle": {
     "ohlc": [
       {
@@ -816,17 +810,17 @@
       "us_overnight": [
         {
           "id": "SPX",
-          "change_pct": 0.58
+          "change_pct": -1.21
         },
         {
           "id": "SOX",
-          "change_pct": 1.97
+          "change_pct": -6.72
         }
       ]
     },
     "forecast_range_m1": [
-      43060.3,
-      49248.2
+      43060.35,
+      49248.14
     ]
   },
   "picks": {
@@ -855,7 +849,7 @@
           ],
           "sector": null,
           "tenure_days": 3,
-          "rank_move": "↑"
+          "rank_move": "−"
         },
         {
           "id": "6152",
@@ -949,39 +943,35 @@
           "rank_move": "−"
         },
         {
-          "id": "6209",
-          "name": "今國光",
-          "close": 99.0,
-          "score": 84.3,
-          "confidence": 69,
-          "action_summary": "分批佈局區 90.4-99.0，跌破 90.4 停損（試單上限 10 萬）",
+          "id": "2305",
+          "name": "全友",
+          "close": 53.2,
+          "score": 77.6,
+          "confidence": 64,
+          "action_summary": "分批佈局區 53.2-61.1，跌破 45.2 停損（試單上限 10 萬）",
           "entry_zone": [
-            90.4,
-            99.0
+            53.2,
+            61.1
           ],
-          "defense_price": 90.4,
-          "invalidation": "跌破 90.4 或營收連 2 月轉負或估值回到高分位",
+          "defense_price": 45.2,
+          "invalidation": "跌破 45.2 或營收連 2 月轉負或估值回到高分位",
           "reasons": [
-            "營收 YoY +81.6%，近 3 月均 +93.8%",
-            "PER 落在歷史 11% 分位",
-            "殖利率 0.5%"
+            "營收 YoY +212.8%，近 3 月均 +216.9%",
+            "PER 落在歷史 15% 分位",
+            "PBR 歷史 98% 分位"
           ],
           "sector": null,
-          "tenure_days": 2,
+          "tenure_days": 1,
           "rank_move": "−"
         }
       ]
     },
     "roster_changes": {
       "new": [
-        "1815",
-        "2069",
-        "6152"
+        "2305"
       ],
       "dropped": [
-        "5228",
-        "6805",
-        "6933"
+        "6209"
       ],
       "stay_note": "1709 連續 3 日留任（波段結構未變）"
     }
