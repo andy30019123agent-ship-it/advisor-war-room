@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-23T20:05:33+08:00",
+    "generated_at": "2026-10-26T21:35:54+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,13 +24,14 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 40,
+    "confidence": 30,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_mixed",
       "fundamental_ok",
       "chips_weak",
-      "valuation_expensive"
+      "valuation_expensive",
+      "market_bear"
     ],
     "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "若已持有，跌破 113.1 先降波段部位；空手則等進場條件",
@@ -44,7 +45,7 @@
       "price": 133.4,
       "condition": "站回 MA60 且法人連 2 日買超"
     },
-    "reeval_date": "2026-10-30",
+    "reeval_date": "2026-11-02",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 113 收盤再降一半波段部位。",
@@ -119,13 +120,13 @@
     },
     "valuation": {
       "band": "偏貴",
-      "base": 113.4,
-      "bull": 134.2,
-      "bear": 86.9,
+      "base": 92.2,
+      "bull": 103.1,
+      "bear": 75.6,
       "regime": "3y",
       "warning": null
     },
-    "rr": -0.98
+    "rr": -2.69
   },
   "evidence": {
     "roles": [
@@ -202,22 +203,22 @@
     ],
     "news": [
       {
-        "title": "聯電還沒落底別亂接刀！13天慘摔近24％ 百萬股東心碎 - 自由財經",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE1xWFJYaGgzeFFVck1Sek12WFhjTjJqNmNCVDNydUkxV0VLTFp4Q0RvR210b1NJNjVyZ0d4aURNTllRdXdVWC1fYVVoWnRNc1RwbjRnQ0xCWjBzVFQweGJ30gFkQVVfeXFMTzJQcGRSSlItcWZadFJTbjJOM0hBckhhRHhSLWExWlNuSy1Uc25leUY1T3JjWlNSS0tCaHFibGUzT2FPZmZ4Yzh1UTdzcmk0Mlo4S3VxSV9LN2pkb09ZWkxDNVVDUA?oc=5",
-        "published_at": "2026-10-22T08:10:42+00:00"
-      },
-      {
         "title": "聯電股價跌不停！他152元進場慘遭套牢 釣出一票苦主 - Yahoo股市",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMi0wJBVV95cUxNeW5BNjFjSzREVzdpQzJMbE9US20temVGckh4X1Mwb1hPR09HVlRyc2dSTkpkZDBwcWFtbjdjOFhCSjVGN3lta3JRNVhSQUhTWUNYZTA5R3J1UzRUeEMtMDd4cFc4SHdta2xoVnBQTGV1N0Y0WUdsdWY5a2podWQ5a1lpTXMxUGs2WWZNMzhpakNEcGhKSmthbXREMHVBQzl2VHJGb0g1VXNnUmZyYTBVbGt2Q0M2UFlqd0JhVEZoY1BaeGRocHBCUFJ3TjEwemZMZ3JEWFRDWWJHVXlFN1p5SW5aUHAxXzdNR0FTVjFuclowQUJYWHJ2MXA3MlFoaWpadHZHdUpiM1hnMWJreGVZa0NfcEtqRXhHZ2djTDgwcFdsMmIyUTVzaW01akIzczhNRzVDWTNoVkU0RWdwR1p2aWNpaTAyNjAwS2tGaGJMNlBFMzg?oc=5",
         "published_at": "2026-10-21T22:15:00+00:00"
       },
       {
-        "title": "2303 聯電 - 大佬們～這個新聞跟聯電有關係嗎？ - 股市爆料同學會 - CMoney",
+        "title": "聯電還沒落底別亂接刀！13天慘摔近24％ 百萬股東心碎 - 自由財經",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1lZEhWdms5UW13NExCNHFUVzNhS09KUnBEdTlYUUU2N3FTWk9vN0pjNFNfRW85VnRiQ2g0YnB3dUlmcHl0eG5rbHc1X2VMd3p5OVFIOE4wcW0?oc=5",
-        "published_at": "2026-10-21T13:31:22+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE1xWFJYaGgzeFFVck1Sek12WFhjTjJqNmNCVDNydUkxV0VLTFp4Q0RvR210b1NJNjVyZ0d4aURNTllRdXdVWC1fYVVoWnRNc1RwbjRnQ0xCWjBzVFQweGJ30gFkQVVfeXFMTzJQcGRSSlItcWZadFJTbjJOM0hBckhhRHhSLWExWlNuSy1Uc25leUY1T3JjWlNSS0tCaHFibGUzT2FPZmZ4Yzh1UTdzcmk0Mlo4S3VxSV9LN2pkb09ZWkxDNVVDUA?oc=5",
+        "published_at": "2026-10-22T08:10:42+00:00"
+      },
+      {
+        "title": "聯電發重訊！法說會時間全說了 - 東森新聞",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTFBVMl80LWJjVm9MM2w2aVFqWXpOVXZkMnQ2WFRoTkJJSWRIU0M4VjhJSW9rMGxCSkc0TEdMQ3FIbDZBczdmVU00LTRSbjRtTU95OUVWWUF0RQ?oc=5",
+        "published_at": "2026-10-13T07:00:00+00:00"
       },
       {
         "title": "聯電在矽光子及先進封裝布局有成 分析師估今年 EPS 為7元 - 經濟日報",
@@ -226,16 +227,16 @@
         "published_at": "2026-10-20T02:50:49+00:00"
       },
       {
-        "title": "聯電、世界、力積電…成熟製程3雄誰最香？老牌投顧喊買它最新目標價EPS一次看- 上市櫃 - 旺得富理財網",
+        "title": "台積電吃肉、二哥慘變祭品！聯電目標價185元是真的？「長線靠2大轉型底氣」多空大論戰：這價位就老實買- 上市櫃 - 旺得富理財網",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBISW1VLTc2ZlQ1YzNIMGxwX2x0R0pGb05CNEl4a1hTamRTQ19FYkRMVDV0TmlacHk2cUprZ0xCczlCRF9Na3NldFBmX19NeVo4elpGUV9BUGZpa0Y1cDR4dFBfR242V3NoS3c?oc=5",
-        "published_at": "2026-10-20T22:05:49+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5ZYjRvaWJ0YTgwbDBZdjN6eUdhOW9RRGNfVTVzOWt3RFRKeWF6cEMxSjJHbXdKaUF4SGVseTJIRWxBcHk4VkRQSm9YVXJFZFFjSGFqc2hDbDFtbHpleW1oU25DTjNseGhiSXc?oc=5",
+        "published_at": "2026-10-17T07:00:00+00:00"
       },
       {
         "title": "【個股分析】聯電：矽光子及先進封裝成為新舞台 - 富果直送",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFBJZjRFWlR6dURKcFg4VUdjYWktaWhTZnhZOXM5eUN1d2h6ckpfSlNMQ1pZeUxNd21mYnBVbUxBeFc4U09GOS1ha2tFZXVLbERKX1lvSDZzWklCVTFKQ3lORFNJeHRKVEJ4X1JCVUR5UmpLZw?oc=5",
-        "published_at": "2026-10-16T10:48:38+00:00"
+        "published_at": "2026-10-16T07:00:00+00:00"
       }
     ],
     "events": []
@@ -1659,9 +1660,9 @@
       134.89
     ],
     "scenarios": {
-      "bear": 86.9,
-      "base": 113.4,
-      "bull": 134.2
+      "bear": 75.6,
+      "base": 92.2,
+      "bull": 103.1
     },
     "event_markers": [],
     "accuracy": {
@@ -1700,7 +1701,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 45,
+        "probability_pct": 50,
         "title": "劇本一・跌破防守，下探支撐"
       },
       {
@@ -1736,7 +1737,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 15,
+        "probability_pct": 10,
         "title": "劇本三・站上前波低點"
       }
     ],

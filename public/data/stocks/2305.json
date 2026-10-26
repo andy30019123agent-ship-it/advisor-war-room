@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-23T20:05:33+08:00",
+    "generated_at": "2026-10-26T21:35:54+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,14 +24,15 @@
     "action": "試單",
     "stance": "中性偏多",
     "position_delta": "small_entry",
-    "confidence": 78,
+    "confidence": 68,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_mixed",
       "fundamental_ok",
       "chips_weak",
       "valuation_cheap",
-      "valuation_warning"
+      "valuation_warning",
+      "market_bear"
     ],
     "readable_reason": "因為基本面沒惡化，所以小量試單；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "跌破 45.2 防守位就先降波段部位",
@@ -45,7 +46,7 @@
       "price": 61.1,
       "condition": "站回 MA20 且法人連 2 日買超"
     },
-    "reeval_date": "2026-10-30",
+    "reeval_date": "2026-11-02",
     "advice": {
       "holder": {
         "action_text": "續抱不動。",
@@ -116,13 +117,13 @@
     },
     "valuation": {
       "band": "便宜",
-      "base": 125.9,
-      "bull": 162.4,
-      "bear": 99.5,
+      "base": 99.5,
+      "bull": 125.9,
+      "bear": 82.4,
       "regime": "3y",
-      "warning": "模型 Base 125.9 與現價 53.2 偏離 137%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+      "warning": "模型 Base 99.5 與現價 53.2 偏離 87%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
     },
-    "rr": 9.09
+    "rr": 5.79
   },
   "evidence": {
     "roles": [
@@ -199,28 +200,16 @@
     ],
     "news": [
       {
-        "title": "全友(2305) 個股概覽 | 個股 - 股市 - CMoney",
+        "title": "2305 全友- 今天打得不算好！收工吃午餐- 股市爆料同學會 - CMoney",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9qMGF0ZW52ODlWX3ZFSjJrTVNEVzZRLXBmQXNnb0tzYVZCMjFuUnYzNkFzdnlPT3RPbzVpMkhGclB5Y0c3SlE1N0tLVVhpV2FhSjRR?oc=5",
-        "published_at": "2026-10-12T16:44:09+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5DQXJOOG9DNi1EUk9DMXVOZ291M0VFVk16a2NMenZVSExfdUQ3T3pXZ1loeXI1N05IRUFQQXpXMUVvaTNtdnNRal9fbWVuTG1EYWJ1ME05bWo?oc=5",
+        "published_at": "2026-10-13T05:12:57+00:00"
       },
       {
-        "title": "【09:24 即時新聞】全友(2305)亮燈漲停，光通訊轉型題材續成盤中焦點 - CMoney投資網誌",
+        "title": "全友國票64購01 (080018.TW) 的分析師見解、目標價與建議 - Yahoo 財經",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOQTE2SG51ckd0UE50Z0poX3IyMlVRcWd5RXFlUktKc3I3d1cta0Ftajd0eEh0WmljTDBwSGxjVmZHeVZNcVZLNkY0M21FcVJ2OWZjbS0yT25VMFA0T3VEcldiSVJFaEFpeU80NXJIdHJsU21YTXpEWkdXbmRKNzhfOHJ6cHl0cVFMTWdibTlB?oc=5",
-        "published_at": "2026-10-12T07:00:00+00:00"
-      },
-      {
-        "title": "明星分析師下週聚焦「5檔避震股」！全友重倉逾五成 - Yahoo新聞",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMixwJBVV95cUxPajRTZ3pPOUlFV3FnbmlsN0dCVi1iNlkyRktncXVSWkFjRk9MdGY4bHpLMzFRU093djNTczJiZzJXWXp5bWw2dTBFcjViR0RUQWJ5SlN3cThwM1JScmpxbUdjTm00b1Z3ZVdxVVdORnJfNktSeS1kZDZWNlVZR25CdGMzZm41Nzl0ZDlXYmNnU2xzdVNmOHFnMWZpZTlSNFNRdFZJcUhFamRaeXpHNXpvSzh0X0V0RUo4U1RkQXZYRmVScGpxSWtJQmRCS0Z2WkRDVXdLUEp4ZUtwMzBhSkhzMmRqMzNXSnFXY3lYY1JzTWp5Q0JqWlJDcGpqRVZ0N2h2TXhwdFY2QkZMd3Ffek1EN3VnTEd3ZWdxaTNNcWN4UHZ1QVY3dmFVWFdBeWdjX0k3N0FKc3phT3VvQjFCcnlpNjV6a2gzM2c?oc=5",
-        "published_at": "2026-10-11T07:00:00+00:00"
-      },
-      {
-        "title": "今日漲停股｜和碩AI伺服器營收暴衝、長榮旺季延長，電子零組件股逆勢亮燈1012｜豐雲學堂2026 年 10 月 - 永豐金證券",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMi9wNBVV95cUxOOFBvcXptZElXTGl1ODB0NlYzc1BQQ0hWdlJ5dnljOVJqdHlBbDJDckRYYlpYaHlOZUdvRHR0Y19aNExVYXViVmtaUWJmR09HRFdZTW1wRWc1dS1IaEdndE93ZEI1a3pRRWdocWZYLVlhLUcwc0xqT1QwYjc0emVidUlDc01QZFhzOHNJWlpPeEtiVHlsbGFXRFAyMC1kaER3QXF0LWdURVhITDVjN3VUb0ZSYVFBcG1RRHU4TDJSdUJ2ODRpaEd3NHhNd08zY1FrUEdxVlU1SlBNXy1PX2RUSE1qTXhKV0NkQng5MDN1SFdfMERuYjc0S2lub1pvdHZnQ09rcUt6a0cwQXVoMXk0bjJBRmJsZkFLV1liM1MzcDNZWVJzbU9ITzRoYzFZT3VUMWI1VDdFZ2lzdjVOWkR2SDFQWFNVR2VsdE02WlNqYUJEdXlzSmtSSDJjUmthbDRBeGFPcWE5TDZqNml4WDlKellKS1dsSEhaSk9Fai1oNllLQ0NHV19WZjRfTC1aMjlfX0NhT2ROY0dPRFlBRENiRWpnYkh1T3JOWF8zdWZLSTN3aWhNQzVYbVFDWDREc2ZtekdqVlVsMVR5WE5SYW9JNUpRZ3VMcG1ZNHl6eFBxNlVoNEJaRXdVaXU4ODJKOVg4ZGRNQXRLbw?oc=5",
-        "published_at": "2026-10-12T07:49:53+00:00"
+        "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE5ua0lNc0ZUTG1aYWhhMHFjTkxmVU1EZXZvVlk4UVM2cUtOelRfNF83V3Zab1hrbmlMOFd2ejNLNk1WcG1aWlFWM25Jb0tGR3FxaTdyT2VSWEl0UTRpU2hRQzJidFlpR2tTZFQ4M1ZpOA?oc=5",
+        "published_at": "2026-10-22T02:36:05+00:00"
       },
       {
         "title": "《自營商賣超32-20》全 友(43)、三 商(43)、環 科(43) - 富聯網",
@@ -229,10 +218,22 @@
         "published_at": "2026-10-14T08:33:00+00:00"
       },
       {
-        "title": "趙彭博︱劍指50K 緊盯台積電法說- 日報 - 工商時報",
+        "title": "2305 全友 - 這個月4字頭看法不變 - 股市爆料同學會 - CMoney",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE8zbF9GOWlHbVkyX191aG1HSGtLNHktMVJTNE1meU9jTEZpR0VWREszaEYtQUcxU1pHS1BTN09qdEd5ek9QRTlWWGxYYjczX3N1LUpsWW1JMF82b05NTVhJ?oc=5",
-        "published_at": "2026-10-11T07:00:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE9qaUE1SE1UczZ1OWdFX3JaaElDZ2o0WFhYSFotd2dpb0NiVkk0dkpSWnVlMURhQkNtQXFXWEtJZjdjd0YzSmo1QkpXTmxxeE1GajN0WEpjYTA?oc=5",
+        "published_at": "2026-10-22T02:25:05+00:00"
+      },
+      {
+        "title": "萬元保衛戰真的開打！「伺服器滑軌巨頭」又被列入注意股 大量與「AI機殼大廠」一同遭盯上 - FTNN 新聞網",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE5jN2RRUnZySk1zY1FJQWZhdHVoVERRYTlkTklRR2lCbFUxMlJLTHd2WnFxSkFpSUVYNUtiblRHVXlrWF9BSHEtX0hmMA?oc=5",
+        "published_at": "2026-10-15T07:00:00+00:00"
+      },
+      {
+        "title": "KKday全站消費卡友享折扣優惠｜卡優新聞網 - 卡優新聞網",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5ZT2ZKNGVpYkV5YlNDQlFYZmo2TjZpVXg3N1FGRG1tQk91bEdlMVV1TnY0N0hVcWtGZDlKVVo1cVlrdzVUaXloa3RiNGllVHdXU1RUMDVROXVjTU04blE?oc=5",
+        "published_at": "2026-10-19T06:27:08+00:00"
       }
     ],
     "events": []
@@ -1146,24 +1147,6 @@
     },
     "scenarios": [
       {
-        "id": "bull",
-        "trigger": "收盤站上 54（前波低點）且法人連 2 日買超",
-        "price_path": [
-          53.2,
-          54.0,
-          61.1
-        ],
-        "price_path_text": "53 → 挑戰 54（前波低點）→ 突破後上看 61（MA20）",
-        "narrative": "站上前波低點且法人買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
-        "invalidation": "站上 54 後量縮不過，本劇本失效，切換劇本二。",
-        "action": {
-          "stance": "small_entry",
-          "text": "站上壓力可先小量試單，不重壓"
-        },
-        "probability_pct": 40,
-        "title": "劇本一・站上前波低點"
-      },
-      {
         "id": "base",
         "trigger": "收盤守住 45（防守價）",
         "price_path": [
@@ -1179,7 +1162,25 @@
           "text": "維持小量試單，不重壓"
         },
         "probability_pct": 35,
-        "title": "劇本二・守住防守價"
+        "title": "劇本一・守住防守價"
+      },
+      {
+        "id": "bull",
+        "trigger": "收盤站上 54（前波低點）且法人連 2 日買超",
+        "price_path": [
+          53.2,
+          54.0,
+          61.1
+        ],
+        "price_path_text": "53 → 挑戰 54（前波低點）→ 突破後上看 61（MA20）",
+        "narrative": "站上前波低點且法人買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
+        "invalidation": "站上 54 後量縮不過，本劇本失效，切換劇本一。",
+        "action": {
+          "stance": "small_entry",
+          "text": "站上壓力可先小量試單，不重壓"
+        },
+        "probability_pct": 35,
+        "title": "劇本二・站上前波低點"
       },
       {
         "id": "risk",
@@ -1191,12 +1192,12 @@
         ],
         "price_path_text": "53 → 跌破 45（防守價）→ 下探 42（MA60），守穩才反彈",
         "narrative": "跌破防守位代表波段結構轉弱，先執行紀律不留戀。等止穩訊號出現再評估是否回補。",
-        "invalidation": "站回 45（防守價）本劇本失效，切換劇本二。",
+        "invalidation": "站回 45（防守價）本劇本失效，切換劇本一。",
         "action": {
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 25,
+        "probability_pct": 30,
         "title": "劇本三・跌破防守，下探支撐"
       }
     ],

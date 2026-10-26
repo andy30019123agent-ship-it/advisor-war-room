@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-23T20:05:33+08:00",
+    "generated_at": "2026-10-26T21:35:54+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,12 +24,13 @@
     "action": "試單",
     "stance": "中性偏多",
     "position_delta": "small_entry",
-    "confidence": 20,
+    "confidence": 10,
     "decided_by_layer": 4,
     "reason_codes": [
       "trend_mixed",
       "fundamental_ok",
-      "chips_weak"
+      "chips_weak",
+      "market_bear"
     ],
     "readable_reason": "因為基本面沒惡化，所以小量試單；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "跌破 162.0 防守位就先降波段部位",
@@ -43,7 +44,7 @@
       "price": 203.0,
       "condition": "帶量突破近20日高、法人回補"
     },
-    "reeval_date": "2026-10-30",
+    "reeval_date": "2026-11-02",
     "advice": {
       "holder": {
         "action_text": "續抱不動，跌破 162 收盤再降一半波段部位。",
@@ -201,16 +202,16 @@
     ],
     "news": [
       {
+        "title": "光環(3234)9月營收年增140%！InP代工擴產加速，上游材料吃緊成最大變數！ - 鉅亨網",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5FQ0Zpb1ZoM1ZwS2loa3hMblVldUJzeFhyV3lDalJPMmJjNVVOMnVheVJLZEhHdGFyb1RBMVYzMERja010Y0RxaWtwaGk4MzA?oc=5",
+        "published_at": "2026-10-13T07:00:00+00:00"
+      },
+      {
         "title": "光環獲法人按讚 毛利率將回溫 - 經濟日報",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1KTFZWbWd3eUtfWUdIaERRTTZieXhMXzZCZGQtaGh3OFZUWk1uSTNVQlB3RXlpaUVXWk9vTGRIaUhjOEUwM1hUcGowV2ZVMjNRejg2Ym5rRkJ2Q3PSAWBBVV95cUxQVkFsbC1MUzB0VGRUdGxXS3BDdGhnSW52RWF3dkJ4SnU1MzJoellHQVZaRjVNMVh0TGhyRnJTR2dxbGk0WGh0TlFBamdmN25ibmJpaGRmdHpTNENUQ1NnSGc?oc=5",
-        "published_at": "2026-10-16T10:26:19+00:00"
-      },
-      {
-        "title": "〈焦點股〉磷化銦需求爆發 光環漲逾半根站上所有均線 - 鉅亨網",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFB4U21DZVRmdzZEc181WDVZdWVtNFlnMTFJMVNvLVo1bEJBVHl4SWFCeWxoM2Fsb3NfQzRON2Fad1VEMW95T1JEeXNEVGhocHM?oc=5",
-        "published_at": "2026-10-20T05:05:08+00:00"
+        "published_at": "2026-10-16T07:00:00+00:00"
       },
       {
         "title": "TPCA 光環褪色？參展概念股跌多漲少- 證券 - 工商時報",
@@ -219,22 +220,22 @@
         "published_at": "2026-10-20T05:31:00+00:00"
       },
       {
-        "title": "兆元IPO光環下的隱憂！想提前布局OpenAI、Anthropic？3大風險要留意 - Money錢",
+        "title": "高鐵光環褪色? 青埔新案開倒車8字頭變6字頭| 房產 - 非凡新聞台",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE5nT1hPV0h2TXhXSmF3TEdaRlhiRVAwRDJSX1pBSmxVakJmaU9LRWZORE1jdTE2UFZlcDJma1BJYjdTNWliRVJ6S0dVSzNrZw?oc=5",
-        "published_at": "2026-10-14T23:00:00+00:00"
-      },
-      {
-        "title": "【12:04 即時新聞】光環(3234) 股價勁揚逾6% 聚焦代工動能與體質轉強 - CMoney投資網誌",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPZGpRZm5nTUpuSVZ4STNmSTZmd0hLMnNPOTNPdzRMZTBDWnNnY0dpRmJOTU1EYXk2TnBVMTVKN3ZpZzRxeUV3UG4zbXdQYkhOelpENmRlMEd3NFVVcTVOMVM4STlNemd3eU1KbUZDUVRPUTVuQjhUQWVvMnJkNnZ5NTVkTkhnQzZabGdvTWl3?oc=5",
-        "published_at": "2026-10-21T04:04:49+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE15U041WDlkVjVFT0pWY0VLeXRUNkxNekxJRmU2cVZjU1lSU3gyZGFGazc3SWVRR0otTWFPeExkYk9yRTFxQy1mcC1WSWlRd0VhbUpGLXlNbzZra00?oc=5",
+        "published_at": "2026-10-15T07:00:00+00:00"
       },
       {
         "title": "曾以為自己不值得！放下台塑第三代光環，楊元寧：面對內心的黑暗，才能活出最好的你 - 康健雜誌",
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE9KbEJhWmJDMTJPWEp1ZmFKS1J2VTE4R0Q0OTRxX3JPQzhKZGlrUUtBN2hLZXhiMEozUVNlY254LWFJX0UxWDZmb2FiQXJpcW5EV2tvRGg3Mlo?oc=5",
-        "published_at": "2026-10-16T05:30:05+00:00"
+        "published_at": "2026-10-16T07:00:00+00:00"
+      },
+      {
+        "title": "【13:09 即時新聞】光環(3234)盤中走強，市場聚焦代工營收放大 - CMoney投資網誌",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQb2pBTF9EUDFTN3BocDI1d0tGekFQYk8yME1uWTVERnk2OFJrcVMxY1c4amNSRmJMc2lTc3g3MWRzNFhfSjhlNVEySWJhb0VYM3pXOWIyaXMxSVVacURYbG1iQjVkbEc3ZmlhTTRkQjNoNkh6ckJTY1V0R0o0Mm9SelpqLU4wUUsySmZWVTd3?oc=5",
+        "published_at": "2026-10-16T07:00:00+00:00"
       }
     ],
     "events": []
@@ -1067,31 +1068,13 @@
         ],
         "price_path_text": "178 → 回測 163（MA60）→ 反彈 178（MA20）震盪",
         "narrative": "股價在MA60與MA20之間找方向，等法人與均線訊號進一步確認再加減碼。",
-        "invalidation": "收盤跌破 163 本劇本失效，切換劇本三。",
+        "invalidation": "收盤跌破 163 本劇本失效，切換劇本二。",
         "action": {
           "stance": "small_entry",
           "text": "維持小量試單，不重壓"
         },
         "probability_pct": 35,
         "title": "劇本一・守住MA60"
-      },
-      {
-        "id": "bull",
-        "trigger": "收盤站上 178（MA20）且法人連 2 日買超",
-        "price_path": [
-          177.5,
-          178.2,
-          203.0
-        ],
-        "price_path_text": "178 → 挑戰 178（MA20）→ 突破後上看 203（近20日高）",
-        "narrative": "站上MA20且法人買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
-        "invalidation": "站上 178 後量縮不過，本劇本失效，切換劇本一。",
-        "action": {
-          "stance": "small_entry",
-          "text": "站上壓力可先小量試單，不重壓"
-        },
-        "probability_pct": 35,
-        "title": "劇本二・站上MA20"
       },
       {
         "id": "risk",
@@ -1108,8 +1091,26 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
+        "probability_pct": 35,
+        "title": "劇本二・跌破防守，下探支撐"
+      },
+      {
+        "id": "bull",
+        "trigger": "收盤站上 178（MA20）且法人連 2 日買超",
+        "price_path": [
+          177.5,
+          178.2,
+          203.0
+        ],
+        "price_path_text": "178 → 挑戰 178（MA20）→ 突破後上看 203（近20日高）",
+        "narrative": "站上MA20且法人買盤延續，才是轉強訊號。站不穩前仍以區間對待，不追高。",
+        "invalidation": "站上 178 後量縮不過，本劇本失效，切換劇本一。",
+        "action": {
+          "stance": "small_entry",
+          "text": "站上壓力可先小量試單，不重壓"
+        },
         "probability_pct": 30,
-        "title": "劇本三・跌破防守，下探支撐"
+        "title": "劇本三・站上MA20"
       }
     ],
     "prob_note": "機率為規則估計＋歷史校正（樣本 32 筆），不是統計勝率，更不是保證。",

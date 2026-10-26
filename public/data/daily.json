@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-23T20:05:33+08:00",
+    "generated_at": "2026-10-26T21:35:54+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -20,22 +20,22 @@
       {
         "id": "SPX",
         "name": "S&P 500",
-        "change_pct": -1.21
+        "change_pct": 0.37
       },
       {
         "id": "NDX",
         "name": "Nasdaq 100",
-        "change_pct": -2.9
+        "change_pct": 0.39
       },
       {
         "id": "SOX",
         "name": "費城半導體",
-        "change_pct": -6.72
+        "change_pct": 1.09
       },
       {
         "id": "VIX",
         "name": "VIX",
-        "change_pct": 2.84
+        "change_pct": -1.95
       }
     ]
   },
@@ -754,7 +754,7 @@
             "stance": "reduce",
             "text": "降曝險，控制股票總部位比重"
           },
-          "probability_pct": 60,
+          "probability_pct": 50,
           "title": "劇本一・跌破MA60，觀察止穩"
         },
         {
@@ -790,7 +790,7 @@
             "stance": "small_entry",
             "text": "可回補試單，不重壓"
           },
-          "probability_pct": 15,
+          "probability_pct": 25,
           "title": "劇本三・站上近20日低"
         }
       ],
@@ -810,17 +810,17 @@
       "us_overnight": [
         {
           "id": "SPX",
-          "change_pct": -1.21
+          "change_pct": 0.37
         },
         {
           "id": "SOX",
-          "change_pct": -6.72
+          "change_pct": 1.09
         }
       ]
     },
     "forecast_range_m1": [
-      43060.35,
-      49248.14
+      43060.25,
+      49248.25
     ]
   },
   "picks": {
@@ -967,12 +967,8 @@
       ]
     },
     "roster_changes": {
-      "new": [
-        "2305"
-      ],
-      "dropped": [
-        "6209"
-      ],
+      "new": [],
+      "dropped": [],
       "stay_note": "1709 連續 3 日留任（波段結構未變）"
     }
   }

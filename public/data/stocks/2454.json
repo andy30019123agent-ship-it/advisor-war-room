@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-23T20:05:33+08:00",
+    "generated_at": "2026-10-26T21:35:54+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,14 +24,15 @@
     "action": "觀望",
     "stance": "中性",
     "position_delta": "wait",
-    "confidence": 58,
+    "confidence": 48,
     "decided_by_layer": 5,
     "reason_codes": [
       "trend_mixed",
       "fundamental_ok",
       "chips_weak",
       "valuation_very_expensive",
-      "valuation_warning"
+      "valuation_warning",
+      "market_bear"
     ],
     "readable_reason": "因為基本面沒惡化，所以先觀望不進場；但均線轉弱／糾結，僅守長期均線是風險。",
     "risk_note": "若已持有，跌破 3612.6 先降波段部位；空手則等進場條件",
@@ -45,7 +46,7 @@
       "price": 4297.0,
       "condition": "站回 MA60 且法人連 2 日買超"
     },
-    "reeval_date": "2026-10-30",
+    "reeval_date": "2026-11-02",
     "advice": {
       "holder": {
         "action_text": "續抱觀望、暫不加碼，跌破 3,613 收盤再降一半波段部位。",
@@ -120,13 +121,13 @@
     },
     "valuation": {
       "band": "很貴",
-      "base": 1623.9,
-      "bull": 1696.2,
-      "bear": 1383.8,
+      "base": 1449.6,
+      "bull": 1483.5,
+      "bear": 1288.9,
       "regime": "3y",
-      "warning": "模型 Base 1623.9 與現價 4010.0 偏離 60%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+      "warning": "模型 Base 1449.6 與現價 4010.0 偏離 64%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
     },
-    "rr": -6.0
+    "rr": -6.44
   },
   "evidence": {
     "roles": [
@@ -204,10 +205,22 @@
     ],
     "news": [
       {
-        "title": "愈跌愈買！聯發科已跌16% 卻有8.6萬散戶撿便宜 分析師看下檔支撐 - Yahoo股市",
+        "title": "聯發科跌深散戶搶買！　專家示警「大戶撤退」揭低接價位 - ETtoday財經雲",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMimwNBVV95cUxNMzF5MFVsS3BqcS1FNHgxTDExcF8zYVZ4UDJQMHpTTTVFbW9VMnZMTWpPWHNLazhnd1psWi1PTHJYSkk3bFZqbjdhSXNNbVhRaTg0eHpBMkczRFlxSmhWSUJvM3htU0kyb0E5MHdubXc3dHR3NnNoTXFuMllEck5CcXdjNElOVEZ2WUN4b2JZT1FYeXlxSUYtUFlaT1VueFdrQ181djNWcnMwR2l0b2p6MXV0dTBOemt1R0FITGJSUk1FaHBkY1Q1MW9BQnR2bTdaWE44eko5Rm1XdTZnX3lLQXZoZXNqMVpWM1ZKVVluMEszWVFFTzhKbUlkVkZFU2xjbGctNWhpQ0loYXlIc3I4YkpmZ083WEhScjRVMnM1NmFXNl9MdlVvd3pmdnZUZ1FNTEd1eWE2ZXlKalRCaE9sN2xpX1BJUElnREhHTkRoYnQzZWxEQ2JvN2hvYkc2YU5qOVNrbzhFOHZyTlVWbDdqX0N4QThLTEluYU45TnpyQW11d2l0VmtJQlNrX0hCSHYwa3A1ZXI0TWlBTHc?oc=5",
-        "published_at": "2026-10-11T07:00:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5GMWFSblM3WEdwLXI3REREeUJsbGNILXI5S1JDTF9hc01TSExFSnZZbUtWQ1BJanQyRU1jUU9FbGpvTFNlSGxiWXFmNENXLUMwcFHSAVBBVV95cUxPLXhvb3ZQUlZZd1BrcHpjckllNlJ4ZVpaUUMydWVEamV6WWpDY2Q5WlZDRmhWNW1NSi1JenJuUmxsZWpiVmo4T0xRV2ZOdmNrcA?oc=5",
+        "published_at": "2026-10-16T07:00:00+00:00"
+      },
+      {
+        "title": "5165套房學長姐還有救嗎？聯發科連6跌「最慘蒸發69 萬元」 分析師揭止跌訊號 - Yahoo股市",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMi2wNBVV95cUxNSGdfRUJ5RjZObWtpQ3hKNFVwd0djVEtGUjdiSEtWRUhTNWFmaGtlRVRlWDZaMTFmUGo1aEpMb25iRHFib0EzUUlVT2F1LWZWREtTNGZab0R2S1NvcWxVOHJKaWxaWkMyR0lYNGdacFJfbk9sRDRrZnp0Q2toRzAxSHVDa0NwcDhqRjhlQ1BnN1ZXXzI1OUNYeTlBZnRKLVZNaURlblpZZWNZY1RQZERCQ3dVaWV0cm5xUFBnYXYybXNlUjZRWHhHcndqbFRBemVKRzJ2aTJ2ZEd4WWdQYjU1UW9BVHlGb2hyTzZHcllFTkFqN3lkbUQ2R1ptdXZxODJCZE52bHFsSHZjRHIxS002M3p1SE9Ja083WVpucWQ4aEEzVTJxRkpFUDhqZnUzOW5YMGtXYXNyWFNTQTdKZjZEaTRvVmhQVFAyQXpGdWRzNWcxRGZzQU9YLUJKTnhFemFMcWhrNW9pd2ZZWFd5VWJIQjVMNThGUlJ5UGx4R3dwREtHX0wxZk5UM3BsVlFEbzRFdFJMLVFQZGQ3R3RzVEpndmdBZVozelRDUW5tWDBDYmdqTkZDbzBoV0tsbHhJNXZBNWNNYkJnblhFOG1fWjA0ZkFvWGxOdjJoZzZJ?oc=5",
+        "published_at": "2026-10-13T07:00:00+00:00"
+      },
+      {
+        "title": "聯發科3500元買進、5500元沒賣！400萬投資人怕獲利回吐 崩潰求解 - UDN",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE9sQ1RLc3pDOUdQSThYVGhKWkFlTDhDU2dZakgzZlFHMGI4OEdsZ0E3bmxFUHJtTTRzeU80alRmUXdMRkl1MU96WFZFTDE5LVFOWEHSAVdBVV95cUxNUi1CZENONzJpVC1GaFpRR1lZaE5HeHlWeFhXcVZaVjdoRzZ0azk4R3NGVGdBUlRLSFdNdGZZWWh0SC1PNGVZd3hRNThVZ1JVeHNXT3pkanM?oc=5",
+        "published_at": "2026-10-19T03:43:54+00:00"
       },
       {
         "title": "焦點股》聯發科：近一個月股價回檔逾24％！10月30日法說會成為多空關鍵 - 自由財經",
@@ -220,18 +233,6 @@
         "source": "Google News",
         "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOaWtleDNQeW5ISEhaaFVrQVI3S19nd3RVMWZSb0hwUHJ1dFdha0xHNjhseTB0NmtEUWQ3WnI5YjE0MFpLWktua1MzcGFTZ25taE9STFVkVGIxZUM0QlFPcjBNT3E3TndIeEIzSjZGVFRDY0c0TTM4cUFBOFQ2RUVoNGRWUHl4MExIX0FJSnJsMzNtTVpyV251dTd4YWF2MGNodF8tUlh1STJBZFE?oc=5",
         "published_at": "2026-10-22T06:15:49+00:00"
-      },
-      {
-        "title": "聯發科第3季營收超越預期 法人估全年EPS 66元 - UDN",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE55WjhGQnFvZU45WTN3UmtaYTJaZkNoeldqeFNvZ0kyd0M2ZGtLemJSLVNRaU1GQ3d5cGxXZXBOc3YyM2I5NV9xNUNJaV9XcHlI0gFWQVVfeXFMT29MazlBemcxYU81aUQ1dVp6N0FOMFd4RU0wNEltRWEwWjl5bERtVDdwQkFDRUVjOTRXX1hBR3VpQklYa1JOcHhWYWZIMmluc1VFSy02UUE?oc=5",
-        "published_at": "2026-10-18T07:04:36+00:00"
-      },
-      {
-        "title": "聯發科跌深散戶搶買！　專家示警「大戶撤退」揭低接價位 - ETtoday財經雲",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5GMWFSblM3WEdwLXI3REREeUJsbGNILXI5S1JDTF9hc01TSExFSnZZbUtWQ1BJanQyRU1jUU9FbGpvTFNlSGxiWXFmNENXLUMwcFHSAVBBVV95cUxPLXhvb3ZQUlZZd1BrcHpjckllNlJ4ZVpaUUMydWVEamV6WWpDY2Q5WlZDRmhWNW1NSi1JenJuUmxsZWpiVmo4T0xRV2ZOdmNrcA?oc=5",
-        "published_at": "2026-10-15T23:48:00+00:00"
       },
       {
         "title": "聯發科不到1個月慘崩24％！還能買嗎？分析師喊「萬金股」 大咖投顧卻狂砍目標價- 證券 - 工商時報",
@@ -1735,7 +1736,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 45,
+        "probability_pct": 50,
         "title": "劇本一・跌破防守，下探支撐"
       },
       {
@@ -1771,7 +1772,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 15,
+        "probability_pct": 10,
         "title": "劇本三・站上前波低點"
       }
     ],

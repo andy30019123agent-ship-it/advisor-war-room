@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": 1,
     "data_date": "2026-10-22",
-    "generated_at": "2026-10-23T20:05:33+08:00",
+    "generated_at": "2026-10-26T21:35:54+08:00",
     "sources": [
       "FinMind",
       "yfinance"
@@ -24,7 +24,7 @@
     "action": "續抱",
     "stance": "中性偏多",
     "position_delta": "hold",
-    "confidence": 60,
+    "confidence": 46,
     "decided_by_layer": 6,
     "reason_codes": [
       "chips_broken",
@@ -32,7 +32,7 @@
       "fundamental_ok",
       "chips_weak",
       "valuation_expensive",
-      "valuation_warning"
+      "market_bear"
     ],
     "readable_reason": "因為基本面沒惡化，所以續抱不動；但法人連日賣超、籌碼失效是風險。（此為波段層判斷，不影響定期定額核心部位）",
     "risk_note": "跌破 2194.2 防守位就先降波段部位；法人持續賣超需留意",
@@ -43,7 +43,7 @@
     },
     "defense_price": 2194.2,
     "entry_condition": null,
-    "reeval_date": "2026-10-30",
+    "reeval_date": "2026-11-02",
     "core_note": "此為波段層判斷，不影響定期定額核心部位。",
     "advice": {
       "holder": {
@@ -119,13 +119,13 @@
     },
     "valuation": {
       "band": "偏貴",
-      "base": 3330.5,
-      "bull": 3436.5,
-      "bear": 2559.5,
+      "base": 2932.6,
+      "bull": 3124.8,
+      "bear": 2045.0,
       "regime": "3y",
-      "warning": "模型 Base 3330.5 與現價 2385.0 偏離 40%，可能低估近期估值 regime；僅供參考，不作為減碼依據"
+      "warning": null
     },
-    "rr": 4.96
+    "rr": 2.87
   },
   "evidence": {
     "roles": [
@@ -169,7 +169,6 @@
           "防守價明確、下檔可量化，續抱不動都在停損紀律內執行。"
         ],
         "oppose": [
-          "估值模型有 warning、Base 不可信，R/R 不宜當加碼依據，只看價格結構與停損。",
           "估值偏貴，一旦情緒反轉，殺估值的速度會很快。"
         ],
         "verify": [
@@ -203,10 +202,28 @@
     ],
     "news": [
       {
-        "title": "台積電轉弱幕後黑手曝光！阮慕驊揭原因：它們瘋狂提款 - Yahoo股市",
+        "title": "專家分析台積電「2大翻空警訊」看到快跑！再曝重押大牛股噴發 - ETtoday財經雲",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMi8gJBVV95cUxNQmJCQlpOR2JvUGs0OVByNVZqX2lBZHVWZ0xfX1BXX2VNbWxwX1NRbTgzbWJTd0VkVThnYm9pMWFOVW9rVnV5QWhKbVJibzgwYVh5MjBhTjZnZkVYSjNYWWhKTWZZM193NnZWVkdvZnNPU0c5UVFnMHhzSnh1cFoxVDN1alRNb1QzRHZ2eGtQbTJoNGZZTm1qa2txYmdhbnhfRWNLeVhmaU5nYm5Hb2FNZ0loQTgxenFHYkM0MktSOWpFZm1MTER6S09qYktTeGhGUWdMb0hVLTRyWFh6UVo4dnY0QjlCdi1nYmtJbzYwaV95ZGtuYXpCWGdpb1lBUGV1VTZFSnI4NjVxcHlhYWwyNzI5cWZ6eFVxcUJDX2M0a0xJakZIYW1LczVGUzVmTVh5enpGQVo5MXVVNENaNlNhOGRuWUhJMndIRFZhQVJwZUNUZWdoX2FqNW5HZXpBZG10TG5acDNFZFlSUjJTaEota1lR?oc=5",
-        "published_at": "2026-10-21T02:04:56+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1XczNtN0EteHFwMVhrc0s1OFlzTDE4Rl9rejhnOHVXVmtlbVo1akRFZGhsc3pQX1Z6QmpzQ1dCNjJBTzJ5bGpEcVM5SjhWVUxwV1HSAVBBVV95cUxNcFAxVnRYUTl3bFA0MWhtMkJ2dEMzQVU1NDJ5ODdnX0FOUUVjdW9hSGZUOUpZYTQzc29OWUdmTUtxZk9tOURVcGNaY0w0eVdpag?oc=5",
+        "published_at": "2026-10-15T07:00:00+00:00"
+      },
+      {
+        "title": "點名台積電！外媒曝「現在買進這3檔」長抱 10年後會感謝自己 - 自由財經",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE1WWWY4bDZGVmZfcndydEprRTJNRVZFUUtqUGQ2R3pkSkxZTno2bUdNWlF6QlJzSTlXV1dzR3U1OTJWcW8zdlYyRzY4anh4YlNEaTN1WFZOdlZNNVdlb1JF0gFkQVVfeXFMTU5idFVQTHRyb3ZoQkJiaXk2Z0FKZi1kTnJBVmEzVE5hRzFYb0o1cnUwMERjc2FhTHdDQVZUdTRjT2dmZkZTRnBlS2c3TlU4cGZadXJ3aS00TFVQNzMzdWpiSVFKLQ?oc=5",
+        "published_at": "2026-10-16T07:00:00+00:00"
+      },
+      {
+        "title": "外資專挑尾盤殺？台積電最後一單遭提款近200億元 台股120漲點秒吐回 - Yahoo股市",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMitANBVV95cUxNUWc0bWZDbWJpWW5lbkVmby1iZ0hra0k3ZERyb2pMMzlBZV9hSnFuMncxMTNaMDM0X3VGc1pkLVZoY1U4SllOUmRidy1kUkNVVm4xOEFodEMxcW1hdE95Z0k5eDk5dm9BNkJCUHdxaTY3RF9ocmZwa0RKOHRINjl4Z0RtSllHeUNuX2Q4dDFxanFXUE96NzFvX3Zqd3piZExydmZJSXVZRlVhQzdEVW44a2dMN3RWbHJOSWxZOWFxT1BoRmtWMjE5WWJwQnBwaTlacXhYODRxTEF6T2ctOG1uZnlaempRT19wMHVRd0lKWlhId1NYcU1fa1VoZzVFSUNWeEhzaS11YnRqMjNOWExjWFlFUThjMEU1ckdpa3NIM0JicmFQQWlheEhKZmxteDR3c1pGVkVhdGsxcmRzdVVnVDlxY0ItUjd2QXIwY1ZaN2k0QlNVMmUwWHM3OGZIOEJfNVJ2Y3l3UXlkaURpRFpyWGp5RUs2dHNwcnVMT1c5eWFoRVJvaEtvREw1Vi1sYkk4bzF5emd0OTZsTk1BdnZNVWtmRGtiWklNeFIwYzdkaG5aTFUz?oc=5",
+        "published_at": "2026-10-13T07:00:00+00:00"
+      },
+      {
+        "title": "法說會後外資力挺 台積目標價5,000元創內外資最高價位 - 經濟日報",
+        "source": "Google News",
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE05VXVkU2pOQV9YRmhtVzI0RmhWeUhmZkw4WmJlakFXVGx6TGx0Q0pyR0FhdW9iWnNweVVqZmxLOGlQOGxMZHB1NkNWUUpyY1JaNlZscGt1VFRTd9IBX0FVX3lxTE9jRkRWUzlYQk0xc2YwMXpvQm5rM0JWS1gzM2NHZGJYaWJyNnRLTTRqRkxKQnhVcVJZeUpSekw5c1lwa0tGMkhTUHhmSUdwWjFHSEV2WVFkX0ZYVkxJNVBJ?oc=5",
+        "published_at": "2026-10-17T07:00:00+00:00"
       },
       {
         "title": "台股周一恐下殺千點？台積電股價面臨季線2420元保衛戰，分析師曝勝率、布局時機在此時 - 今周刊",
@@ -215,28 +232,10 @@
         "published_at": "2026-10-18T08:30:00+00:00"
       },
       {
-        "title": "台積電股價有望狂飆近3倍！外媒看好「這時」衝破1200美元驚人目標 - 自由財經",
+        "title": "台積電甜甜價！　專家揭布局時機：這2天最關鍵 - ETtoday財經雲",
         "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBKdWRKZDFuVHFBOHZ1NERQSGZNZ20tMVAyaG9Gd3REQkRXZDdNcmxiNThvZlVLRk12d0Jwd1J5Qmc4V0EwSjY2d2pQUXlVOURKX1Y1SnRFT0xuRWFHX1dn0gFkQVVfeXFMUEdLU0NiRGZySzZkRno1NGdpRkhkRDZ6UlpPVGlBYi1zdUJvb0xqaTRiVEVuRk5RbWJpY3hBRE5PRHRBOFZscUdKSWNnT0dBMmVEcEV4VjlUNVNxTFIwNW1FSHVWeg?oc=5",
-        "published_at": "2026-10-21T14:07:56+00:00"
-      },
-      {
-        "title": "台積電從天價到季線失守跌夠了嗎？ 分析師：要上漲先看這時間 - UDN",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE82cW00YlZYM2hTc1hDemhMRkhjWllaU1BOTExjbWtHbDF6d19lUGcxRVY4WlNyT0lxeGdES2JGRWlRLWlyZ1dDT2ZMaU1ZR0Mt0gFWQVVfeXFMUGpkUGJIUFlFb0p5dXFKZHk5VUJLTlRFZFNheGJoWEtpQWlPX1Q5MzRTeWo4MVBfRFhXeEw0UFlZZEJiSUdNWHAxVGFhdXNuSWM2VFR3eVE?oc=5",
-        "published_at": "2026-10-20T03:55:43+00:00"
-      },
-      {
-        "title": "Jay Goldberg：「英特爾+馬斯克」組合對台積電構成的威脅 可能大於Terafab單打獨鬥 - 鉅亨網",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9scnRSSlpTLUE2OUF4S2dTOEhGRmxuQ0w3bDh4a1ZuSWZWanpwVnNXd2NiTTFaUTFfQjB0WWRvUXQ4Mmw5NXRxbno3Q0I0X2s?oc=5",
-        "published_at": "2026-10-23T06:00:08+00:00"
-      },
-      {
-        "title": "台積電爆工安事故、運動會前又遇強颱薔琵！如何因應？ - 遠見雜誌",
-        "source": "Google News",
-        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9ZSU5FMUhVdGp3UEVPY0JfRXBCY2pnN3JaR09HNG16SDk0YmY1LVpsVGk1OXpIWHJkeTc1bDRaMVpZY1V0R1B4T0tZamZfZw?oc=5",
-        "published_at": "2026-10-21T08:36:00+00:00"
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE15MDA4Z1BFZWNlWHUwaHZEb0RQNUMzMTF4VjRLQjQ1aXE3MW04d3dYa2IzVkM0Y1RDT1NWdy1MTTZ3V1NLa1hXa2ZkZHQyUWY2MGfSAVBBVV95cUxPYzVPWjBLaU94UzBYcnp0bVRPRXdPeFktY2FadWJsTUw0R2daZEhCamI1MEUxZWdLVmp3YUo0aDZYdkFDamZ2WlNXb2ZOdHpkbA?oc=5",
+        "published_at": "2026-10-17T07:00:00+00:00"
       }
     ],
     "events": []
@@ -1693,9 +1692,9 @@
       2459.01
     ],
     "scenarios": {
-      "bear": null,
-      "base": null,
-      "bull": null
+      "bear": 2045.0,
+      "base": 2932.6,
+      "bull": 3124.8
     },
     "event_markers": [],
     "accuracy": {
@@ -1735,7 +1734,7 @@
           "stance": "reduce",
           "text": "跌破即先減碼／執行停損，嚴守紀律不凹單"
         },
-        "probability_pct": 45,
+        "probability_pct": 50,
         "title": "劇本一・跌破防守，下探支撐"
       },
       {
@@ -1771,7 +1770,7 @@
           "stance": "small_entry",
           "text": "站上壓力可先小量試單，不重壓"
         },
-        "probability_pct": 15,
+        "probability_pct": 10,
         "title": "劇本三・站上前波低點"
       }
     ],
