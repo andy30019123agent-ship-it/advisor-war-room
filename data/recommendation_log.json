@@ -2900,8 +2900,8 @@
     "outcome": {
       "r5": -0.0227,
       "r20": -0.0021,
-      "r60": null,
-      "hit": null,
+      "r60": -0.0198,
+      "hit": "expired",
       "hit_days": null,
       "max_drawdown": -0.0474,
       "ex_div_adjusted": true
@@ -3012,8 +3012,8 @@
     "outcome": {
       "r5": 0.0086,
       "r20": 0.1914,
-      "r60": null,
-      "hit": null,
+      "r60": 0.1185,
+      "hit": "expired",
       "hit_days": null,
       "max_drawdown": -0.0358,
       "ex_div_adjusted": true
@@ -3068,8 +3068,8 @@
     "outcome": {
       "r5": 0.5417,
       "r20": 0.2458,
-      "r60": null,
-      "hit": null,
+      "r60": 0.075,
+      "hit": "expired",
       "hit_days": null,
       "max_drawdown": 0.0,
       "ex_div_adjusted": true
@@ -3124,8 +3124,8 @@
     "outcome": {
       "r5": 0.1368,
       "r20": 0.0789,
-      "r60": null,
-      "hit": null,
+      "r60": 0.0526,
+      "hit": "expired",
       "hit_days": null,
       "max_drawdown": -0.0284,
       "ex_div_adjusted": true
@@ -3351,7 +3351,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": 0.0,
+      "max_drawdown": -0.072,
       "ex_div_adjusted": true
     }
   },
@@ -5449,9 +5449,9 @@
       "r5": 0.0736,
       "r20": 0.1585,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.1377,
+      "hit": "stop",
+      "hit_days": 51,
+      "max_drawdown": -0.2047,
       "ex_div_adjusted": true
     }
   },
@@ -7439,7 +7439,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0104,
+      "max_drawdown": -0.0137,
       "ex_div_adjusted": true
     }
   },
@@ -7719,7 +7719,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0166,
+      "max_drawdown": -0.0199,
       "ex_div_adjusted": true
     }
   },
@@ -7999,7 +7999,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0145,
+      "max_drawdown": -0.0178,
       "ex_div_adjusted": true
     }
   },
@@ -8279,7 +8279,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0186,
+      "max_drawdown": -0.0219,
       "ex_div_adjusted": true
     }
   },
@@ -8559,7 +8559,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0104,
+      "max_drawdown": -0.0158,
       "ex_div_adjusted": true
     }
   },
@@ -8839,7 +8839,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0246,
+      "max_drawdown": -0.0299,
       "ex_div_adjusted": true
     }
   },
@@ -9119,7 +9119,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0021,
+      "max_drawdown": -0.0075,
       "ex_div_adjusted": true
     }
   },
@@ -9399,7 +9399,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0042,
+      "max_drawdown": -0.0096,
       "ex_div_adjusted": true
     }
   },
@@ -9679,7 +9679,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0124,
+      "max_drawdown": -0.0178,
       "ex_div_adjusted": true
     }
   },
@@ -9959,7 +9959,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0325,
+      "max_drawdown": -0.0378,
       "ex_div_adjusted": true
     }
   },
@@ -10239,7 +10239,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0364,
+      "max_drawdown": -0.0417,
       "ex_div_adjusted": true
     }
   },
@@ -10407,7 +10407,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0324,
+      "max_drawdown": -0.0486,
       "ex_div_adjusted": true
     }
   },
@@ -10519,7 +10519,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0345,
+      "max_drawdown": -0.0398,
       "ex_div_adjusted": true
     }
   },
@@ -10659,7 +10659,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0535,
+      "max_drawdown": -0.0693,
       "ex_div_adjusted": true
     }
   },
@@ -10799,7 +10799,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0286,
+      "max_drawdown": -0.0339,
       "ex_div_adjusted": true
     }
   },
@@ -11079,7 +11079,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0124,
+      "max_drawdown": -0.0178,
       "ex_div_adjusted": true
     }
   },
@@ -11247,7 +11247,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0627,
+      "max_drawdown": -0.0784,
       "ex_div_adjusted": true
     }
   },
@@ -11359,7 +11359,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": 0.0,
+      "max_drawdown": -0.0055,
       "ex_div_adjusted": true
     }
   },
@@ -11639,7 +11639,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0013,
+      "max_drawdown": -0.0075,
       "ex_div_adjusted": true
     }
   },
@@ -11919,7 +11919,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": 0.0,
+      "max_drawdown": -0.0084,
       "ex_div_adjusted": true
     }
   },
@@ -12199,7 +12199,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0186,
+      "max_drawdown": -0.0268,
       "ex_div_adjusted": true
     }
   },
@@ -12479,7 +12479,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0325,
+      "max_drawdown": -0.0407,
       "ex_div_adjusted": true
     }
   },
@@ -12759,7 +12759,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0403,
+      "max_drawdown": -0.0484,
       "ex_div_adjusted": true
     }
   },
@@ -13009,9 +13009,9 @@
       "r5": -0.0308,
       "r20": -0.0056,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0924,
+      "hit": "stop",
+      "hit_days": 24,
+      "max_drawdown": -0.1513,
       "ex_div_adjusted": true
     }
   },
@@ -13039,7 +13039,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0325,
+      "max_drawdown": -0.0407,
       "ex_div_adjusted": true
     }
   },
@@ -13319,7 +13319,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.048,
+      "max_drawdown": -0.056,
       "ex_div_adjusted": true
     }
   },
@@ -13625,9 +13625,9 @@
       "r5": 0.0112,
       "r20": -0.0562,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0787,
+      "hit": "stop",
+      "hit_days": 21,
+      "max_drawdown": -0.1489,
       "ex_div_adjusted": true
     }
   },
@@ -13655,7 +13655,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0384,
+      "max_drawdown": -0.0465,
       "ex_div_adjusted": true
     }
   },
@@ -13767,7 +13767,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0623,
+      "max_drawdown": -0.1091,
       "ex_div_adjusted": true
     }
   },
@@ -13823,7 +13823,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0073,
+      "max_drawdown": -0.0776,
       "ex_div_adjusted": true
     }
   },
@@ -13931,11 +13931,11 @@
     },
     "outcome": {
       "r5": 0.0444,
-      "r20": null,
+      "r20": -0.0424,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0384,
+      "max_drawdown": -0.0465,
       "ex_div_adjusted": true
     }
   },
@@ -14043,7 +14043,7 @@
     },
     "outcome": {
       "r5": -0.0021,
-      "r20": null,
+      "r20": 0.0106,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -14071,11 +14071,11 @@
     },
     "outcome": {
       "r5": -0.0321,
-      "r20": null,
+      "r20": -0.0737,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0633,
+      "hit": "stop",
+      "hit_days": 20,
+      "max_drawdown": -0.1115,
       "ex_div_adjusted": true
     }
   },
@@ -14155,7 +14155,7 @@
     },
     "outcome": {
       "r5": 0.0764,
-      "r20": null,
+      "r20": 0.0424,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -14183,7 +14183,7 @@
     },
     "outcome": {
       "r5": -0.0026,
-      "r20": null,
+      "r20": 0.0635,
       "r60": null,
       "hit": null,
       "hit_days": null,
@@ -14215,7 +14215,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0403,
+      "max_drawdown": -0.0484,
       "ex_div_adjusted": true
     }
   },
@@ -14495,7 +14495,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0518,
+      "max_drawdown": -0.0598,
       "ex_div_adjusted": true
     }
   },
@@ -14689,9 +14689,9 @@
       "r5": 0.0321,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0197,
+      "hit": "stop",
+      "hit_days": 18,
+      "max_drawdown": -0.0891,
       "ex_div_adjusted": true
     }
   },
@@ -14775,7 +14775,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.048,
+      "max_drawdown": -0.056,
       "ex_div_adjusted": true
     }
   },
@@ -14913,9 +14913,9 @@
       "r5": 0.0156,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0166,
+      "hit": "stop",
+      "hit_days": 17,
+      "max_drawdown": -0.0863,
       "ex_div_adjusted": true
     }
   },
@@ -15053,9 +15053,9 @@
       "r5": -0.033,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0757,
+      "hit": "stop",
+      "hit_days": 16,
+      "max_drawdown": -0.0835,
       "ex_div_adjusted": true
     }
   },
@@ -15279,7 +15279,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0091,
+      "max_drawdown": -0.0162,
       "ex_div_adjusted": true
     }
   },
@@ -15305,9 +15305,9 @@
       "r5": -0.0291,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0492,
+      "hit": "stop",
+      "hit_days": 16,
+      "max_drawdown": -0.1166,
       "ex_div_adjusted": true
     }
   },
@@ -15333,9 +15333,9 @@
       "r5": -0.0368,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0793,
+      "hit": "stop",
+      "hit_days": 15,
+      "max_drawdown": -0.087,
       "ex_div_adjusted": true
     }
   },
@@ -15559,7 +15559,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0296,
+      "max_drawdown": -0.0443,
       "ex_div_adjusted": true
     }
   },
@@ -15585,9 +15585,9 @@
       "r5": -0.01,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.054,
+      "hit": "stop",
+      "hit_days": 15,
+      "max_drawdown": -0.121,
       "ex_div_adjusted": true
     }
   },
@@ -15613,9 +15613,9 @@
       "r5": -0.0561,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0793,
+      "hit": "stop",
+      "hit_days": 14,
+      "max_drawdown": -0.087,
       "ex_div_adjusted": true
     }
   },
@@ -15837,9 +15837,9 @@
       "r5": -0.0142,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0435,
+      "hit": "stop",
+      "hit_days": 14,
+      "max_drawdown": -0.1112,
       "ex_div_adjusted": true
     }
   },
@@ -15921,9 +15921,9 @@
       "r5": -0.0455,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.1056,
+      "hit": "stop",
+      "hit_days": 13,
+      "max_drawdown": -0.1466,
       "ex_div_adjusted": true
     }
   },
@@ -15949,9 +15949,9 @@
       "r5": -0.002,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0502,
+      "hit": "stop",
+      "hit_days": 13,
+      "max_drawdown": -0.1175,
       "ex_div_adjusted": true
     }
   },
@@ -15979,7 +15979,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0667,
+      "max_drawdown": -0.0745,
       "ex_div_adjusted": true
     }
   },
@@ -16117,9 +16117,9 @@
       "r5": 0.0351,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0341,
+      "hit": "stop",
+      "hit_days": 13,
+      "max_drawdown": -0.0838,
       "ex_div_adjusted": true
     }
   },
@@ -16259,7 +16259,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.063,
+      "max_drawdown": -0.0709,
       "ex_div_adjusted": true
     }
   },
@@ -16539,7 +16539,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0442,
+      "max_drawdown": -0.0522,
       "ex_div_adjusted": true
     }
   },
@@ -16705,9 +16705,9 @@
       "r5": 0.0107,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0687,
+      "hit": "stop",
+      "hit_days": 11,
+      "max_drawdown": -0.1115,
       "ex_div_adjusted": true
     }
   },
@@ -16763,7 +16763,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0349,
+      "max_drawdown": -0.0742,
       "ex_div_adjusted": true
     }
   },
@@ -16819,7 +16819,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0442,
+      "max_drawdown": -0.0522,
       "ex_div_adjusted": true
     }
   },
@@ -16931,7 +16931,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.026,
+      "max_drawdown": -0.0589,
       "ex_div_adjusted": true
     }
   },
@@ -17071,7 +17071,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0672,
+      "max_drawdown": -0.0746,
       "ex_div_adjusted": true
     }
   },
@@ -17099,7 +17099,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0246,
+      "max_drawdown": -0.0328,
       "ex_div_adjusted": true
     }
   },
@@ -17211,7 +17211,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0221,
+      "max_drawdown": -0.075,
       "ex_div_adjusted": true
     }
   },
@@ -17321,9 +17321,9 @@
       "r5": -0.0448,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.1166,
+      "hit": "stop",
+      "hit_days": 9,
+      "max_drawdown": -0.13,
       "ex_div_adjusted": true
     }
   },
@@ -17349,9 +17349,9 @@
       "r5": -0.0418,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0753,
+      "hit": "stop",
+      "hit_days": 9,
+      "max_drawdown": -0.113,
       "ex_div_adjusted": true
     }
   },
@@ -17379,7 +17379,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0165,
+      "max_drawdown": -0.0248,
       "ex_div_adjusted": true
     }
   },
@@ -17659,7 +17659,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0165,
+      "max_drawdown": -0.0248,
       "ex_div_adjusted": true
     }
   },
@@ -17939,7 +17939,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0104,
+      "max_drawdown": -0.0187,
       "ex_div_adjusted": true
     }
   },
@@ -18051,7 +18051,7 @@
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": -0.0396,
+      "max_drawdown": -0.0772,
       "ex_div_adjusted": true
     }
   },
@@ -18161,9 +18161,9 @@
       "r5": -0.038,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": -0.0675,
+      "hit": "stop",
+      "hit_days": 6,
+      "max_drawdown": -0.1055,
       "ex_div_adjusted": true
     }
   },
@@ -18214,13 +18214,13 @@
       "per_percentile": 0.72
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0207,
       "r20": null,
       "r60": null,
       "hit": null,
       "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "max_drawdown": -0.0248,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18242,13 +18242,13 @@
       "per_percentile": 0.93
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0543,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0326,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18270,13 +18270,13 @@
       "per_percentile": 0.66
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.1227,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0361,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18298,13 +18298,13 @@
       "per_percentile": 0.84
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.1289,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0234,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18326,13 +18326,13 @@
       "per_percentile": 0.33
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.1924,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "stop",
+      "hit_days": 4,
+      "max_drawdown": -0.1374,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18354,13 +18354,13 @@
       "per_percentile": 0.56
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0905,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 3,
+      "max_drawdown": -0.0528,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18382,13 +18382,13 @@
       "per_percentile": 0.99
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.1411,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "target",
+      "hit_days": 1,
+      "max_drawdown": -0.0179,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18410,13 +18410,13 @@
       "per_percentile": 0.44
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.0042,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "stop",
+      "hit_days": 2,
+      "max_drawdown": -0.0814,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18438,13 +18438,13 @@
       "per_percentile": null
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.229,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "stop",
+      "hit_days": 1,
+      "max_drawdown": -0.0992,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -18466,13 +18466,13 @@
       "per_percentile": 0.26
     },
     "outcome": {
-      "r5": null,
+      "r5": -0.2091,
       "r20": null,
       "r60": null,
-      "hit": null,
-      "hit_days": null,
-      "max_drawdown": null,
-      "ex_div_adjusted": false
+      "hit": "stop",
+      "hit_days": 2,
+      "max_drawdown": -0.1482,
+      "ex_div_adjusted": true
     }
   },
   {
@@ -19612,6 +19612,286 @@
       "tech_light": "amber",
       "chip_light": "amber",
       "per_percentile": 0.23
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:24:56+08:00",
+    "date": "2026-10-30",
+    "stock_id": "2330",
+    "name": "台積電",
+    "price": 2370.0,
+    "rating": "續抱",
+    "fair_base": 3332.6,
+    "stop": 2180.4,
+    "rr": 5.08,
+    "confidence": 78,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.64
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:24:58+08:00",
+    "date": "2026-10-30",
+    "stock_id": "2454",
+    "name": "聯發科",
+    "price": 3915.0,
+    "rating": "觀望",
+    "fair_base": 1627.8,
+    "stop": 3601.8,
+    "rr": -7.3,
+    "confidence": 58,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "red",
+      "per_percentile": 0.9
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:25:02+08:00",
+    "date": "2026-10-30",
+    "stock_id": "3481",
+    "name": "群創",
+    "price": 42.5,
+    "rating": "觀望",
+    "fair_base": 15.2,
+    "stop": 37.6,
+    "rr": -5.53,
+    "confidence": 55,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.61
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:25:06+08:00",
+    "date": "2026-10-30",
+    "stock_id": "2303",
+    "name": "聯電",
+    "price": 111.5,
+    "rating": "觀望",
+    "fair_base": 116.7,
+    "stop": 97.9,
+    "rr": 0.38,
+    "confidence": 58,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.74
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:32:34+08:00",
+    "date": "2026-10-30",
+    "stock_id": "6233",
+    "name": "旺玖",
+    "price": 32.0,
+    "rating": "試單",
+    "fair_base": 46.5,
+    "stop": 29.4,
+    "rr": 5.58,
+    "confidence": 82,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "green",
+      "per_percentile": 0.42
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:32:36+08:00",
+    "date": "2026-10-30",
+    "stock_id": "3498",
+    "name": "陽程",
+    "price": 237.5,
+    "rating": "觀望",
+    "fair_base": 408.3,
+    "stop": 218.5,
+    "rr": 8.99,
+    "confidence": 60,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "red",
+      "per_percentile": 0.29
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:32:38+08:00",
+    "date": "2026-10-30",
+    "stock_id": "3287",
+    "name": "廣寰科",
+    "price": 58.8,
+    "rating": "試單",
+    "fair_base": 294.8,
+    "stop": 53.8,
+    "rr": 47.2,
+    "confidence": 82,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.06
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:32:40+08:00",
+    "date": "2026-10-30",
+    "stock_id": "6108",
+    "name": "競國",
+    "price": 29.4,
+    "rating": "觀望",
+    "fair_base": 15.5,
+    "stop": 27.1,
+    "rr": -5.94,
+    "confidence": 58,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "amber",
+      "tech_light": "green",
+      "chip_light": "amber",
+      "per_percentile": 0.99
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:32:41+08:00",
+    "date": "2026-10-30",
+    "stock_id": "3234",
+    "name": "光環",
+    "price": 151.5,
+    "rating": "觀望",
+    "fair_base": null,
+    "stop": 128.8,
+    "rr": null,
+    "confidence": 2,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "red",
+      "per_percentile": null
+    },
+    "outcome": {
+      "r5": null,
+      "r20": null,
+      "r60": null,
+      "hit": null,
+      "hit_days": null,
+      "max_drawdown": null,
+      "ex_div_adjusted": false
+    }
+  },
+  {
+    "logged_at": "2026-10-30T21:32:46+08:00",
+    "date": "2026-10-30",
+    "stock_id": "2491",
+    "name": "吉祥全",
+    "price": 40.5,
+    "rating": "試單",
+    "fair_base": 1428.3,
+    "stop": 37.3,
+    "rr": 433.69,
+    "confidence": 78,
+    "timeframe": "swing",
+    "factors": {
+      "fund_light": "green",
+      "tech_light": "amber",
+      "chip_light": "amber",
+      "per_percentile": 0.07
     },
     "outcome": {
       "r5": null,
